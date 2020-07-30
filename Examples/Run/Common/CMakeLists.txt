@@ -5,6 +5,7 @@ add_library(
   src/GeometryExampleBase.cpp
   src/MaterialMappingBase.cpp
   src/MaterialValidationBase.cpp
+  src/SeedingExampleBase.cpp
   src/PropagationExampleBase.cpp)
 target_include_directories(
   ActsExamplesCommon
@@ -13,10 +14,16 @@ target_link_libraries(
   ActsExamplesCommon
   PUBLIC
     ActsCore
-    ActsExamplesFramework ActsExamplesMagneticField
-    ActsExamplesDetectorsCommon ActsExamplesPropagation
-    ActsExamplesMaterialMapping ActsExamplesIoCsv ActsExamplesIoJson
-    ActsExamplesIoRoot ActsExamplesIoObj)
+    ActsExamplesFramework 
+    ActsExamplesMagneticField
+    ActsExamplesDetectorsCommon 
+    ActsExamplesPropagation
+    ActsExamplesSeeding
+    ActsExamplesMaterialMapping 
+    ActsExamplesIoCsv 
+    ActsExamplesIoJson
+    ActsExamplesIoRoot 
+    ActsExamplesIoObj)
 
 install(
   TARGETS ActsExamplesCommon
