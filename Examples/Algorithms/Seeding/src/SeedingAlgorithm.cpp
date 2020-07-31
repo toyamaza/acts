@@ -30,6 +30,8 @@
 #include "Acts/Seeding/Seedfinder.hpp"
 #include "Acts/Seeding/SpacePointGrid.hpp"
 
+#include "SpacePointFromHit.hpp"
+
 #include <iostream>
 #include <stdexcept>
 
@@ -42,14 +44,28 @@ FW::SeedingAlgorithm::SeedingAlgorithm(
   if (m_cfg.outputSeeds.empty()) {
     throw std::invalid_argument("Missing output seeds collection");
   }
+  if (not m_cfg.trackingGeometry) {
+    throw std::invalid_argument("Missing tracking geometry");
+  }
+
+  // fill the surface map to allow lookup by geometry id only
+  m_cfg.trackingGeometry->visitSurfaces([this](const Acts::Surface* surface) {
+    // for now we just require a valid surface
+    if (not surface) {
+      return;
+    }
+    this->m_surfaces.insert_or_assign(surface->geoID(), surface);
+  });
+
 }
 
 FW::ProcessCode FW::SeedingAlgorithm::execute(
-    const AlgorithmContext& ctx) const {
+					      const AlgorithmContext& ctx) const {
 
   // Prepare the input and output collections
   const auto& hits = ctx.eventStore.get<SimHitContainer>(m_cfg.inputSimulatedHits);
-  Acts::SeedfinderConfig<SimHit> config;
+
+  Acts::SeedfinderConfig<SpacePointFromHit> config;
   // silicon detector max
   config.rMax = 160.;
   config.deltaRMin = 5.;
@@ -69,21 +85,6 @@ FW::ProcessCode FW::SeedingAlgorithm::execute(
   config.beamPos = {-.5, -.5};
   config.impactMax = 10.;
 
-  auto bottomBinFinder = std::make_shared<Acts::BinFinder<SimHit>>(
-      Acts::BinFinder<SimHit>());
-  auto topBinFinder = std::make_shared<Acts::BinFinder<SimHit>>(
-      Acts::BinFinder<SimHit>());
-  Acts::SeedFilterConfig sfconf;
-  // Acts::ATLASCuts<SimHit> atlasCuts = Acts::ATLASCuts<SimHit>();
-  // config.seedFilter = std::make_unique<Acts::SeedFilter<SimHit>>(
-  //     Acts::SeedFilter<SimHit>(sfconf, &atlasCuts));
-  Acts::Seedfinder<SimHit> a(config);
-
-  covariance tool, sets covariances per spacepoint as required
-  auto ct = [=](const SimHit& sp, float, float, float) -> Acts::Vector2D {
-return {0., 0.}; // Fix me (cov R, cov Z)
-  };
-
   // setup spacepoint grid config
   Acts::SpacePointGridConfig gridConf;
   gridConf.bFieldInZ = config.bFieldInZ;
@@ -93,21 +94,100 @@ return {0., 0.}; // Fix me (cov R, cov Z)
   gridConf.zMin = config.zMin;
   gridConf.deltaRMax = config.deltaRMax;
   gridConf.cotThetaMax = config.cotThetaMax;
-  // create grid with bin sizes according to the configured geometry
-  std::unique_ptr<Acts::SpacePointGrid<SimHit>> grid =
-      Acts::SpacePointGridCreator::createGrid<SpacePoint>(gridConf);
-  auto spGroup = Acts::BinnedSPGroup<SpacePoint>(spVec.begin(), spVec.end(), ct,
-                                                 bottomBinFinder, topBinFinder,
-                                                 std::move(grid), config);
 
-  // std::vector<std::vector<Acts::Seed<SpacePoint>>> seedVector;
-  // auto start = std::chrono::system_clock::now();
-  // auto groupIt = spGroup.begin();
-  // auto endOfGroups = spGroup.end();
-  // for (; !(groupIt == endOfGroups); ++groupIt) {
-  //   seedVector.push_back(a.createSeedsForGroup(
-  //       groupIt.bottom(), groupIt.middle(), groupIt.top()));
-  // }
+  auto bottomBinFinder = std::make_shared<Acts::BinFinder<SpacePointFromHit>>(
+									      Acts::BinFinder<SpacePointFromHit>());
+  auto topBinFinder = std::make_shared<Acts::BinFinder<SpacePointFromHit>>(
+									   Acts::BinFinder<SpacePointFromHit>());
+  // Acts::SeedFilterConfig sfconf;
+  // Acts::ATLASCuts<SpacePointFromHit> atlasCuts = Acts::ATLASCuts<SpacePointFromHit>();
+  // config.seedFilter = std::make_unique<Acts::SeedFilter<SpacePointFromHit>>(
+  //     Acts::SeedFilter<SpacePointFromHit>(sfconf, &atlasCuts));
+  Acts::Seedfinder<SpacePointFromHit> a(config);
+
+
+  // covariance tool, sets covariances per spacepoint as required
+  auto ct = [=](const SpacePointFromHit& sp, float, float, float) -> Acts::Vector2D {
+    return {sp.varianceR, sp.varianceZ};
+  };
+
+
+  for (auto&& [moduleGeoId, moduleHits] : groupByModule(hits)) {
+    // check if we should create hits for this surface
+    const auto is = m_surfaces.find(moduleGeoId);
+    if (is == m_surfaces.end()) {
+      continue;
+    }
+    std::vector<const SpacePointFromHit*> spVec;
+    const Acts::Surface* surface = is->second;
+    for (const auto& hit : moduleHits) {
+      const auto hitPos = hit.position();
+      // std::cout << hitPos.x() << "," << hitPos.y() << "," << hitPos.z() << std::endl;
+      int layer = 1; // dummy
+      float varR = 0.01;
+      float varZ = 0.5;
+      
+      SpacePointFromHit* sp = new SpacePointFromHit{
+	hitPos.x(), hitPos.y(),	hitPos.z(), layer, varR, varZ
+      };
+      spVec.push_back(sp);
+      // transform global position into local coordinates
+      // Acts::Vector2D pos(0, 0);
+      // surface->globalToLocal(ctx.geoContext, hit.position(),
+      //                        hit.unitDirection(), pos);
+    }
+
+
+    // create grid with bin sizes according to the configured geometry
+    std::unique_ptr<Acts::SpacePointGrid<SpacePointFromHit>> grid =
+      Acts::SpacePointGridCreator::createGrid<SpacePointFromHit>(gridConf);
+    auto spGroup = Acts::BinnedSPGroup<SpacePointFromHit>(spVec.begin(), spVec.end(), ct,
+							  bottomBinFinder, topBinFinder,
+							  std::move(grid), config);
+
+
+    std::vector<std::vector<Acts::Seed<SpacePointFromHit>>> seedVector;
+    // auto start = std::chrono::system_clock::now();
+    auto groupIt = spGroup.begin();
+    auto endOfGroups = spGroup.end();
+    int cnt = 0;
+    for (; !(groupIt == endOfGroups); ++groupIt) {
+      cnt++;
+      seedVector.push_back(a.createSeedsForGroup(
+						 groupIt.bottom(), groupIt.middle(), groupIt.top()));
+    }
+    
+    int numSeeds = 0;
+    for (auto& outVec : seedVector) {
+      numSeeds += outVec.size();
+    }
+
+    std::cout << spVec.size() << " hits " << seedVector.size() << " regions " << numSeeds << " seeds" << std::endl;
+
+    for (auto& regionVec : seedVector) {
+      for (size_t i = 0; i < regionVec.size(); i++) {
+        const Acts::Seed<SpacePointFromHit>* seed = &regionVec[i];
+        const SpacePointFromHit* sp = seed->sp()[0];
+        std::cout << " (" << sp->x() << ", " << sp->y() << ", " << sp->z()
+                  << ") ";
+        sp = seed->sp()[1];
+        std::cout << sp->surface << " (" << sp->x() << ", " << sp->y() << ", "
+                  << sp->z() << ") ";
+        sp = seed->sp()[2];
+        std::cout << sp->surface << " (" << sp->x() << ", " << sp->y() << ", "
+                  << sp->z() << ") ";
+        std::cout << std::endl;
+      }
+    }
+
+
+  }
+  std::cout << std::endl;
+
+
+
+
+
   // auto end = std::chrono::system_clock::now();
   // std::chrono::duration<double> elapsed_seconds = end - start;
   // std::cout << "time to create seeds: " << elapsed_seconds.count() << std::endl;
@@ -118,7 +198,9 @@ return {0., 0.}; // Fix me (cov R, cov Z)
   // }
   // std::cout << "Number of seeds generated: " << numSeeds << std::endl;
 
-// for (auto&& [moduleGeoId, moduleHits] : groupByModule(hits)) {
+
+
+  // for (auto&& [moduleGeoId, moduleHits] : groupByModule(hits)) {
   //   // can only digitize hits on digitizable surfaces
   //   const auto it = m_digitizables.find(moduleGeoId);
   //   if (it == m_digitizables.end()) {

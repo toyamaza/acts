@@ -34,6 +34,8 @@ class SeedingAlgorithm final : public BareAlgorithm {
     std::string inputSimulatedHits;
     /// Output collection of clusters.
     std::string outputSeeds;
+    std::shared_ptr<const Acts::TrackingGeometry> trackingGeometry;
+
   };
 
   /// Construct the digitization algorithm.
@@ -57,6 +59,7 @@ class SeedingAlgorithm final : public BareAlgorithm {
 
   Config m_cfg;
   /// Lookup container for all digitizable surfaces
+  std::unordered_map<Acts::GeometryID, const Acts::Surface*> m_surfaces;
   // std::unordered_map<Acts::GeometryID, Digitizable> m_digitizables;
 };
 

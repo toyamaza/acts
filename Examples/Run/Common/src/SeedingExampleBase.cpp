@@ -100,8 +100,8 @@ int seedingExample(int argc, char* argv[], FW::IBaseDetector& detector) {
   FW::SeedingAlgorithm::Config seeding;
   seeding.inputSimulatedHits = clusterReaderCfg.outputSimulatedHits;
   seeding.outputSeeds =  "seeds";
-  sequencer.addAlgorithm(
-  			 std::make_shared<FW::SeedingAlgorithm>(seeding, logLevel));
+  seeding.trackingGeometry = tGeometry;
+  sequencer.addAlgorithm( std::make_shared<FW::SeedingAlgorithm>(seeding, logLevel));
 
   // // Create the random number engine
   // auto randomNumberSvcCfg = FW::Options::readRandomNumbersConfig(vm);
