@@ -11,6 +11,7 @@
 #include "ACTFW/EventData/GeometryContainers.hpp"
 #include "ACTFW/Framework/BareAlgorithm.hpp"
 #include "Acts/Plugins/Digitization/PlanarModuleCluster.hpp"
+#include "Acts/Seeding/SpacePoint.hpp"
 
 namespace FW {
 
@@ -32,6 +33,10 @@ class TestSeedAlgorithm : public FW::BareAlgorithm {
 
   TestSeedAlgorithm(const Config& cfg, Acts::Logging::Level level);
 
+  SpacePoint* readSP(std::vector<const SpacePoint*>& spVec,
+                     const Acts::GeometryID geoId,
+                     const Acts::PlanarModuleCluster& cluster,
+                     const AlgorithmContext& ctx) const;
   /// The framework execut mehtod
   /// @param ctx The Algorithm context for multithreading
   FW::ProcessCode execute(

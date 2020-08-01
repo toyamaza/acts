@@ -6,10 +6,6 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#include <Acts/Utilities/Units.hpp>
-#include <cstdlib>
-#include <memory>
-
 #include "ACTFW/Framework/Sequencer.hpp"
 #include "ACTFW/Framework/WhiteBoard.hpp"
 #include "ACTFW/GenericDetector/GenericDetector.hpp"
@@ -23,6 +19,11 @@
 #include "ACTFW/Plugins/BField/BFieldOptions.hpp"
 #include "ACTFW/Utilities/Options.hpp"
 #include "ACTFW/Utilities/Paths.hpp"
+#include <Acts/Utilities/Units.hpp>
+
+#include <cstdlib>
+#include <memory>
+
 #include "TestSeedAlgorithm.hpp"
 
 using namespace FW;
@@ -72,8 +73,8 @@ int main(int argc, char* argv[]) {
   auto particleReader = Options::readCsvParticleReaderConfig(vm);
   particleReader.inputStem = "particles_initial";
   particleReader.outputParticles = "particles_initial";
-  sequencer.addReader(
-      std::make_shared<CsvParticleReader>(particleReader, logLevel));
+  // sequencer.addReader(
+  //  std::make_shared<CsvParticleReader>(particleReader, logLevel));
   // Read clusters from CSV files
   auto clusterReaderCfg = Options::readCsvPlanarClusterReaderConfig(vm);
   clusterReaderCfg.trackingGeometry = trackingGeometry;
@@ -88,8 +89,8 @@ int main(int argc, char* argv[]) {
   auto clusterWriterCfg = Options::readCsvPlanarClusterWriterConfig(vm);
   clusterWriterCfg.inputClusters = "clusters";
   clusterWriterCfg.inputSimulatedHits = "hits";
-  sequencer.addWriter(
-      std::make_shared<CsvPlanarClusterWriter>(clusterWriterCfg, logLevel));
+  // sequencer.addWriter(
+  // std::make_shared<CsvPlanarClusterWriter>(clusterWriterCfg, logLevel));
 
   // add Seeding Algorithm that finds the seeds
   FW::TestSeedAlgorithm::Config testSeedCfg;

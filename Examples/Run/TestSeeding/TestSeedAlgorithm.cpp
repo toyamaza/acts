@@ -8,14 +8,6 @@
 
 #include "TestSeedAlgorithm.hpp"
 
-#include <boost/type_erasure/any_cast.hpp>
-#include <chrono>
-#include <fstream>
-#include <iostream>
-#include <sstream>
-#include <stdexcept>
-#include <utility>
-
 #include "ACTFW/EventData/IndexContainers.hpp"
 #include "ACTFW/EventData/SimHit.hpp"
 #include "ACTFW/EventData/SimIdentifier.hpp"
@@ -32,10 +24,19 @@
 #include "Acts/Seeding/Seed.hpp"
 #include "Acts/Seeding/SeedFilter.hpp"
 #include "Acts/Seeding/Seedfinder.hpp"
-#include "Acts/Seeding/SpacePoint.hpp"
+//#include "Acts/Seeding/SpacePoint.hpp"
 #include "Acts/Seeding/SpacePointGrid.hpp"
 #include "Acts/Utilities/Logger.hpp"
 #include "Acts/Utilities/Units.hpp"
+
+#include <chrono>
+#include <fstream>
+#include <iostream>
+#include <sstream>
+#include <stdexcept>
+#include <utility>
+
+#include <boost/type_erasure/any_cast.hpp>
 
 FW::TestSeedAlgorithm::TestSeedAlgorithm(
     const FW::TestSeedAlgorithm::Config& cfg, Acts::Logging::Level level)
@@ -48,6 +49,30 @@ FW::TestSeedAlgorithm::TestSeedAlgorithm(
   }
 }
 
+SpacePoint* FW::TestSeedAlgorithm::readSP(
+    std::vector<const SpacePoint*>& spVec, const Acts::GeometryID geoId,
+    const Acts::PlanarModuleCluster& cluster,
+    const AlgorithmContext& ctx) const {
+  const auto& parameters = cluster.parameters();
+  Acts::Vector2D localPos(parameters[0], parameters[1]);
+  Acts::Vector3D globalFakeMom(1, 1, 1);
+  Acts::Vector3D globalPos(0, 0, 0);
+  // transform local into global position information
+  cluster.referenceObject().localToGlobal(ctx.geoContext, localPos,
+                                          globalFakeMom, globalPos);
+  float x, y, z, r, varianceR, varianceZ;
+  x = globalPos.x();
+  y = globalPos.y();
+  z = globalPos.z();
+  r = std::sqrt(x * x + y * y);
+  varianceR = 0;  // initialized to 0 becuse they don't affect seeds generated
+  varianceZ = 0;  // initialized to 0 becuse they don't affect seeds generated
+
+  SpacePoint* sp = new SpacePoint{x, y, z, r, -1, varianceR, varianceZ};
+  spVec.push_back(sp);
+  return sp;
+}
+
 FW::ProcessCode FW::TestSeedAlgorithm::execute(
     const AlgorithmContext& ctx /*,
     const FW::GeometryIdMultimap<Acts::PlanarModuleCluster>& clusters*/) const {
@@ -58,28 +83,31 @@ FW::ProcessCode FW::TestSeedAlgorithm::execute(
 
   // create the space points
   std::size_t clustCounter = 0;
+  std::size_t numIgnored = 0;
   std::vector<const SpacePoint*> spVec;
   for (const auto& entry : clusters) {
     Acts::GeometryID geoId = entry.first;
     const Acts::PlanarModuleCluster& cluster = entry.second;
-    const auto& parameters = cluster.parameters();
-    Acts::Vector2D localPos(parameters[0], parameters[1]);
-    Acts::Vector3D globalFakeMom(1, 1, 1);
-    Acts::Vector3D globalPos(0, 0, 0);
-    // transform local into global position information
-    cluster.referenceObject().localToGlobal(ctx.geoContext, localPos,
-                                            globalFakeMom, globalPos);
-    float x, y, z, r, varianceR, varianceZ;
-    x = globalPos.x();
-    y = globalPos.y();
-    z = globalPos.z();
-    r = std::sqrt(x * x + y * y);
-    varianceR = 0;  // initialized to 0 becuse they don't affect seeds generated
-    varianceZ = 0;  // initialized to 0 becuse they don't affect seeds generated
-    SpacePoint* sp =
-        new SpacePoint{x, y, z, r, geoId.layer(), varianceR, varianceZ};
-    spVec.push_back(sp);
-    clustCounter++;
+    std::size_t volnum = geoId.volume();
+    std::size_t laynum = geoId.layer();
+    if ((clustCounter + numIgnored) % 1000 == 0) {
+      ACTS_INFO("clust " << clustCounter + numIgnored
+                         << " has layer() = " << geoId.layer()
+                         << " and volume() = " << geoId.volume()
+                         << " and value() " << geoId.value() << " and boundary "
+                         << geoId.boundary() << " and approach "
+                         << geoId.approach())
+    }
+    if (volnum == 7 || volnum == 8 || volnum == 9) {
+      if (laynum == 2 || laynum == 4 || laynum == 6) {
+        SpacePoint* sp = readSP(spVec, geoId, cluster, ctx);
+        clustCounter++;
+      } else {
+        numIgnored++;
+      }
+    } else {
+      numIgnored++;
+    }
   }
 
   Acts::SeedfinderConfig<SpacePoint> config;
