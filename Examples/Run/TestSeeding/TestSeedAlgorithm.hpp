@@ -9,9 +9,13 @@
 #pragma once
 
 #include "ACTFW/EventData/GeometryContainers.hpp"
+#include "ACTFW/EventData/IndexContainers.hpp"
 #include "ACTFW/Framework/BareAlgorithm.hpp"
 #include "Acts/Plugins/Digitization/PlanarModuleCluster.hpp"
+#include "Acts/Seeding/InternalSeed.hpp"
+#include "Acts/Seeding/InternalSpacePoint.hpp"
 #include "Acts/Seeding/SpacePoint.hpp"
+#include "ActsFatras/EventData/Barcode.hpp"
 
 namespace FW {
 
@@ -25,7 +29,8 @@ class TestSeedAlgorithm : public FW::BareAlgorithm {
     std::string inputClusters;
     // inputDir not currently used.
     std::string inputDir;
-    // not entirely sure what this could be used for, so not used currently.
+    // used to get truth information into seeds about what particles are in what
+    // space point.
     std::string inputHitParticlesMap;
     /// Which simulated (truth) hits collection to use. Not used currently.
     std::string inputSimulatedHits;
@@ -33,9 +38,11 @@ class TestSeedAlgorithm : public FW::BareAlgorithm {
 
   TestSeedAlgorithm(const Config& cfg, Acts::Logging::Level level);
 
-  SpacePoint* readSP(std::vector<const SpacePoint*>& spVec,
-                     const Acts::GeometryID geoId,
+  std::size_t seedNumParticles(const Acts::Seed<SpacePoint>* seed) const;
+
+  SpacePoint* readSP(std::size_t hit_id, const Acts::GeometryID geoId,
                      const Acts::PlanarModuleCluster& cluster,
+                     const IndexMultimap<ActsFatras::Barcode>& hitParticlesMap,
                      const AlgorithmContext& ctx) const;
   /// The framework execut mehtod
   /// @param ctx The Algorithm context for multithreading

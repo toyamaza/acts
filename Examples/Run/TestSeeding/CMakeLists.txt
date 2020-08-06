@@ -11,6 +11,7 @@ target_link_libraries(
     ActsExamplesDetectorGeneric
     ActsExamplesMagneticField
     ActsExamplesIoCsv
+    ActsExamplesIoPerformance
     Boost::program_options)
 
 install(

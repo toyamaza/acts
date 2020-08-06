@@ -15,8 +15,10 @@
 #include "ACTFW/Io/Csv/CsvParticleReader.hpp"
 #include "ACTFW/Io/Csv/CsvPlanarClusterReader.hpp"
 #include "ACTFW/Io/Csv/CsvPlanarClusterWriter.hpp"
+#include "ACTFW/Io/Performance/TrackFinderPerformanceWriter.hpp"
 #include "ACTFW/Options/CommonOptions.hpp"
 #include "ACTFW/Plugins/BField/BFieldOptions.hpp"
+#include "ACTFW/TruthTracking/TruthTrackFinder.hpp"
 #include "ACTFW/Utilities/Options.hpp"
 #include "ACTFW/Utilities/Paths.hpp"
 #include <Acts/Utilities/Units.hpp>
@@ -68,13 +70,21 @@ int main(int argc, char* argv[]) {
   }
   // Setup the magnetic field
   auto magneticField = Options::readBField(vm);
+  /*
+    // Read particles (initial states) and clusters from CSV files
+    auto particleReader = Options::readCsvParticleReaderConfig(vm);
+    particleReader.inputStem = "particles_initial";
+    particleReader.outputParticles = "particles_initial";
+    // sequencer.addReader(
+    //  std::make_shared<CsvParticleReader>(particleReader, logLevel));
+    */
 
   // Read particles (initial states) and clusters from CSV files
   auto particleReader = Options::readCsvParticleReaderConfig(vm);
   particleReader.inputStem = "particles_initial";
   particleReader.outputParticles = "particles_initial";
-  // sequencer.addReader(
-  //  std::make_shared<CsvParticleReader>(particleReader, logLevel));
+  sequencer.addReader(
+      std::make_shared<CsvParticleReader>(particleReader, logLevel));
   // Read clusters from CSV files
   auto clusterReaderCfg = Options::readCsvPlanarClusterReaderConfig(vm);
   clusterReaderCfg.trackingGeometry = trackingGeometry;
@@ -85,12 +95,22 @@ int main(int argc, char* argv[]) {
   sequencer.addReader(
       std::make_shared<CsvPlanarClusterReader>(clusterReaderCfg, logLevel));
 
-  // Write clusters to CSV files. Currently not needed and not used
+  const auto& inputParticles = particleReader.outputParticles;
+  // Create truth tracks
+  TruthTrackFinder::Config trackFinderCfg;
+  trackFinderCfg.inputParticles = inputParticles;
+  trackFinderCfg.inputHitParticlesMap = clusterReaderCfg.outputHitParticlesMap;
+  trackFinderCfg.outputProtoTracks = "prototracks";
+  sequencer.addAlgorithm(
+      std::make_shared<TruthTrackFinder>(trackFinderCfg, logLevel));
+  /*
+  / Write clusters to CSV files. Currently not needed and not used
   auto clusterWriterCfg = Options::readCsvPlanarClusterWriterConfig(vm);
   clusterWriterCfg.inputClusters = "clusters";
   clusterWriterCfg.inputSimulatedHits = "hits";
   // sequencer.addWriter(
   // std::make_shared<CsvPlanarClusterWriter>(clusterWriterCfg, logLevel));
+  */
 
   // add Seeding Algorithm that finds the seeds
   FW::TestSeedAlgorithm::Config testSeedCfg;
@@ -101,6 +121,15 @@ int main(int argc, char* argv[]) {
   testSeedCfg.inputClusters = "clusters";
   sequencer.addAlgorithm(
       std::make_shared<FW::TestSeedAlgorithm>(testSeedCfg, logLevel));
+
+  // write reconstruction performance data
+  TrackFinderPerformanceWriter::Config perfFinder;
+  perfFinder.inputParticles = inputParticles;
+  perfFinder.inputHitParticlesMap = clusterReaderCfg.outputHitParticlesMap;
+  perfFinder.inputProtoTracks = trackFinderCfg.outputProtoTracks;
+  perfFinder.outputDir = outputDir;
+  sequencer.addWriter(
+      std::make_shared<TrackFinderPerformanceWriter>(perfFinder, logLevel));
 
   // Run all configured algorithms and return the appropriate status.
   return sequencer.run();

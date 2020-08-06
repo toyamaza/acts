@@ -8,6 +8,8 @@
 
 #pragma once
 
+#include "ACTFW/Validation/ProtoTrackClassification.hpp"
+
 struct SpacePoint {
   float m_x;
   float m_y;
@@ -16,6 +18,7 @@ struct SpacePoint {
   int surface;
   float varianceR;
   float varianceZ;
+  std::vector<FW::ParticleHitCount> particles;
   float x() const { return m_x; }
   float y() const { return m_y; }
   float z() const { return m_z; }
