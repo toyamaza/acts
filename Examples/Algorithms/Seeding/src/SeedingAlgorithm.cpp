@@ -30,7 +30,8 @@
 #include "Acts/Seeding/Seedfinder.hpp"
 #include "Acts/Seeding/SpacePointGrid.hpp"
 
-#include "SpacePointFromHit.hpp"
+#include "ACTFW/Seeding/SpacePointFromHit.hpp"
+#include "ACTFW/Seeding/GenericDetectorCuts.hpp"
 
 #include <iostream>
 #include <stdexcept>
@@ -59,31 +60,28 @@ FW::SeedingAlgorithm::SeedingAlgorithm(
 
 }
 
-FW::ProcessCode FW::SeedingAlgorithm::execute(
-					      const AlgorithmContext& ctx) const {
+FW::ProcessCode FW::SeedingAlgorithm::execute(const AlgorithmContext& ctx) const {
 
   // Prepare the input and output collections
   const auto& hits = ctx.eventStore.get<SimHitContainer>(m_cfg.inputSimulatedHits);
 
   Acts::SeedfinderConfig<SpacePointFromHit> config;
   // silicon detector max
-  config.rMax = 160.;
-  config.deltaRMin = 5.;
-  config.deltaRMax = 160.;
-  config.collisionRegionMin = -250.;
-  config.collisionRegionMax = 250.;
-  config.zMin = -2800.;
-  config.zMax = 2800.;
-  config.maxSeedsPerSpM = 5;
-  // 2.7 eta
-  config.cotThetaMax = 7.40627;
-  config.sigmaScattering = 1.00000;
-
-  config.minPt = 500.;
-  config.bFieldInZ = 0.00199724;
-
-  config.beamPos = {-.5, -.5};
-  config.impactMax = 10.;
+  // config.rMax = 160.;
+  // config.rMax = 300.;
+  // config.deltaRMin = 5.;
+  // config.deltaRMax = 160.;
+  // config.collisionRegionMin = -250.;
+  // config.collisionRegionMax = 250.;
+  // config.zMin = -2800.;
+  // config.zMax = 2800.;
+  // config.maxSeedsPerSpM = 5;
+  // config.cotThetaMax = 7.40627;  // 2.7 eta
+  // config.sigmaScattering = 1.00000;
+  // config.minPt = 500.;
+  // config.bFieldInZ = 0.00199724;
+  // config.beamPos = {-.5, -.5};
+  // config.impactMax = 10.;
 
   // setup spacepoint grid config
   Acts::SpacePointGridConfig gridConf;
@@ -99,11 +97,11 @@ FW::ProcessCode FW::SeedingAlgorithm::execute(
 									      Acts::BinFinder<SpacePointFromHit>());
   auto topBinFinder = std::make_shared<Acts::BinFinder<SpacePointFromHit>>(
 									   Acts::BinFinder<SpacePointFromHit>());
-  // Acts::SeedFilterConfig sfconf;
-  // Acts::ATLASCuts<SpacePointFromHit> atlasCuts = Acts::ATLASCuts<SpacePointFromHit>();
-  // config.seedFilter = std::make_unique<Acts::SeedFilter<SpacePointFromHit>>(
-  //     Acts::SeedFilter<SpacePointFromHit>(sfconf, &atlasCuts));
-  Acts::Seedfinder<SpacePointFromHit> a(config);
+  Acts::SeedFilterConfig sfconf;
+  Acts::GenericDetectorCuts<SpacePointFromHit> atlasCuts = Acts::GenericDetectorCuts<SpacePointFromHit>();
+  config.seedFilter = std::make_unique<Acts::SeedFilter<SpacePointFromHit>>(
+      Acts::SeedFilter<SpacePointFromHit>(sfconf, &atlasCuts));
+  Acts::Seedfinder<SpacePointFromHit> seedFinder(config);
 
 
   // covariance tool, sets covariances per spacepoint as required
@@ -112,181 +110,65 @@ FW::ProcessCode FW::SeedingAlgorithm::execute(
   };
 
 
-  for (auto&& [moduleGeoId, moduleHits] : groupByModule(hits)) {
-    // check if we should create hits for this surface
-    const auto is = m_surfaces.find(moduleGeoId);
-    if (is == m_surfaces.end()) {
-      continue;
-    }
-    std::vector<const SpacePointFromHit*> spVec;
-    const Acts::Surface* surface = is->second;
-    for (const auto& hit : moduleHits) {
-      const auto hitPos = hit.position();
-      // std::cout << hitPos.x() << "," << hitPos.y() << "," << hitPos.z() << std::endl;
-      int layer = 1; // dummy
-      float varR = 0.01;
-      float varZ = 0.5;
+  std::vector<const SpacePointFromHit*> spVec;
+  for (const auto& hit : hits) {
+    const auto hitPos = hit.position();
+    // std::cout << "Hit position : " << hitPos.x() << "," << hitPos.y() << "," << hitPos.z() << std::endl;
+    int layer = 1; // dummy
+    float varR = 0.01;
+    float varZ = 0.5;
       
-      SpacePointFromHit* sp = new SpacePointFromHit{
-	hitPos.x(), hitPos.y(),	hitPos.z(), layer, varR, varZ
-      };
-      spVec.push_back(sp);
-      // transform global position into local coordinates
-      // Acts::Vector2D pos(0, 0);
-      // surface->globalToLocal(ctx.geoContext, hit.position(),
-      //                        hit.unitDirection(), pos);
-    }
+    SpacePointFromHit* sp = new SpacePointFromHit{
+      hitPos.x(), hitPos.y(),	hitPos.z(), layer, varR, varZ
+    };
+    spVec.push_back(sp);
+  }
 
 
-    // create grid with bin sizes according to the configured geometry
-    std::unique_ptr<Acts::SpacePointGrid<SpacePointFromHit>> grid =
-      Acts::SpacePointGridCreator::createGrid<SpacePointFromHit>(gridConf);
-    auto spGroup = Acts::BinnedSPGroup<SpacePointFromHit>(spVec.begin(), spVec.end(), ct,
-							  bottomBinFinder, topBinFinder,
-							  std::move(grid), config);
+  // create grid with bin sizes according to the configured geometry
+  std::unique_ptr<Acts::SpacePointGrid<SpacePointFromHit>> grid =
+    Acts::SpacePointGridCreator::createGrid<SpacePointFromHit>(gridConf);
+  auto spGroup = Acts::BinnedSPGroup<SpacePointFromHit>(spVec.begin(), spVec.end(), ct,
+							bottomBinFinder, topBinFinder,
+							std::move(grid), config);
 
 
-    std::vector<std::vector<Acts::Seed<SpacePointFromHit>>> seedVector;
-    // auto start = std::chrono::system_clock::now();
-    auto groupIt = spGroup.begin();
-    auto endOfGroups = spGroup.end();
-    int cnt = 0;
-    for (; !(groupIt == endOfGroups); ++groupIt) {
-      cnt++;
-      seedVector.push_back(a.createSeedsForGroup(
-						 groupIt.bottom(), groupIt.middle(), groupIt.top()));
-    }
+  std::vector<std::vector<Acts::Seed<SpacePointFromHit>>> seedVector;
+  // auto start = std::chrono::system_clock::now();
+  auto groupIt = spGroup.begin();
+  auto endOfGroups = spGroup.end();
+  int cnt = 0;
+  for (; !(groupIt == endOfGroups); ++groupIt) {
+    // std::cout << "group" << cnt << std::endl;
+    cnt++;
+
+    seedVector.push_back(seedFinder.createSeedsForGroup(
+					       groupIt.bottom(), groupIt.middle(), groupIt.top()));
+  }
     
-    int numSeeds = 0;
-    for (auto& outVec : seedVector) {
-      numSeeds += outVec.size();
+  int numSeeds = 0;
+  for (auto& outVec : seedVector) {
+    numSeeds += outVec.size();
+  }
+
+  std::cout << spVec.size() << " hits, " << seedVector.size() << " regions, " << numSeeds << " seeds" << std::endl;
+
+  for (auto& regionVec : seedVector) {
+    for (size_t i = 0; i < regionVec.size(); i++) {
+      const Acts::Seed<SpacePointFromHit>* seed = &regionVec[i];
+      const SpacePointFromHit* sp = seed->sp()[0];
+      std::cout << " (" << sp->x() << ", " << sp->y() << ", " << sp->z()
+		<< ") ";
+      sp = seed->sp()[1];
+      std::cout << sp->surface << " (" << sp->x() << ", " << sp->y() << ", "
+		<< sp->z() << ") ";
+      sp = seed->sp()[2];
+      std::cout << sp->surface << " (" << sp->x() << ", " << sp->y() << ", "
+		<< sp->z() << ") ";
+      std::cout << std::endl;
     }
-
-    std::cout << spVec.size() << " hits " << seedVector.size() << " regions " << numSeeds << " seeds" << std::endl;
-
-    for (auto& regionVec : seedVector) {
-      for (size_t i = 0; i < regionVec.size(); i++) {
-        const Acts::Seed<SpacePointFromHit>* seed = &regionVec[i];
-        const SpacePointFromHit* sp = seed->sp()[0];
-        std::cout << " (" << sp->x() << ", " << sp->y() << ", " << sp->z()
-                  << ") ";
-        sp = seed->sp()[1];
-        std::cout << sp->surface << " (" << sp->x() << ", " << sp->y() << ", "
-                  << sp->z() << ") ";
-        sp = seed->sp()[2];
-        std::cout << sp->surface << " (" << sp->x() << ", " << sp->y() << ", "
-                  << sp->z() << ") ";
-        std::cout << std::endl;
-      }
-    }
-
-
   }
   std::cout << std::endl;
 
-
-
-
-
-  // auto end = std::chrono::system_clock::now();
-  // std::chrono::duration<double> elapsed_seconds = end - start;
-  // std::cout << "time to create seeds: " << elapsed_seconds.count() << std::endl;
-  // std::cout << "Number of regions: " << seedVector.size() << std::endl;
-  // int numSeeds = 0;
-  // for (auto& outVec : seedVector) {
-  //   numSeeds += outVec.size();
-  // }
-  // std::cout << "Number of seeds generated: " << numSeeds << std::endl;
-
-
-
-  // for (auto&& [moduleGeoId, moduleHits] : groupByModule(hits)) {
-  //   // can only digitize hits on digitizable surfaces
-  //   const auto it = m_digitizables.find(moduleGeoId);
-  //   if (it == m_digitizables.end()) {
-  //     continue;
-  //   }
-
-  //   const auto& dg = it->second;
-  //   // local intersection / direction
-  //   const auto invTransfrom = dg.surface->transform(ctx.geoContext).inverse();
-
-  //   // use iterators manually so we can retrieve the hit index in the container
-  //   for (auto ih = moduleHits.begin(); ih != moduleHits.end(); ++ih) {
-  //     const auto& hit = *ih;
-  //     const auto idx = hits.index_of(ih);
-
-  //     Acts::Vector2D localIntersect = (invTransfrom * hit.position()).head<2>();
-  //     Acts::Vector3D localDirection =
-  //         invTransfrom.linear() * hit.unitDirection();
-
-  //     // compute digitization steps
-  //     const auto thickness = dg.detectorElement->thickness();
-  //     const auto lorentzAngle = dg.digitizer->lorentzAngle();
-  //     auto lorentzShift = thickness * std::tan(lorentzAngle);
-  //     lorentzShift *= -(dg.digitizer->readoutDirection());
-  //     // now calculate the steps through the silicon
-  //     std::vector<Acts::DigitizationStep> dSteps =
-  //         m_cfg.planarModuleStepper->cellSteps(ctx.geoContext, *dg.digitizer,
-  //                                              localIntersect, localDirection);
-  //     // everything under threshold or edge effects
-  //     if (!dSteps.size()) {
-  //       ACTS_VERBOSE("No steps returned from stepper.");
-  //       continue;
-  //     }
-
-  //     // lets create a cluster - centroid method
-  //     double localX = 0.;
-  //     double localY = 0.;
-  //     double totalPath = 0.;
-  //     // the cells to be used
-  //     std::vector<Acts::DigitizationCell> usedCells;
-  //     usedCells.reserve(dSteps.size());
-  //     // loop over the steps
-  //     for (auto dStep : dSteps) {
-  //       // @todo implement smearing
-  //       localX += dStep.stepLength * dStep.stepCellCenter.x();
-  //       localY += dStep.stepLength * dStep.stepCellCenter.y();
-  //       totalPath += dStep.stepLength;
-  //       usedCells.push_back(Acts::DigitizationCell(dStep.stepCell.channel0,
-  //                                                  dStep.stepCell.channel1,
-  //                                                  dStep.stepLength));
-  //     }
-  //     // divide by the total path
-  //     localX /= totalPath;
-  //     localX += lorentzShift;
-  //     localY /= totalPath;
-
-  //     // get the segmentation & find the corresponding cell id
-  //     const Acts::Segmentation& segmentation = dg.digitizer->segmentation();
-  //     auto binUtility = segmentation.binUtility();
-  //     Acts::Vector2D localPosition(localX, localY);
-  //     // @todo remove unneccesary conversion
-  //     // size_t bin0 = binUtility.bin(localPosition, 0);
-  //     // size_t bin1 = binUtility.bin(localPosition, 1);
-  //     // size_t binSerialized = binUtility.serialize({{bin0, bin1, 0}});
-
-  //     // the covariance is currently set to 0.
-  //     Acts::ActsSymMatrixD<3> cov;
-  //     cov << 0.05, 0., 0., 0., 0.05, 0., 0., 0.,
-  //         900. * Acts::UnitConstants::ps * Acts::UnitConstants::ps;
-
-  //     // create the planar cluster
-  //     Acts::PlanarModuleCluster pCluster(
-  //         dg.surface->getSharedPtr(), Identifier(identifier_type(idx), {idx}),
-  //         std::move(cov), localX, localY, hit.time(), std::move(usedCells));
-
-  //     // insert into the cluster container. since the input data is already
-  //     // sorted by geoId, we should always be able to add at the end.
-  //     clusters.emplace_hint(clusters.end(), hit.geometryId(),
-  //                           std::move(pCluster));
-  //   }
-  // }
-
-  // ACTS_DEBUG("digitized " << hits.size() << " hits into " << clusters.size()
-  //                         << " clusters");
-
-  // // write the clusters to the EventStore
-  // ctx.eventStore.add(m_cfg.outputClusters, std::move(clusters));
   return FW::ProcessCode::SUCCESS;
 }
