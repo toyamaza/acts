@@ -1,6 +1,6 @@
 // This file is part of the Acts project.
 //
-// Copyright (C) 2017 CERN for the benefit of the Acts project
+// Copyright (C) 2020 CERN for the benefit of the Acts project
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -100,7 +100,7 @@ FW::ProcessCode FW::SeedingAlgorithm::execute(const AlgorithmContext& ctx) const
   Acts::SeedFilterConfig sfconf;
   Acts::GenericDetectorCuts<SpacePointFromHit> atlasCuts = Acts::GenericDetectorCuts<SpacePointFromHit>();
   config.seedFilter = std::make_unique<Acts::SeedFilter<SpacePointFromHit>>(
-      Acts::SeedFilter<SpacePointFromHit>(sfconf, &atlasCuts));
+									    Acts::SeedFilter<SpacePointFromHit>(sfconf, &atlasCuts));
   Acts::Seedfinder<SpacePointFromHit> seedFinder(config);
 
 
@@ -113,13 +113,15 @@ FW::ProcessCode FW::SeedingAlgorithm::execute(const AlgorithmContext& ctx) const
   std::vector<const SpacePointFromHit*> spVec;
   for (const auto& hit : hits) {
     const auto hitPos = hit.position();
-    // std::cout << "Hit position : " << hitPos.x() << "," << hitPos.y() << "," << hitPos.z() << std::endl;
     int layer = 1; // dummy
     float varR = 0.01;
     float varZ = 0.5;
-      
+    float hitPosX = hitPos.x();
+    float hitPosY = hitPos.y();
+    float hitPosZ = hitPos.z();
+    float r = sqrt(hitPosX*hitPosX + hitPosY*hitPosY);
     SpacePointFromHit* sp = new SpacePointFromHit{
-      hitPos.x(), hitPos.y(),	hitPos.z(), layer, varR, varZ
+      hitPosX,hitPosY,hitPosZ, r, layer, varR, varZ
     };
     spVec.push_back(sp);
   }
@@ -143,7 +145,7 @@ FW::ProcessCode FW::SeedingAlgorithm::execute(const AlgorithmContext& ctx) const
     cnt++;
 
     seedVector.push_back(seedFinder.createSeedsForGroup(
-					       groupIt.bottom(), groupIt.middle(), groupIt.top()));
+							groupIt.bottom(), groupIt.middle(), groupIt.top()));
   }
     
   int numSeeds = 0;
