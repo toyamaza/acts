@@ -18,20 +18,18 @@
 #include "ACTFW/Plugins/BField/BFieldOptions.hpp"
 #include "ACTFW/Plugins/BField/ScalableBField.hpp"
 #include "ACTFW/Plugins/Obj/ObjPropagationStepsWriter.hpp"
-#include "ACTFW/Propagation/PropagationAlgorithm.hpp"
-#include "ACTFW/Propagation/PropagationOptions.hpp"
+// #include "ACTFW/Propagation/PropagationAlgorithm.hpp"
+// #include "ACTFW/Propagation/PropagationOptions.hpp"
+#include "ACTFW/TruthTracking/TruthSeedSelector.hpp"
 #include "ACTFW/Seeding/SeedingAlgorithm.hpp"
 #include "ACTFW/Utilities/Options.hpp"
 #include "ACTFW/Utilities/Paths.hpp"
+#include "ACTFW/Io/Performance/SeedingPerformanceWriter.hpp"
 #include <Acts/Geometry/TrackingGeometry.hpp>
 #include <Acts/MagneticField/ConstantBField.hpp>
 #include <Acts/MagneticField/InterpolatedBFieldMap.hpp>
 #include <Acts/MagneticField/SharedBField.hpp>
-// #include <Acts/Propagator/AtlasStepper.hpp>
-// #include <Acts/Propagator/EigenStepper.hpp>
-// #include <Acts/Propagator/Navigator.hpp>
-// #include <Acts/Propagator/Propagator.hpp>
-// #include <Acts/Propagator/StraightLineStepper.hpp>
+
 
 #include "Acts/Seeding/BinFinder.hpp"
 #include "Acts/Seeding/BinnedSPGroup.hpp"
@@ -58,7 +56,7 @@ int seedingExample(int argc, char* argv[], FW::IBaseDetector& detector) {
   FW::Options::addMaterialOptions(desc);
   FW::Options::addBFieldOptions(desc);
   FW::Options::addRandomNumbersOptions(desc);
-  FW::Options::addPropagationOptions(desc);
+  // FW::Options::addPropagationOptions(desc);
   FW::Options::addOutputOptions(desc);
   FW::Options::addInputOptions(desc);
 
@@ -97,11 +95,33 @@ int seedingExample(int argc, char* argv[], FW::IBaseDetector& detector) {
   clusterReaderCfg.outputSimulatedHits = "hits";
   sequencer.addReader(std::make_shared<FW::CsvPlanarClusterReader>(clusterReaderCfg, logLevel));
 
+  // Particle selector
+  FW::TruthSeedSelector::Config particleSelectorCfg;
+  particleSelectorCfg.inputParticles = particleReader.outputParticles;
+  particleSelectorCfg.inputHitParticlesMap =
+      clusterReaderCfg.outputHitParticlesMap;
+  particleSelectorCfg.outputParticles = "particles_selected";
+  particleSelectorCfg.ptMin = 1_GeV;
+  particleSelectorCfg.nHitsMin = 9;
+  sequencer.addAlgorithm(
+			 std::make_shared<FW::TruthSeedSelector>(particleSelectorCfg, logLevel));
+
+  // Seeding algorithm
   FW::SeedingAlgorithm::Config seeding;
   seeding.inputSimulatedHits = clusterReaderCfg.outputSimulatedHits;
   seeding.outputSeeds =  "seeds";
   seeding.trackingGeometry = tGeometry;
   sequencer.addAlgorithm( std::make_shared<FW::SeedingAlgorithm>(seeding, logLevel));
+
+
+  // Performance
+  FW::SeedingPerformanceWriter::Config perfWriterCfg;
+  perfWriterCfg.inputParticles = particleSelectorCfg.outputParticles;
+  perfWriterCfg.inputSeeds = seeding.outputSeeds;
+  perfWriterCfg.outputDir = "perf";
+  sequencer.addWriter(
+		      std::make_shared<FW::SeedingPerformanceWriter>(perfWriterCfg, logLevel));
+
 
   // // Create the random number engine
   // auto randomNumberSvcCfg = FW::Options::readRandomNumbersConfig(vm);

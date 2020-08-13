@@ -32,6 +32,7 @@
 
 #include "ACTFW/Seeding/SpacePointFromHit.hpp"
 #include "ACTFW/Seeding/GenericDetectorCuts.hpp"
+#include "ACTFW/Seeding/SeedContainer.hpp"
 
 #include <iostream>
 #include <stdexcept>
@@ -126,7 +127,6 @@ FW::ProcessCode FW::SeedingAlgorithm::execute(const AlgorithmContext& ctx) const
     spVec.push_back(sp);
   }
 
-
   // create grid with bin sizes according to the configured geometry
   std::unique_ptr<Acts::SpacePointGrid<SpacePointFromHit>> grid =
     Acts::SpacePointGridCreator::createGrid<SpacePointFromHit>(gridConf);
@@ -134,43 +134,43 @@ FW::ProcessCode FW::SeedingAlgorithm::execute(const AlgorithmContext& ctx) const
 							bottomBinFinder, topBinFinder,
 							std::move(grid), config);
 
-
   std::vector<std::vector<Acts::Seed<SpacePointFromHit>>> seedVector;
-  // auto start = std::chrono::system_clock::now();
   auto groupIt = spGroup.begin();
   auto endOfGroups = spGroup.end();
-  int cnt = 0;
   for (; !(groupIt == endOfGroups); ++groupIt) {
-    // std::cout << "group" << cnt << std::endl;
-    cnt++;
-
-    seedVector.push_back(seedFinder.createSeedsForGroup(
-							groupIt.bottom(), groupIt.middle(), groupIt.top()));
+    seedVector.push_back(seedFinder.createSeedsForGroup(groupIt.bottom(), groupIt.middle(), groupIt.top()));
   }
-    
+
+  SeedContainer seeds;
   int numSeeds = 0;
   for (auto& outVec : seedVector) {
     numSeeds += outVec.size();
   }
 
-  std::cout << spVec.size() << " hits, " << seedVector.size() << " regions, " << numSeeds << " seeds" << std::endl;
+  // std::cout << spVec.size() << " hits, " << seedVector.size() << " regions, " << numSeeds << " seeds" << std::endl;
+  ACTS_DEBUG(spVec.size() << " hits, " << seedVector.size() << " regions, " << numSeeds << " seeds" );
+  
+  // for (auto& regionVec : seedVector) {
+  //   for (size_t i = 0; i < regionVec.size(); i++) {
+  //     const Acts::Seed<SpacePointFromHit>* seed = &regionVec[i];
+  //     seeds.emplace_back(*seed);
+  //     const SpacePointFromHit* sp = seed->sp()[0];
+  //     std::cout << " (" << sp->x() << ", " << sp->y() << ", " << sp->z()
+  // 		<< ") ";
+  //     sp = seed->sp()[1];
+  //     std::cout << sp->surface << " (" << sp->x() << ", " << sp->y() << ", "
+  // 		<< sp->z() << ") ";
+  //     sp = seed->sp()[2];
+  //     std::cout << sp->surface << " (" << sp->x() << ", " << sp->y() << ", "
+  // 		<< sp->z() << ") ";
+  //     std::cout << std::endl;
+  //   }
+  // }
+  // std::cout << std::endl;
 
-  for (auto& regionVec : seedVector) {
-    for (size_t i = 0; i < regionVec.size(); i++) {
-      const Acts::Seed<SpacePointFromHit>* seed = &regionVec[i];
-      const SpacePointFromHit* sp = seed->sp()[0];
-      std::cout << " (" << sp->x() << ", " << sp->y() << ", " << sp->z()
-		<< ") ";
-      sp = seed->sp()[1];
-      std::cout << sp->surface << " (" << sp->x() << ", " << sp->y() << ", "
-		<< sp->z() << ") ";
-      sp = seed->sp()[2];
-      std::cout << sp->surface << " (" << sp->x() << ", " << sp->y() << ", "
-		<< sp->z() << ") ";
-      std::cout << std::endl;
-    }
-  }
-  std::cout << std::endl;
+  ctx.eventStore.add(m_cfg.outputSeeds, std::move(seeds) );
+
+
 
   return FW::ProcessCode::SUCCESS;
 }

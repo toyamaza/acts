@@ -17,10 +17,12 @@ target_link_libraries(
     ActsExamplesFramework 
     ActsExamplesMagneticField
     ActsExamplesDetectorsCommon 
+    ActsExamplesTruthTracking
     ActsExamplesPropagation
     ActsExamplesSeeding
     ActsExamplesMaterialMapping 
     ActsExamplesIoCsv 
+    ActsExamplesIoPerformance
     ActsExamplesIoJson
     ActsExamplesIoRoot 
     ActsExamplesIoObj)
