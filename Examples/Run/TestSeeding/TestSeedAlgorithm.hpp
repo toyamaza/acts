@@ -42,11 +42,22 @@ class TestSeedAlgorithm : public FW::BareAlgorithm {
 
   TestSeedAlgorithm(const Config& cfg, Acts::Logging::Level level);
 
+  // Technically, space points can have multiple particles that are a part of
+  // them, so seedNumParticles finds how many particles are in common.
+  // @param seed The seed to be processed.
+  // @param particlesFoundBySeeds The set of particle barcodes already found.
+  // @param numRedundantSeeds Number of seeds that find a particle already
+  // identified by a previous seed.
+  // Returns the number particles that are a part
+  // of all 3 spacePoints in the seed. Returning 0 means it's a fake seed.
   std::size_t seedNumParticles(
       const Acts::Seed<SpacePoint>* seed,
       std::set<ActsFatras::Barcode>& particlesFoundBySeeds,
       std::size_t& numRedundantSeeds) const;
 
+  // @param cluster The hit with local hit information
+  // Returns a space point with a particle barcode stored in .particles for each
+  // particle that made this space point.
   SpacePoint* readSP(std::size_t hit_id, const Acts::GeometryID geoId,
                      const Acts::PlanarModuleCluster& cluster,
                      const IndexMultimap<ActsFatras::Barcode>& hitParticlesMap,

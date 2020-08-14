@@ -52,15 +52,14 @@ FW::TestSeedAlgorithm::TestSeedAlgorithm(
     throw std::invalid_argument(
         "Missing clusters input collection with the hits");
   }
-  if (cfg.inputHitParticlesMap.empty()) {
+  if (m_cfg.inputHitParticlesMap.empty()) {
     throw std::invalid_argument("Missing hit-particles map input collection");
+  }
+  if (m_cfg.inputParticles.empty()) {
+    throw std::invalid_argument("Missing input particles collection");
   }
 }
 
-// Technically, space points can have multiple particles that are a part of
-// them, so seedNumParticles finds how many particles are in common.
-// Returns the number particles that are a part of all
-// 3 spacePoints in the seed. Returning 0 means it's a fake seed.
 size_t FW::TestSeedAlgorithm::seedNumParticles(
     const Acts::Seed<SpacePoint>* seed,
     std::set<ActsFatras::Barcode>& particlesFoundBySeeds,
@@ -70,9 +69,9 @@ size_t FW::TestSeedAlgorithm::seedNumParticles(
   const SpacePoint* sp2 = seed->sp()[2];
   std::set<ActsFatras::Barcode> particles0;
   std::set<ActsFatras::Barcode> particles1;
-    std::set<ActsFatras::Barcode> particles2;
+  std::set<ActsFatras::Barcode> particles2;
   for (size_t i = 0; i < sp0->particles.size(); i++) {
-    particles0.insert(sp0->particles[i].particleId); // insert particle barcode
+    particles0.insert(sp0->particles[i].particleId);  // insert particle barcode
   }
   for (size_t i = 0; i < sp1->particles.size(); i++) {
     particles1.insert(sp1->particles[i].particleId);
@@ -93,20 +92,15 @@ size_t FW::TestSeedAlgorithm::seedNumParticles(
         // this particle was already found
         numRedundantSeeds++;
       }
-      particlesFoundBySeeds.insert(cParticleId); 
+      particlesFoundBySeeds.insert(cParticleId);
     }
   }
   if (particles0.size() > 1 || particles1.size() > 1) {
     ACTS_INFO("We have a space point with multiple particles")
   }
-  if (sharedParticles > 1) {
-    ACTS_INFO("We have a seed with multiple particles shared")
-  }
   return sharedParticles;
 }
 
-// returns a space point with a particle barcode stored in .particles for each
-// particle that made this space point
 SpacePoint* FW::TestSeedAlgorithm::readSP(
     size_t hit_id, const Acts::GeometryID geoId,
     const Acts::PlanarModuleCluster& cluster,
@@ -279,15 +273,15 @@ FW::ProcessCode FW::TestSeedAlgorithm::execute(
   size_t maxNumToPrint = 0;  // 0 means print nothing
   size_t printCounter = 0;   // for debuging purposes
   size_t printCounter2 = 0;  // for debuging purposes
-size_t numTrueSeeds = 0;   // true seed means it contains a particle
+  size_t numTrueSeeds = 0;   // true seed means it contains a particle
   for (auto& regionVec : seedVector) {
     for (size_t i = 0; i < regionVec.size(); i++) {
       const Acts::Seed<SpacePoint>* seed = &regionVec[i];
-      size_t sharedParticles = seedNumParticles(seed, particlesFoundBySeeds, numRedundantSeeds);
-      if (sharedParticles >
-          0) {
+      size_t sharedParticles =
+          seedNumParticles(seed, particlesFoundBySeeds, numRedundantSeeds);
+      if (sharedParticles > 0) {
         numTrueSeeds++;
-      } 
+      }
       if (sharedParticles > 1) {
         ACTS_INFO("there are " << sharedParticles << " particles in a seed!")
       }
@@ -321,7 +315,8 @@ size_t numTrueSeeds = 0;   // true seed means it contains a particle
   ACTS_INFO("Number of true seeds generated: " << numTrueSeeds)
   ACTS_INFO("Number of redundant seeds generated: " << numRedundantSeeds)
   ACTS_INFO("Seed Purity --- "
-            << 100 * (numTrueSeeds - numRedundantSeeds) / numSeeds << "%") // TODO: fix how this is recorded
+            << 100 * (numTrueSeeds - numRedundantSeeds) / numSeeds
+            << "%")  // TODO: fix how this is recorded
   ACTS_INFO("Number of hits used is: " << clustCounter << " --- "
                                        << 100 * clustCounter / numHitsTotal
                                        << "% usage")  // some of the hits
