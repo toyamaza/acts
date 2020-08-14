@@ -24,6 +24,14 @@ class InternalSeed {
   InternalSeed(const InternalSpacePoint<SpacePoint>& s0,
                const InternalSpacePoint<SpacePoint>& s1,
                const InternalSpacePoint<SpacePoint>& s2, float z);
+  InternalSeed(const InternalSpacePoint<SpacePoint>& s0,
+    const InternalSpacePoint<SpacePoint>& s1,
+    const InternalSpacePoint<SpacePoint>& s2,
+    float z,
+    float invHelixDiameter,
+    float imapctParameter,
+    float cotTheta);
+
   InternalSeed& operator=(const InternalSeed& seed);
 
   const std::array<const InternalSpacePoint<SpacePoint>*, 3> sp;
@@ -31,6 +39,9 @@ class InternalSeed {
 
  protected:
   float m_z;
+  float m_invHelixDiameter;
+  float m_impactParameter;
+  float m_cotTheta;
 };
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -52,6 +63,22 @@ inline InternalSeed<SpacePoint>::InternalSeed(
     const InternalSpacePoint<SpacePoint>& s2, float z)
     : sp({&s0, &s1, &s2}) {
   m_z = z;
+}
+
+template <typename SpacePoint>
+inline InternalSeed<SpacePoint>::InternalSeed(
+    const InternalSpacePoint<SpacePoint>& s0,
+    const InternalSpacePoint<SpacePoint>& s1,
+    const InternalSpacePoint<SpacePoint>& s2,
+    float z,
+    float invHelixDiameter,
+    float imapctParameter,
+    float cotTheta)
+    : sp({&s0, &s1, &s2}) {
+  m_z = z;
+  m_invHelixDiameter = invHelixDiameter;
+  m_impactParameter = impactParameter;
+  m_cotTheta = cotTheta;
 }
 
 }  // namespace Acts

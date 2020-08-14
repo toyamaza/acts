@@ -43,7 +43,9 @@ SeedFilter<external_spacepoint_t>::filterSeeds_2SpFixed(
     float upperLimitCurv = invHelixDiameter + m_cfg.deltaInvHelixDiameter;
     float currentTop_r = topSpVec[i]->radius();
     float impact = impactParametersVec[i];
-
+    float deltaR_top_bottom = currentTop_r - bottomSP.radius();
+    float deltaZ_top_bottom = topSpVec[i]->z() - bottomSP.z();
+    float cotTheta = deltaZ_top_bottom/deltaR_top_bottom;
     float weight = -(impact * m_cfg.impactWeightFactor);
     for (size_t j = 0; j < topSpVec.size(); j++) {
       if (i == j) {
@@ -93,9 +95,15 @@ SeedFilter<external_spacepoint_t>::filterSeeds_2SpFixed(
         continue;
       }
     }
+    // selectedSeeds.push_back(std::make_pair(
+    //     weight, std::make_unique<const InternalSeed<external_spacepoint_t>>(
+    //                 bottomSP, middleSP, *topSpVec[i], zOrigin)));
+
     selectedSeeds.push_back(std::make_pair(
         weight, std::make_unique<const InternalSeed<external_spacepoint_t>>(
-                    bottomSP, middleSP, *topSpVec[i], zOrigin)));
+									    bottomSP, middleSP, *topSpVec[i], zOrigin,
+									    invHelixDiameter, impact,
+									    cotTheta)));
   }
   return selectedSeeds;
 }

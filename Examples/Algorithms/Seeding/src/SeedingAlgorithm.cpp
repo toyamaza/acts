@@ -145,28 +145,14 @@ FW::ProcessCode FW::SeedingAlgorithm::execute(const AlgorithmContext& ctx) const
   int numSeeds = 0;
   for (auto& outVec : seedVector) {
     numSeeds += outVec.size();
+    for (size_t i = 0; i < outVec.size(); i++) {
+      const Acts::Seed<SpacePointFromHit>* seed = &outVec[i];
+      seeds.emplace_back(*seed);
+  }
   }
 
-  // std::cout << spVec.size() << " hits, " << seedVector.size() << " regions, " << numSeeds << " seeds" << std::endl;
+
   ACTS_DEBUG(spVec.size() << " hits, " << seedVector.size() << " regions, " << numSeeds << " seeds" );
-  
-  // for (auto& regionVec : seedVector) {
-  //   for (size_t i = 0; i < regionVec.size(); i++) {
-  //     const Acts::Seed<SpacePointFromHit>* seed = &regionVec[i];
-  //     seeds.emplace_back(*seed);
-  //     const SpacePointFromHit* sp = seed->sp()[0];
-  //     std::cout << " (" << sp->x() << ", " << sp->y() << ", " << sp->z()
-  // 		<< ") ";
-  //     sp = seed->sp()[1];
-  //     std::cout << sp->surface << " (" << sp->x() << ", " << sp->y() << ", "
-  // 		<< sp->z() << ") ";
-  //     sp = seed->sp()[2];
-  //     std::cout << sp->surface << " (" << sp->x() << ", " << sp->y() << ", "
-  // 		<< sp->z() << ") ";
-  //     std::cout << std::endl;
-  //   }
-  // }
-  // std::cout << std::endl;
 
   ctx.eventStore.add(m_cfg.outputSeeds, std::move(seeds) );
 

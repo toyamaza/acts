@@ -94,14 +94,25 @@ FW::ProcessCode FW::SeedingPerformanceWriter::writeT(
   std::map<ActsFatras::Barcode, size_t> unmatched;
   std::cout << "writer" << std::endl;
   // Loop over all seeds
+  std::cout << seeds.size() << std::endl;
   for (const auto& seed : seeds) {
+    const auto& sp0 = seed.sp()[0];
+    std::cout << sp0->x() << " " << sp0->y() << " " << sp0->z() << std::endl;
+
+    const auto& sp1 = seed.sp()[1];
+    std::cout << sp1->x() << " " << sp1->y() << " " << sp1->z() << std::endl;
+
+    const auto& sp2 = seed.sp()[2];
+    std::cout << sp2->x() << " " << sp2->y() << " " << sp2->z() << std::endl;
     // The trajectory entry indices and the multiTrajectory
     // const auto& [trackTips, mj] = traj.trajectory();
     // if (trackTips.empty()) {
     //   ACTS_WARNING("Empty multiTrajectory.");
     //   continue;
     // }
+    std::cout << std::endl;
   }
+
   //   // Loop over all trajectories in a multiTrajectory
   //   for (const size_t& trackTip : trackTips) {
   //     // Collect the trajectory summary info
