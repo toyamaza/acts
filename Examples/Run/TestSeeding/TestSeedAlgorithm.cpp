@@ -34,6 +34,7 @@
 #include <chrono>
 #include <fstream>
 #include <iostream>
+#include <set>
 #include <sstream>
 #include <stdexcept>
 #include <utility>
@@ -57,37 +58,57 @@ FW::TestSeedAlgorithm::TestSeedAlgorithm(
 }
 
 // Technically, space points can have multiple particles that are a part of
-// them, so seedNumParticles loops over all possible combinations of particles
-// in the seeds to find how many particles are in common.
-// TODO: Replace code with set intersection so that it's much more simple.
+// them, so seedNumParticles finds how many particles are in common.
 // Returns the number particles that are a part of all
-// 3 spacePoints in the seed. 0 means it's a fake seed.
-std::size_t FW::TestSeedAlgorithm::seedNumParticles(
-    const Acts::Seed<SpacePoint>* seed) const {
-  std::size_t numTrueSeeds = 0;
+// 3 spacePoints in the seed. Returning 0 means it's a fake seed.
+size_t FW::TestSeedAlgorithm::seedNumParticles(
+    const Acts::Seed<SpacePoint>* seed,
+    std::set<ActsFatras::Barcode>& particlesFoundBySeeds,
+    size_t& numRedundantSeeds) const {
   const SpacePoint* sp0 = seed->sp()[0];
   const SpacePoint* sp1 = seed->sp()[1];
   const SpacePoint* sp2 = seed->sp()[2];
-  for (std::size_t a = 0; a < sp0->particles.size(); a++) {
-    for (std::size_t b = 0; b < sp0->particles.size(); b++) {
-      if (sp0->particles[a].particleId.particle() ==
-          sp1->particles[b].particleId.particle()) {
-        for (std::size_t c = 0; c < sp0->particles.size(); c++) {
-          if (sp1->particles[b].particleId.particle() ==
-              sp2->particles[c].particleId.particle()) {
-            numTrueSeeds++;
-          }
-        }
+  std::set<ActsFatras::Barcode> particles0;
+  std::set<ActsFatras::Barcode> particles1;
+    std::set<ActsFatras::Barcode> particles2;
+  for (size_t i = 0; i < sp0->particles.size(); i++) {
+    particles0.insert(sp0->particles[i].particleId); // insert particle barcode
+  }
+  for (size_t i = 0; i < sp1->particles.size(); i++) {
+    particles1.insert(sp1->particles[i].particleId);
+  }
+  for (size_t i = 0; i < sp2->particles.size(); i++) {
+    particles2.insert(sp2->particles[i].particleId);
+  }
+
+  // number of particles in common to all 3 SPs
+  size_t sharedParticles = 0;
+  for (size_t i = 0; i < sp2->particles.size(); i++) {
+    ActsFatras::Barcode cParticleId = sp2->particles[i].particleId;
+    if (particles0.find(cParticleId) != particles0.end() &&
+        particles1.find(cParticleId) != particles1.end()) {
+      sharedParticles++;
+      if (particlesFoundBySeeds.find(cParticleId) !=
+          particlesFoundBySeeds.end()) {
+        // this particle was already found
+        numRedundantSeeds++;
       }
+      particlesFoundBySeeds.insert(cParticleId); 
     }
   }
-  return numTrueSeeds;
+  if (particles0.size() > 1 || particles1.size() > 1) {
+    ACTS_INFO("We have a space point with multiple particles")
+  }
+  if (sharedParticles > 1) {
+    ACTS_INFO("We have a seed with multiple particles shared")
+  }
+  return sharedParticles;
 }
 
-// returns a space point with a particle barcode stored in particles for each
+// returns a space point with a particle barcode stored in .particles for each
 // particle that made this space point
 SpacePoint* FW::TestSeedAlgorithm::readSP(
-    std::size_t hit_id, const Acts::GeometryID geoId,
+    size_t hit_id, const Acts::GeometryID geoId,
     const Acts::PlanarModuleCluster& cluster,
     const HitParticlesMap& hitParticlesMap, const AlgorithmContext& ctx) const {
   const auto& parameters = cluster.parameters();
@@ -129,8 +150,7 @@ SpacePoint* FW::TestSeedAlgorithm::readSP(
 }
 
 FW::ProcessCode FW::TestSeedAlgorithm::execute(
-    const AlgorithmContext& ctx /*,
-    const FW::GeometryIdMultimap<Acts::PlanarModuleCluster>& clusters*/) const {
+    const AlgorithmContext& ctx) const {
   // read in the hits
   const auto& clusters =
       ctx.eventStore.get<FW::GeometryIdMultimap<Acts::PlanarModuleCluster>>(
@@ -139,23 +159,29 @@ FW::ProcessCode FW::TestSeedAlgorithm::execute(
   const HitParticlesMap hitParticlesMap =
       ctx.eventStore.get<HitParticlesMap>(m_cfg.inputHitParticlesMap);
 
+  // count the number of particles
+  const auto& particles =
+      ctx.eventStore.get<SimParticleContainer>(m_cfg.inputParticles);
+  size_t numParticles = particles.size();
+  size_t numHitsTotal = hitParticlesMap.size();
+
   // create the space points
-  std::size_t clustCounter = 0;
-  std::size_t numIgnored = 0;
+  size_t clustCounter = 0;
+  size_t numIgnored = 0;
   std::vector<const SpacePoint*> spVec;
   // since clusters are ordered, we simply count the hit_id as we read
   // clusters. Hit_id isn't stored in a cluster. This is how
   // CsvPlanarClusterWriter did it.
-  std::size_t hit_id = 0;
+  size_t hit_id = 0;
   for (const auto& entry : clusters) {
     Acts::GeometryID geoId = entry.first;
     const Acts::PlanarModuleCluster& cluster = entry.second;
-    std::size_t volnum = geoId.volume();
-    std::size_t laynum = geoId.layer();
+    size_t volnum = geoId.volume();
+    size_t laynum = geoId.layer();
 
-    // only uses innermost 3 pixel barrel-like layers on volume 8.
-    if (volnum == 8) {
-      if (laynum == 2 || laynum == 4 || laynum == 6) {
+    // filter out hits that aren't part of useful volumes and layers.
+    if (true) {
+      if (true || volnum == 8 || volnum == 7 || volnum == 9) {
         SpacePoint* sp = readSP(hit_id, geoId, cluster, hitParticlesMap, ctx);
         spVec.push_back(sp);
         clustCounter++;
@@ -170,23 +196,23 @@ FW::ProcessCode FW::TestSeedAlgorithm::execute(
 
   Acts::SeedfinderConfig<SpacePoint> config;
   // silicon detector max
-  config.rMax = 160.;
+  config.rMax = 160.;  // original 160
   config.deltaRMin = 5.;
   config.deltaRMax = 160.;
   config.collisionRegionMin = -250.;
   config.collisionRegionMax = 250.;
-  config.zMin = -2800.;
-  config.zMax = 2800.;
-  config.maxSeedsPerSpM = 5;
+  config.zMin = -3000.;       // -2800
+  config.zMax = 3000.;        // 2800
+  config.maxSeedsPerSpM = 1;  // 5
   // 2.7 eta
-  config.cotThetaMax = 7.40627;
+  config.cotThetaMax = 7.40627;  // 7.40627
   config.sigmaScattering = 1.00000;
 
   config.minPt = 500.;
-  config.bFieldInZ = 0.00199724;
+  config.bFieldInZ = 0.00199724;  // 0.00199724
 
-  config.beamPos = {-.5, -.5};
-  config.impactMax = 10.;
+  config.beamPos = {0, 0};  // {-.5, -.5}
+  config.impactMax = 10.;   // 10
 
   auto bottomBinFinder = std::make_shared<Acts::BinFinder<SpacePoint>>(
       Acts::BinFinder<SpacePoint>());
@@ -230,48 +256,48 @@ FW::ProcessCode FW::TestSeedAlgorithm::execute(
     seedVector.push_back(a.createSeedsForGroup(
         groupIt.bottom(), groupIt.middle(), groupIt.top()));
   }
+  // ACTS_INFO("n space points is " << nSpacePoints)
   auto end = std::chrono::system_clock::now();
   std::chrono::duration<double> elapsed_seconds = end - start;
   std::cout << "time to create seeds: " << elapsed_seconds.count() << std::endl;
   std::cout << "Number of regions: " << seedVector.size() << std::endl;
   std::cout << "Now we start counting seeds" << std::endl;
   int numSeeds = 0;
-  std::size_t emptySeedCount = 0;
+  size_t emptySeedCount = 0;
   for (auto& regionVec : seedVector) {
     numSeeds += regionVec.size();
     if (regionVec.size() == 0) {
       emptySeedCount++;
     }
   }
-  std::size_t maxNumToPrint = 10;  // for debuging purposes
-  std::size_t printCounter = 0;    // for debuging purposes
-  std::size_t printCounter2 = 0;   // for debuging purposes
-  std::size_t numTrueSeeds = 0;
+
+  // Set that helps keep track of the number of redundant seeds. i.e. if there
+  // are three seeds for one particle, this is counted as two redundant seeds.
+  std::set<ActsFatras::Barcode> particlesFoundBySeeds;
+  size_t numRedundantSeeds = 0;
+
+  size_t maxNumToPrint = 0;  // 0 means print nothing
+  size_t printCounter = 0;   // for debuging purposes
+  size_t printCounter2 = 0;  // for debuging purposes
+size_t numTrueSeeds = 0;   // true seed means it contains a particle
   for (auto& regionVec : seedVector) {
     for (size_t i = 0; i < regionVec.size(); i++) {
       const Acts::Seed<SpacePoint>* seed = &regionVec[i];
-      if (seedNumParticles(seed) > 0) {
+      size_t sharedParticles = seedNumParticles(seed, particlesFoundBySeeds, numRedundantSeeds);
+      if (sharedParticles >
+          0) {
         numTrueSeeds++;
-        if (printCounter2 < maxNumToPrint) {
-          std::cout << "We have a true seed: ";
-          const SpacePoint* sp = seed->sp()[0];
-          std::cout << sp->surface << " (" << sp->x() << ", " << sp->y() << ", "
-                    << sp->z() << ") hit_id? = " << sp->particles[0].particleId;
-          sp = seed->sp()[1];
-          std::cout << sp->surface << " (" << sp->x() << ", " << sp->y() << ", "
-                    << sp->z() << ") hit_id? = " << sp->particles[0].particleId;
-          sp = seed->sp()[2];
-          std::cout << sp->surface << " (" << sp->x() << ", " << sp->y() << ", "
-                    << sp->z() << ") hit_id = " << sp->particles[0].particleId
-                    << " with count " << sp->particles[0].hitCount;
-          std::cout << std::endl;
-          printCounter2++;
-        }
+      } 
+      if (sharedParticles > 1) {
+        ACTS_INFO("there are " << sharedParticles << " particles in a seed!")
       }
     }
-    // prints first few space points
+    // prints first few space points for debugging purposes
     if (printCounter < maxNumToPrint) {
       for (size_t i = 0; i < regionVec.size(); i++) {
+        if (printCounter < maxNumToPrint) {
+          break;
+        }
         const Acts::Seed<SpacePoint>* seed = &regionVec[i];
         const SpacePoint* sp = seed->sp()[0];
         std::cout << sp->surface << " (" << sp->x() << ", " << sp->y() << ", "
@@ -293,9 +319,17 @@ FW::ProcessCode FW::TestSeedAlgorithm::execute(
   }
   ACTS_INFO("Number of seeds generated: " << numSeeds)
   ACTS_INFO("Number of true seeds generated: " << numTrueSeeds)
-  ACTS_INFO("Number of empty regions: " << emptySeedCount)
-  ACTS_INFO("Number of clusters (hits) used is: " << clustCounter)
-  ACTS_INFO("Number of clusters (hits) ignored is: " << numIgnored)
+  ACTS_INFO("Number of redundant seeds generated: " << numRedundantSeeds)
+  ACTS_INFO("Seed Purity --- "
+            << 100 * (numTrueSeeds - numRedundantSeeds) / numSeeds << "%") // TODO: fix how this is recorded
+  ACTS_INFO("Number of hits used is: " << clustCounter << " --- "
+                                       << 100 * clustCounter / numHitsTotal
+                                       << "% usage")  // some of the hits
+  ACTS_INFO("Number of particles with a seed: "
+            << numTrueSeeds - numRedundantSeeds << " --- "
+            << 100 * (numTrueSeeds - numRedundantSeeds) / numParticles
+            << "% coverage")
+  ACTS_INFO("Time to create seeds: " << elapsed_seconds.count() << "s")
 
   return FW::ProcessCode::SUCCESS;
 }

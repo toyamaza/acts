@@ -18,6 +18,7 @@
 #include "ACTFW/Io/Performance/TrackFinderPerformanceWriter.hpp"
 #include "ACTFW/Options/CommonOptions.hpp"
 #include "ACTFW/Plugins/BField/BFieldOptions.hpp"
+#include "ACTFW/TruthTracking/TruthSeedSelector.hpp"
 #include "ACTFW/TruthTracking/TruthTrackFinder.hpp"
 #include "ACTFW/Utilities/Options.hpp"
 #include "ACTFW/Utilities/Paths.hpp"
@@ -96,9 +97,20 @@ int main(int argc, char* argv[]) {
       std::make_shared<CsvPlanarClusterReader>(clusterReaderCfg, logLevel));
 
   const auto& inputParticles = particleReader.outputParticles;
+
+  // select only valid particles that seeding is supposed to find
+  TruthSeedSelector::Config seedSelectorCfg;
+  seedSelectorCfg.inputParticles = inputParticles;
+  seedSelectorCfg.inputHitParticlesMap = clusterReaderCfg.outputHitParticlesMap;
+  seedSelectorCfg.outputParticles = "particles_final";
+  seedSelectorCfg.etaMin = -2.7;
+  seedSelectorCfg.etaMax = 2.7;
+  sequencer.addAlgorithm(
+      std::make_shared<TruthSeedSelector>(seedSelectorCfg, logLevel));
+
   // Create truth tracks
   TruthTrackFinder::Config trackFinderCfg;
-  trackFinderCfg.inputParticles = inputParticles;
+  trackFinderCfg.inputParticles = seedSelectorCfg.outputParticles;
   trackFinderCfg.inputHitParticlesMap = clusterReaderCfg.outputHitParticlesMap;
   trackFinderCfg.outputProtoTracks = "prototracks";
   sequencer.addAlgorithm(
@@ -119,12 +131,13 @@ int main(int argc, char* argv[]) {
   testSeedCfg.inputDir = inputDir;
   testSeedCfg.outputHitIds = "hit_ids";
   testSeedCfg.inputClusters = "clusters";
+  testSeedCfg.inputParticles = seedSelectorCfg.outputParticles;
   sequencer.addAlgorithm(
       std::make_shared<FW::TestSeedAlgorithm>(testSeedCfg, logLevel));
 
   // write reconstruction performance data
   TrackFinderPerformanceWriter::Config perfFinder;
-  perfFinder.inputParticles = inputParticles;
+  perfFinder.inputParticles = seedSelectorCfg.outputParticles;
   perfFinder.inputHitParticlesMap = clusterReaderCfg.outputHitParticlesMap;
   perfFinder.inputProtoTracks = trackFinderCfg.outputProtoTracks;
   perfFinder.outputDir = outputDir;

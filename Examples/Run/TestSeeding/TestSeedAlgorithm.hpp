@@ -17,6 +17,8 @@
 #include "Acts/Seeding/SpacePoint.hpp"
 #include "ActsFatras/EventData/Barcode.hpp"
 
+#include <set>
+
 namespace FW {
 
 /// A simple empty algorithm
@@ -34,11 +36,16 @@ class TestSeedAlgorithm : public FW::BareAlgorithm {
     std::string inputHitParticlesMap;
     /// Which simulated (truth) hits collection to use. Not used currently.
     std::string inputSimulatedHits;
+    // input particles so we can count the number of particles for performance
+    std::string inputParticles;
   };
 
   TestSeedAlgorithm(const Config& cfg, Acts::Logging::Level level);
 
-  std::size_t seedNumParticles(const Acts::Seed<SpacePoint>* seed) const;
+  std::size_t seedNumParticles(
+      const Acts::Seed<SpacePoint>* seed,
+      std::set<ActsFatras::Barcode>& particlesFoundBySeeds,
+      std::size_t& numRedundantSeeds) const;
 
   SpacePoint* readSP(std::size_t hit_id, const Acts::GeometryID geoId,
                      const Acts::PlanarModuleCluster& cluster,
