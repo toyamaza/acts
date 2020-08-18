@@ -7,7 +7,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #pragma once
-
+namespace ActsExamples{
 struct SimSpacePoint {
   float m_x;
   float m_y;
@@ -30,4 +30,5 @@ bool operator==(SimSpacePoint a, SimSpacePoint b) {
   } else {
     return false;
   }
+}
 }
