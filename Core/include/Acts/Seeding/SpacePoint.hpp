@@ -11,6 +11,7 @@
 #include "ACTFW/Validation/ProtoTrackClassification.hpp"
 
 struct SpacePoint {
+  size_t m_Id;
   float m_x;
   float m_y;
   float m_z;
@@ -19,6 +20,7 @@ struct SpacePoint {
   float varianceR;
   float varianceZ;
   std::vector<FW::ParticleHitCount> particles;
+  size_t Id() const { return m_Id; }
   float x() const { return m_x; }
   float y() const { return m_y; }
   float z() const { return m_z; }

@@ -16,6 +16,7 @@
 #include "ACTFW/Io/Csv/CsvPlanarClusterReader.hpp"
 #include "ACTFW/Io/Csv/CsvPlanarClusterWriter.hpp"
 #include "ACTFW/Io/Performance/TrackFinderPerformanceWriter.hpp"
+#include "ACTFW/Io/Performance/TrackSeedingPerformanceWriter.hpp"
 #include "ACTFW/Options/CommonOptions.hpp"
 #include "ACTFW/Plugins/BField/BFieldOptions.hpp"
 #include "ACTFW/TruthTracking/TruthSeedSelector.hpp"
@@ -98,31 +99,21 @@ int main(int argc, char* argv[]) {
 
   const auto& inputParticles = particleReader.outputParticles;
 
-  // select only valid particles that seeding is supposed to find
+  // Cuts down on the number of particles so that effeciency is calculated
+  // properly
   TruthSeedSelector::Config seedSelectorCfg;
   seedSelectorCfg.inputParticles = inputParticles;
   seedSelectorCfg.inputHitParticlesMap = clusterReaderCfg.outputHitParticlesMap;
-  seedSelectorCfg.outputParticles = "particles_final";
+  seedSelectorCfg.outputParticles =
+      "particles_final";  // not sure this is what it should be called.
+                          // particles_final may already have a different
+                          // meaning
   seedSelectorCfg.etaMin = -2.7;
   seedSelectorCfg.etaMax = 2.7;
+  seedSelectorCfg.ptMin = 0.5;
+  seedSelectorCfg.nHitsMin = 3;
   sequencer.addAlgorithm(
       std::make_shared<TruthSeedSelector>(seedSelectorCfg, logLevel));
-
-  // Create truth tracks
-  TruthTrackFinder::Config trackFinderCfg;
-  trackFinderCfg.inputParticles = seedSelectorCfg.outputParticles;
-  trackFinderCfg.inputHitParticlesMap = clusterReaderCfg.outputHitParticlesMap;
-  trackFinderCfg.outputProtoTracks = "prototracks";
-  sequencer.addAlgorithm(
-      std::make_shared<TruthTrackFinder>(trackFinderCfg, logLevel));
-  /*
-  / Write clusters to CSV files. Currently not needed and not used
-  auto clusterWriterCfg = Options::readCsvPlanarClusterWriterConfig(vm);
-  clusterWriterCfg.inputClusters = "clusters";
-  clusterWriterCfg.inputSimulatedHits = "hits";
-  // sequencer.addWriter(
-  // std::make_shared<CsvPlanarClusterWriter>(clusterWriterCfg, logLevel));
-  */
 
   // add Seeding Algorithm that finds the seeds
   FW::TestSeedAlgorithm::Config testSeedCfg;
@@ -131,19 +122,16 @@ int main(int argc, char* argv[]) {
   testSeedCfg.inputDir = inputDir;
   testSeedCfg.outputHitIds = "hit_ids";
   testSeedCfg.inputClusters = "clusters";
-  testSeedCfg.inputParticles = seedSelectorCfg.outputParticles;
+  testSeedCfg.outputSeeds = "output_seeds";
   sequencer.addAlgorithm(
       std::make_shared<FW::TestSeedAlgorithm>(testSeedCfg, logLevel));
 
-  // write reconstruction performance data
-  TrackFinderPerformanceWriter::Config perfFinder;
-  perfFinder.inputParticles = seedSelectorCfg.outputParticles;
-  perfFinder.inputHitParticlesMap = clusterReaderCfg.outputHitParticlesMap;
-  perfFinder.inputProtoTracks = trackFinderCfg.outputProtoTracks;
-  perfFinder.outputDir = outputDir;
+  FW::TrackSeedingPerformanceWriter::Config seedPerfCfg;
+  seedPerfCfg.inputSeeds = testSeedCfg.outputSeeds;
+  seedPerfCfg.inputParticles = seedSelectorCfg.outputParticles;
+  seedPerfCfg.outputDir = outputDir;
   sequencer.addWriter(
-      std::make_shared<TrackFinderPerformanceWriter>(perfFinder, logLevel));
-
+      std::make_shared<TrackSeedingPerformanceWriter>(seedPerfCfg, logLevel));
   // Run all configured algorithms and return the appropriate status.
   return sequencer.run();
 }
