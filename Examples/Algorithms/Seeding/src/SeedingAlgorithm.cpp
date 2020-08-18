@@ -30,7 +30,7 @@
 #include "Acts/Seeding/Seedfinder.hpp"
 #include "Acts/Seeding/SpacePointGrid.hpp"
 
-#include "ACTFW/Seeding/SpacePointFromHit.hpp"
+#include "ACTFW/Seeding/SimSpacePoint.hpp"
 #include "ACTFW/Seeding/GenericDetectorCuts.hpp"
 #include "ACTFW/Seeding/SeedContainer.hpp"
 
@@ -66,23 +66,22 @@ FW::ProcessCode FW::SeedingAlgorithm::execute(const AlgorithmContext& ctx) const
   // Prepare the input and output collections
   const auto& hits = ctx.eventStore.get<SimHitContainer>(m_cfg.inputSimulatedHits);
 
-  Acts::SeedfinderConfig<SpacePointFromHit> config;
+  Acts::SeedfinderConfig<SimSpacePoint> config;
   // silicon detector max
-  // config.rMax = 160.;
-  // config.rMax = 300.;
-  // config.deltaRMin = 5.;
-  // config.deltaRMax = 160.;
-  // config.collisionRegionMin = -250.;
-  // config.collisionRegionMax = 250.;
-  // config.zMin = -2800.;
-  // config.zMax = 2800.;
-  // config.maxSeedsPerSpM = 5;
-  // config.cotThetaMax = 7.40627;  // 2.7 eta
-  // config.sigmaScattering = 1.00000;
-  // config.minPt = 500.;
-  // config.bFieldInZ = 0.00199724;
-  // config.beamPos = {-.5, -.5};
-  // config.impactMax = 10.;
+  config.rMax = 200.;
+  config.deltaRMin = 5.;
+  config.deltaRMax = 160.;
+  config.collisionRegionMin = -250;
+  config.collisionRegionMax = 250.;
+  config.zMin = -2000.;
+  config.zMax = 2000.;
+  config.maxSeedsPerSpM = 5;
+  config.cotThetaMax = 7.40627;  // 2.7 eta
+  config.sigmaScattering = 1.00000;
+  config.minPt = 500.;
+  config.bFieldInZ = 0.00199724;
+  config.beamPos = {-.5, -.5};
+  config.impactMax = 10.;
 
   // setup spacepoint grid config
   Acts::SpacePointGridConfig gridConf;
@@ -94,24 +93,24 @@ FW::ProcessCode FW::SeedingAlgorithm::execute(const AlgorithmContext& ctx) const
   gridConf.deltaRMax = config.deltaRMax;
   gridConf.cotThetaMax = config.cotThetaMax;
 
-  auto bottomBinFinder = std::make_shared<Acts::BinFinder<SpacePointFromHit>>(
-									      Acts::BinFinder<SpacePointFromHit>());
-  auto topBinFinder = std::make_shared<Acts::BinFinder<SpacePointFromHit>>(
-									   Acts::BinFinder<SpacePointFromHit>());
+  auto bottomBinFinder = std::make_shared<Acts::BinFinder<SimSpacePoint>>(
+									      Acts::BinFinder<SimSpacePoint>());
+  auto topBinFinder = std::make_shared<Acts::BinFinder<SimSpacePoint>>(
+									   Acts::BinFinder<SimSpacePoint>());
   Acts::SeedFilterConfig sfconf;
-  Acts::GenericDetectorCuts<SpacePointFromHit> atlasCuts = Acts::GenericDetectorCuts<SpacePointFromHit>();
-  config.seedFilter = std::make_unique<Acts::SeedFilter<SpacePointFromHit>>(
-									    Acts::SeedFilter<SpacePointFromHit>(sfconf, &atlasCuts));
-  Acts::Seedfinder<SpacePointFromHit> seedFinder(config);
+  Acts::GenericDetectorCuts<SimSpacePoint> detectorCuts = Acts::GenericDetectorCuts<SimSpacePoint>();
+  config.seedFilter = std::make_unique<Acts::SeedFilter<SimSpacePoint>>(
+									    Acts::SeedFilter<SimSpacePoint>(sfconf, &detectorCuts));
+  Acts::Seedfinder<SimSpacePoint> seedFinder(config);
 
 
   // covariance tool, sets covariances per spacepoint as required
-  auto ct = [=](const SpacePointFromHit& sp, float, float, float) -> Acts::Vector2D {
+  auto ct = [=](const SimSpacePoint& sp, float, float, float) -> Acts::Vector2D {
     return {sp.varianceR, sp.varianceZ};
   };
 
 
-  std::vector<const SpacePointFromHit*> spVec;
+  std::vector<const SimSpacePoint*> spVec;
   for (const auto& hit : hits) {
     const auto hitPos = hit.position();
     int layer = 1; // dummy
@@ -121,20 +120,20 @@ FW::ProcessCode FW::SeedingAlgorithm::execute(const AlgorithmContext& ctx) const
     float hitPosY = hitPos.y();
     float hitPosZ = hitPos.z();
     float r = sqrt(hitPosX*hitPosX + hitPosY*hitPosY);
-    SpacePointFromHit* sp = new SpacePointFromHit{
+    SimSpacePoint* sp = new SimSpacePoint{
       hitPosX,hitPosY,hitPosZ, r, layer, varR, varZ
     };
     spVec.push_back(sp);
   }
 
   // create grid with bin sizes according to the configured geometry
-  std::unique_ptr<Acts::SpacePointGrid<SpacePointFromHit>> grid =
-    Acts::SpacePointGridCreator::createGrid<SpacePointFromHit>(gridConf);
-  auto spGroup = Acts::BinnedSPGroup<SpacePointFromHit>(spVec.begin(), spVec.end(), ct,
+  std::unique_ptr<Acts::SpacePointGrid<SimSpacePoint>> grid =
+    Acts::SpacePointGridCreator::createGrid<SimSpacePoint>(gridConf);
+  auto spGroup = Acts::BinnedSPGroup<SimSpacePoint>(spVec.begin(), spVec.end(), ct,
 							bottomBinFinder, topBinFinder,
 							std::move(grid), config);
 
-  std::vector<std::vector<Acts::Seed<SpacePointFromHit>>> seedVector;
+  std::vector<std::vector<Acts::Seed<SimSpacePoint>>> seedVector;
   auto groupIt = spGroup.begin();
   auto endOfGroups = spGroup.end();
   for (; !(groupIt == endOfGroups); ++groupIt) {
@@ -145,28 +144,14 @@ FW::ProcessCode FW::SeedingAlgorithm::execute(const AlgorithmContext& ctx) const
   int numSeeds = 0;
   for (auto& outVec : seedVector) {
     numSeeds += outVec.size();
+    for (size_t i = 0; i < outVec.size(); i++) {
+      const Acts::Seed<SimSpacePoint>* seed = &outVec[i];
+      seeds.emplace_back(*seed);
+  }
   }
 
-  // std::cout << spVec.size() << " hits, " << seedVector.size() << " regions, " << numSeeds << " seeds" << std::endl;
+
   ACTS_DEBUG(spVec.size() << " hits, " << seedVector.size() << " regions, " << numSeeds << " seeds" );
-  
-  // for (auto& regionVec : seedVector) {
-  //   for (size_t i = 0; i < regionVec.size(); i++) {
-  //     const Acts::Seed<SpacePointFromHit>* seed = &regionVec[i];
-  //     seeds.emplace_back(*seed);
-  //     const SpacePointFromHit* sp = seed->sp()[0];
-  //     std::cout << " (" << sp->x() << ", " << sp->y() << ", " << sp->z()
-  // 		<< ") ";
-  //     sp = seed->sp()[1];
-  //     std::cout << sp->surface << " (" << sp->x() << ", " << sp->y() << ", "
-  // 		<< sp->z() << ") ";
-  //     sp = seed->sp()[2];
-  //     std::cout << sp->surface << " (" << sp->x() << ", " << sp->y() << ", "
-  // 		<< sp->z() << ") ";
-  //     std::cout << std::endl;
-  //   }
-  // }
-  // std::cout << std::endl;
 
   ctx.eventStore.add(m_cfg.outputSeeds, std::move(seeds) );
 
