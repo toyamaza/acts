@@ -1,6 +1,6 @@
 // This file is part of the Acts project.
 //
-// Copyright (C) 2018 CERN for the benefit of the Acts project
+// Copyright (C) 2020 CERN for the benefit of the Acts project
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,9 +8,9 @@
 
 #pragma once
 #include "Acts/Seeding/Seed.hpp"
-#include "ACTFW/Seeding/SpacePointFromHit.hpp"
+#include "ACTFW/Seeding/SimSpacePoint.hpp"
 
 #include <vector>
 namespace FW{
-  using SeedContainer = std::vector<Acts::Seed<SpacePointFromHit> >;
+  using SeedContainer = std::vector<Acts::Seed<SimSpacePoint> >;
 } // namespace FW
