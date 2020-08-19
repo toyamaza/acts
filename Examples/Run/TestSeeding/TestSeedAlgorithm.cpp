@@ -97,10 +97,10 @@ SpacePoint* FW::TestSeedAlgorithm::readSP(
     }
   }
 
-  SpacePoint* sp = new SpacePoint{hit_id,    x,         y,
+  SpacePoint* SP = new SpacePoint{hit_id,    x,         y,
                                   z,         r,         geoId.layer(),
                                   varianceR, varianceZ, particleHitCount};
-  return sp;
+  return SP;
 }
 
 FW::ProcessCode FW::TestSeedAlgorithm::execute(
@@ -126,20 +126,15 @@ FW::ProcessCode FW::TestSeedAlgorithm::execute(
   for (const auto& entry : clusters) {
     Acts::GeometryID geoId = entry.first;
     const Acts::PlanarModuleCluster& cluster = entry.second;
-    size_t volnum = geoId.volume();
-    size_t laynum = geoId.layer();
+    size_t volumeId = geoId.volume();
+    size_t layerId = geoId.layer();
 
     // filter out hits that aren't part of useful volumes and layers.
-    if (volnum == 7 || volnum == 8 ||
-        volnum == 9) {  // curently doesn't filter anything
-      if (laynum >= 2 && laynum <= 14) {
-        SpacePoint* sp = readSP(hit_id, geoId, cluster, hitParticlesMap, ctx);
-        if (sp->particles[0].particleId.particle() == 84) {
-          /*std::cout << "Hit id: " << hit_id << "; vol " << volnum << "; lay "
-                    << laynum << "; barcode " << sp->particles[0].particleId
-                    << std::endl;*/
-        }
-        spVec.push_back(sp);
+    if (volumeId == 7 || volumeId == 8 ||
+        volumeId == 9) {  // curently doesn't filter anything
+      if (layerId >= 2 && layerId <= 14) {
+        SpacePoint* SP = readSP(hit_id, geoId, cluster, hitParticlesMap, ctx);
+        spVec.push_back(SP);
         clustCounter++;
       } else {
         nIgnored++;
@@ -182,8 +177,8 @@ FW::ProcessCode FW::TestSeedAlgorithm::execute(
   Acts::Seedfinder<SpacePoint> a(config);
 
   // covariance tool, sets covariances per spacepoint as required
-  auto ct = [=](const SpacePoint& sp, float, float, float) -> Acts::Vector2D {
-    return {sp.varianceR, sp.varianceZ};
+  auto ct = [=](const SpacePoint& SP, float, float, float) -> Acts::Vector2D {
+    return {SP.varianceR, SP.varianceZ};
   };
 
   // setup spacepoint grid config

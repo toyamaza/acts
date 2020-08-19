@@ -49,7 +49,7 @@ class TrackSeedingPerformanceWriter final
 
   /// Finds whether or not the seed contains a truth particle.
   /// Technically, space points can have multiple particles that are a part of
-  /// them, so seedNumParticles finds how many particles are in common.
+  /// them, so analyzeSeed finds how many particles are in common.
   /// @param seed The seed to be processed.
   /// @param particlesFoundBySeeds The set of particle barcodes already found.
   /// @param nDuplicateSeeds Number of seeds that find a particle already
@@ -57,10 +57,9 @@ class TrackSeedingPerformanceWriter final
   ///
   /// Returns the number particles that are a part
   /// of all 3 spacePoints in the seed. Returning 0 means it's a fake seed.
-  std::size_t seedNumParticles(
-      const Acts::Seed<SpacePoint>* seed,
-      std::set<ActsFatras::Barcode>& particlesFoundBySeeds,
-      std::size_t& nDuplicateSeeds) const;
+  std::size_t analyzeSeed(const Acts::Seed<SpacePoint>* seed,
+                          std::set<ActsFatras::Barcode>& particlesFoundBySeeds,
+                          std::size_t& nDuplicateSeeds) const;
 
   void printSeed(const Acts::Seed<SpacePoint>* seed) const;
 

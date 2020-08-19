@@ -96,7 +96,7 @@ void FW::TrackSeedingPerformanceWriter::printSeed(
   std::cout << std::endl << std::endl;
 }
 
-size_t FW::TrackSeedingPerformanceWriter::seedNumParticles(
+size_t FW::TrackSeedingPerformanceWriter::analyzeSeed(
     const Acts::Seed<SpacePoint>* seed,
     std::set<ActsFatras::Barcode>& particlesFoundBySeeds,
     size_t& nDuplicateSeeds) const {
@@ -159,7 +159,7 @@ FW::ProcessCode FW::TrackSeedingPerformanceWriter::writeT(
     for (size_t i = 0; i < regionVec.size(); i++) {
       const Acts::Seed<SpacePoint>* seed = &regionVec[i];
       size_t prtsInCommon =
-          seedNumParticles(seed, particlesFoundBySeeds, nDuplicateSeeds);
+          analyzeSeed(seed, particlesFoundBySeeds, nDuplicateSeeds);
       if (prtsInCommon > 0) {
         nTrueSeeds++;
       }
