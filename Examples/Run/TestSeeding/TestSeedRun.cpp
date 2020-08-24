@@ -131,14 +131,14 @@ int main(int argc, char* argv[]) {
   sequencer.addWriter(
       std::make_shared<TrackSeedingPerformanceWriter>(seedPerfCfg, logLevel));
 
-  // write reconstruction performance data
+  /*// write reconstruction performance data
   TrackFinderPerformanceWriter::Config perfFinder;
   perfFinder.inputParticles = inputParticles;
   perfFinder.inputHitParticlesMap = clusterReaderCfg.outputHitParticlesMap;
   perfFinder.inputProtoTracks = testSeedCfg.outputProtoSeeds;
   perfFinder.outputDir = outputDir;
   sequencer.addWriter(
-      std::make_shared<TrackFinderPerformanceWriter>(perfFinder, logLevel));
+      std::make_shared<TrackFinderPerformanceWriter>(perfFinder, logLevel));*/
 
   // Run all configured algorithms and return the appropriate status.
   return sequencer.run();

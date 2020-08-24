@@ -105,7 +105,7 @@ struct FW::TrackSeedingPerformanceWriter::Impl {
     // the output file can not be given externally since TFile accesses to the
     // same file from multiple threads are unsafe.
     // must always be opened internally
-    auto path = joinPaths(cfg.outputDir, cfg.outputFilename);
+    auto path = joinPaths(cfg.outputDir, "TTrees_" + cfg.outputFilename);
     file = TFile::Open(path.c_str(), "RECREATE");
     if (not file) {
       throw std::invalid_argument("Could not open '" + path + "'");
