@@ -8,13 +8,16 @@
 
 #include "TestSeedAlgorithm.hpp"
 
+#include "ACTFW/EventData/GeometryContainers.hpp"
 #include "ACTFW/EventData/IndexContainers.hpp"
+#include "ACTFW/EventData/ProtoTrack.hpp"
 #include "ACTFW/EventData/SimHit.hpp"
 #include "ACTFW/EventData/SimIdentifier.hpp"
 #include "ACTFW/EventData/SimParticle.hpp"
 #include "ACTFW/EventData/SimVertex.hpp"
 #include "ACTFW/Framework/WhiteBoard.hpp"
 #include "ACTFW/Io/Csv/CsvPlanarClusterReader.hpp"
+#include "ACTFW/Utilities/Range.hpp"
 #include "ACTFW/Validation/ProtoTrackClassification.hpp"
 #include "Acts/Plugins/Digitization/PlanarModuleCluster.hpp"
 #include "Acts/Seeding/ATLASCuts.hpp"
@@ -42,6 +45,7 @@
 #include <boost/type_erasure/any_cast.hpp>
 
 using HitParticlesMap = FW::IndexMultimap<ActsFatras::Barcode>;
+using ProtoTrack = FW::ProtoTrack;
 
 FW::TestSeedAlgorithm::TestSeedAlgorithm(
     const FW::TestSeedAlgorithm::Config& cfg, Acts::Logging::Level level)
@@ -58,10 +62,13 @@ FW::TestSeedAlgorithm::TestSeedAlgorithm(
   if (m_cfg.outputSeeds.empty()) {
     throw std::invalid_argument("Missing output collection for seeds");
   }
+  if (m_cfg.inputParticles.empty()) {
+    throw std::invalid_argument("Missing input particles collection");
+  }
 }
 
 SpacePoint* FW::TestSeedAlgorithm::readSP(
-    size_t hit_id, const Acts::GeometryID geoId,
+    std::size_t hit_id, const Acts::GeometryID geoId,
     const Acts::PlanarModuleCluster& cluster,
     const HitParticlesMap& hitParticlesMap, const AlgorithmContext& ctx) const {
   const auto& parameters = cluster.parameters();
@@ -97,10 +104,19 @@ SpacePoint* FW::TestSeedAlgorithm::readSP(
     }
   }
 
-  SpacePoint* SP = new SpacePoint{hit_id,    x,         y,
-                                  z,         r,         geoId.layer(),
-                                  varianceR, varianceZ, particleHitCount};
+  SpacePoint* SP = new SpacePoint{
+      hit_id, x, y, z, r, geoId, varianceR, varianceZ, particleHitCount};
   return SP;
+}
+
+ProtoTrack FW::TestSeedAlgorithm::seedToProtoTrack(
+    const Acts::Seed<SpacePoint>* seed) const {
+  ProtoTrack track;
+  track.reserve(seed->sp().size());
+  for (std::size_t i = 0; i < seed->sp().size(); i++) {
+    track.emplace_back(seed->sp()[i]->Id());
+  }
+  return track;
 }
 
 FW::ProcessCode FW::TestSeedAlgorithm::execute(
@@ -112,33 +128,34 @@ FW::ProcessCode FW::TestSeedAlgorithm::execute(
   // read in the map of hitId to particleId truth information
   const HitParticlesMap hitParticlesMap =
       ctx.eventStore.get<HitParticlesMap>(m_cfg.inputHitParticlesMap);
+  const auto& particleHitsMap = invertIndexMultimap(hitParticlesMap);
+  // read in particles so we can make proto seeds
+  const auto& particles =
+      ctx.eventStore.get<SimParticleContainer>(m_cfg.inputParticles);
 
-  size_t nHitsTotal = hitParticlesMap.size();
+  std::size_t nHitsTotal = hitParticlesMap.size();
 
   // create the space points
-  size_t clustCounter = 0;
-  size_t nIgnored = 0;
+  std::size_t clustCounter = 0;
+  std::size_t nIgnored = 0;
   std::vector<const SpacePoint*> spVec;
   // since clusters are ordered, we simply count the hit_id as we read
   // clusters. Hit_id isn't stored in a cluster. This is how
   // CsvPlanarClusterWriter did it.
-  size_t hit_id = 0;
+  std::size_t hit_id = 0;
   for (const auto& entry : clusters) {
     Acts::GeometryID geoId = entry.first;
     const Acts::PlanarModuleCluster& cluster = entry.second;
-    size_t volumeId = geoId.volume();
-    size_t layerId = geoId.layer();
+    std::size_t volumeId = geoId.volume();
+    std::size_t layerId = geoId.layer();
 
-    // filter out hits that aren't part of useful volumes and layers.
-    if (volumeId == 7 || volumeId == 8 ||
-        volumeId == 9) {  // curently doesn't filter anything
-      if (layerId >= 2 && layerId <= 14) {
-        SpacePoint* SP = readSP(hit_id, geoId, cluster, hitParticlesMap, ctx);
-        spVec.push_back(SP);
-        clustCounter++;
-      } else {
-        nIgnored++;
-      }
+    // filter out hits that aren't part of the volumes and layers track seeding
+    // is supposed to work on.
+    if (volumeId == 8 && 2 <= layerId && layerId <= 6) {
+      SpacePoint* SP = readSP(hit_id, geoId, cluster, hitParticlesMap, ctx);
+      spVec.push_back(SP);
+      clustCounter++;
+
     } else {
       nIgnored++;
     }
@@ -208,7 +225,6 @@ FW::ProcessCode FW::TestSeedAlgorithm::execute(
     seedVector.push_back(a.createSeedsForGroup(
         groupIt.bottom(), groupIt.middle(), groupIt.top()));
   }
-  // ACTS_INFO("n space points is " << nSpacePoints)
   auto end = std::chrono::system_clock::now();
   std::chrono::duration<double> elapsed_seconds = end - start;
   ACTS_INFO("Time to create seeds: " << elapsed_seconds.count() << "s")
@@ -217,6 +233,18 @@ FW::ProcessCode FW::TestSeedAlgorithm::execute(
                                        << 100 * clustCounter / nHitsTotal
                                        << "% usage")  // some of the hits
 
+  ProtoTrackContainer seeds;
+  seeds.reserve(seedVector.size());
+  // create prototracks for all input particles
+  for (auto& regionVec : seedVector) {
+    for (std::size_t iseed = 0; iseed < regionVec.size(); iseed++) {
+      const Acts::Seed<SpacePoint>* seed = &regionVec[iseed];
+      ProtoTrack track = seedToProtoTrack(seed);
+      seeds.emplace_back(std::move(track));
+    }
+  }
+  // store proto tracks to be analyzed by TrackFindingPerforrmanceWriter
+  ctx.eventStore.add(m_cfg.outputProtoSeeds, std::move(seeds));
   // store seeds to be analyzed by TrackSeedingPerformanceWriter
   ctx.eventStore.add(m_cfg.outputSeeds, std::move(seedVector));
   return FW::ProcessCode::SUCCESS;

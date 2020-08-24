@@ -10,7 +10,7 @@ target_include_directories(
 target_link_libraries(
   ActsExamplesIoPerformance
   PUBLIC ActsExamplesFramework
-  PRIVATE ActsCore ROOT::Core ROOT::Tree)
+  PRIVATE ActsDigitizationPlugin ActsCore ROOT::Core ROOT::Tree)
 
 install(
   TARGETS ActsExamplesIoPerformance

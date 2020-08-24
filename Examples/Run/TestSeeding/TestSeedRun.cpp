@@ -72,14 +72,6 @@ int main(int argc, char* argv[]) {
   }
   // Setup the magnetic field
   auto magneticField = Options::readBField(vm);
-  /*
-    // Read particles (initial states) and clusters from CSV files
-    auto particleReader = Options::readCsvParticleReaderConfig(vm);
-    particleReader.inputStem = "particles_initial";
-    particleReader.outputParticles = "particles_initial";
-    // sequencer.addReader(
-    //  std::make_shared<CsvParticleReader>(particleReader, logLevel));
-    */
 
   // Read particles (initial states) and clusters from CSV files
   auto particleReader = Options::readCsvParticleReaderConfig(vm);
@@ -101,6 +93,7 @@ int main(int argc, char* argv[]) {
 
   // Cuts down on the number of particles so that effeciency is calculated
   // properly
+  /*
   TruthSeedSelector::Config seedSelectorCfg;
   seedSelectorCfg.inputParticles = inputParticles;
   seedSelectorCfg.inputHitParticlesMap = clusterReaderCfg.outputHitParticlesMap;
@@ -113,25 +106,40 @@ int main(int argc, char* argv[]) {
   seedSelectorCfg.ptMin = 0.5;
   seedSelectorCfg.nHitsMin = 3;
   sequencer.addAlgorithm(
-      std::make_shared<TruthSeedSelector>(seedSelectorCfg, logLevel));
+      std::make_shared<TruthSeedSelector>(seedSelectorCfg, logLevel));*/
 
   // add Seeding Algorithm that finds the seeds
   FW::TestSeedAlgorithm::Config testSeedCfg;
   testSeedCfg.inputHitParticlesMap = "hit_particles_map";
   testSeedCfg.inputSimulatedHits = "hits";
   testSeedCfg.inputDir = inputDir;
+  testSeedCfg.inputParticles = inputParticles;
   testSeedCfg.outputHitIds = "hit_ids";
   testSeedCfg.inputClusters = "clusters";
   testSeedCfg.outputSeeds = "output_seeds";
+  testSeedCfg.outputProtoSeeds = "output_proto_seeds";
   sequencer.addAlgorithm(
       std::make_shared<FW::TestSeedAlgorithm>(testSeedCfg, logLevel));
 
   FW::TrackSeedingPerformanceWriter::Config seedPerfCfg;
   seedPerfCfg.inputSeeds = testSeedCfg.outputSeeds;
-  seedPerfCfg.inputParticles = seedSelectorCfg.outputParticles;
+  seedPerfCfg.inputProtoSeeds = testSeedCfg.outputProtoSeeds;
+  seedPerfCfg.inputParticles = inputParticles;
+  seedPerfCfg.inputClusters = testSeedCfg.inputClusters;
+  seedPerfCfg.inputHitParticlesMap = clusterReaderCfg.outputHitParticlesMap;
   seedPerfCfg.outputDir = outputDir;
   sequencer.addWriter(
       std::make_shared<TrackSeedingPerformanceWriter>(seedPerfCfg, logLevel));
+
+  // write reconstruction performance data
+  TrackFinderPerformanceWriter::Config perfFinder;
+  perfFinder.inputParticles = inputParticles;
+  perfFinder.inputHitParticlesMap = clusterReaderCfg.outputHitParticlesMap;
+  perfFinder.inputProtoTracks = testSeedCfg.outputProtoSeeds;
+  perfFinder.outputDir = outputDir;
+  sequencer.addWriter(
+      std::make_shared<TrackFinderPerformanceWriter>(perfFinder, logLevel));
+
   // Run all configured algorithms and return the appropriate status.
   return sequencer.run();
 }

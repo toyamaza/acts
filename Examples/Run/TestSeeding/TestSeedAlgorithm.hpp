@@ -29,7 +29,9 @@ class TestSeedAlgorithm : public FW::BareAlgorithm {
     std::string outputHitIds;
     // input Clusters from the event#-hits.csv file.
     std::string inputClusters;
-    // inputDir not currently used.
+    // input particles for creating proto seeds
+    std::string inputParticles;
+    // input dir containing hits and truth information
     std::string inputDir;
     // used to get truth information into seeds about what particles are in what
     // space point.
@@ -38,9 +40,8 @@ class TestSeedAlgorithm : public FW::BareAlgorithm {
     std::string inputSimulatedHits;
     // output seeds found by seeding algorithm
     std::string outputSeeds;
-
-    // TODO: add protoTracks (seeds) from the seeding algorithm so they can be
-    // fed into track finding and fitting algorithm
+    // output seeds in proto track form
+    std::string outputProtoSeeds;
   };
 
   TestSeedAlgorithm(const Config& cfg, Acts::Logging::Level level);
@@ -65,6 +66,9 @@ class TestSeedAlgorithm : public FW::BareAlgorithm {
                      const Acts::PlanarModuleCluster& cluster,
                      const IndexMultimap<ActsFatras::Barcode>& hitParticlesMap,
                      const AlgorithmContext& ctx) const;
+
+  /// @brief Converts a seed to a proto track of 3 hits
+  FW::ProtoTrack seedToProtoTrack(const Acts::Seed<SpacePoint>* seed) const;
 
   void printSeed(const Acts::Seed<SpacePoint>* seed) const;
 
