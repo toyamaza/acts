@@ -91,23 +91,6 @@ int main(int argc, char* argv[]) {
 
   const auto& inputParticles = particleReader.outputParticles;
 
-  // Cuts down on the number of particles so that effeciency is calculated
-  // properly
-  /*
-  TruthSeedSelector::Config seedSelectorCfg;
-  seedSelectorCfg.inputParticles = inputParticles;
-  seedSelectorCfg.inputHitParticlesMap = clusterReaderCfg.outputHitParticlesMap;
-  seedSelectorCfg.outputParticles =
-      "particles_final";  // not sure this is what it should be called.
-                          // particles_final may already have a different
-                          // meaning
-  seedSelectorCfg.etaMin = -2.7;
-  seedSelectorCfg.etaMax = 2.7;
-  seedSelectorCfg.ptMin = 0.5;
-  seedSelectorCfg.nHitsMin = 3;
-  sequencer.addAlgorithm(
-      std::make_shared<TruthSeedSelector>(seedSelectorCfg, logLevel));*/
-
   // add Seeding Algorithm that finds the seeds
   FW::TestSeedAlgorithm::Config testSeedCfg;
   testSeedCfg.inputHitParticlesMap = "hit_particles_map";
@@ -133,15 +116,6 @@ int main(int argc, char* argv[]) {
   seedPerfCfg.ptMin = 0.5;
   sequencer.addWriter(
       std::make_shared<TrackSeedingPerformanceWriter>(seedPerfCfg, logLevel));
-
-  /*// write reconstruction performance data
-  TrackFinderPerformanceWriter::Config perfFinder;
-  perfFinder.inputParticles = inputParticles;
-  perfFinder.inputHitParticlesMap = clusterReaderCfg.outputHitParticlesMap;
-  perfFinder.inputProtoTracks = testSeedCfg.outputProtoSeeds;
-  perfFinder.outputDir = outputDir;
-  sequencer.addWriter(
-      std::make_shared<TrackFinderPerformanceWriter>(perfFinder, logLevel));*/
 
   // Run all configured algorithms and return the appropriate status.
   return sequencer.run();
