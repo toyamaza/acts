@@ -54,6 +54,28 @@ class TrackSeedingPerformanceWriter final
     std::string outputDir;
     /// Output filename.
     std::string outputFilename = "performance_track_seeding.root";
+
+    // The quality cuts to be applied when evaluating seed finder efficiency
+    /// Maximum distance from the origin in the transverse plane
+    double rhoMax = std::numeric_limits<double>::max();
+    /// Maximum absolute distance from the origin along z
+    double absZMax = std::numeric_limits<double>::max();
+    // Truth particle kinematic cuts
+    double phiMin = std::numeric_limits<double>::lowest();
+    double phiMax = std::numeric_limits<double>::max();
+    double etaMin = std::numeric_limits<double>::lowest();
+    double etaMax = std::numeric_limits<double>::max();
+    double absEtaMin = std::numeric_limits<double>::lowest();
+    double absEtaMax = std::numeric_limits<double>::max();
+    double ptMin = 0.0;
+    double ptMax = std::numeric_limits<double>::max();
+    /// Keep neutral particles
+    bool keepNeutral = false;
+    /// Requirement on number of recorded hits
+    //@TODO: implement detector-specific requirements
+    size_t nHitsMin = 0;
+    size_t nHitsMax = std::numeric_limits<size_t>::max();
+
     /// Plot tool configurations.
     EffPlotTool::Config effPlotToolConfig;
     FakeRatePlotTool::Config fakeRatePlotConfig;
@@ -73,7 +95,7 @@ class TrackSeedingPerformanceWriter final
   /// @param clusters Used to get information on the hits that a particle has
   /// made. TODO: Verify this is a valid filter
   bool prtFindable(
-      const ActsFatras::Barcode& prt, const auto& particleHitsMap,
+      const ActsFatras::Particle& prt, const auto& particleHitsMap,
       const FW::GeometryIdMultimap<Acts::PlanarModuleCluster>& clusters) const;
 
   /// @brief Analyzes onse seed. Finds whether or not the seed contains a truth

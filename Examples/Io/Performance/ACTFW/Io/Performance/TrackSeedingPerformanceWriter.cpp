@@ -51,7 +51,7 @@ struct FW::TrackSeedingPerformanceWriter::Impl {
   ULong64_t trkTrackId;
   // track content
   // True seed = 0 and Fake = 1
-  UShort_t trkTrue;
+  UShort_t trkTrue;  // TODO: Implement
   // number of hits on track
   UShort_t trkNumHits;
   // number of particles contained in the track
@@ -131,7 +131,7 @@ struct FW::TrackSeedingPerformanceWriter::Impl {
     prtTree->Branch("vy", &prtVy);
     prtTree->Branch("vz", &prtVz);
     prtTree->Branch("vt", &prtVt);
-    prtTree->Branch("r", &prtR);
+    prtTree->Branch("vr", &prtR);
     prtTree->Branch("px", &prtPx);
     prtTree->Branch("py", &prtPy);
     prtTree->Branch("pz", &prtPz);
@@ -329,9 +329,32 @@ void FW::TrackSeedingPerformanceWriter::printSeed(
 }
 
 bool FW::TrackSeedingPerformanceWriter::prtFindable(
-    const ActsFatras::Barcode& prt, const auto& particleHitsMap,
+    const ActsFatras::Particle& prt, const auto& particleHitsMap,
     const FW::GeometryIdMultimap<Acts::PlanarModuleCluster>& clusters) const {
-  auto prtHits = makeRange(particleHitsMap.equal_range(prt));
+  auto within = [](double x, double min, double max) {
+    return (min <= x) and (x < max);
+  };
+  auto isValidparticle = [&](const auto& p) {
+    const auto eta = Acts::VectorHelpers::eta(p.unitDirection());
+    const auto phi = Acts::VectorHelpers::phi(p.unitDirection());
+    const auto rho = Acts::VectorHelpers::perp(p.position());
+    // find the corresponding hits for this particle
+    const auto& hits = makeRange(particleHitsMap.equal_range(p.particleId()));
+    // number of recorded hits
+    size_t nHits = hits.size();
+    return within(rho, 0., m_impl->cfg.rhoMax) and
+           within(std::abs(p.position().z()), 0., m_impl->cfg.absZMax) and
+           within(std::abs(eta), m_impl->cfg.absEtaMin,
+                  m_impl->cfg.absEtaMax) and
+           within(eta, m_impl->cfg.etaMin, m_impl->cfg.etaMax) and
+           within(phi, m_impl->cfg.phiMin, m_impl->cfg.phiMax) and
+           within(p.transverseMomentum(), m_impl->cfg.ptMin,
+                  m_impl->cfg.ptMax) and
+           within(nHits, m_impl->cfg.nHitsMin, m_impl->cfg.nHitsMax) and
+           (m_impl->cfg.keepNeutral or (p.charge() != 0));
+  };
+
+  auto prtHits = makeRange(particleHitsMap.equal_range(prt.particleId()));
   bool hasBottomSP = false;
   bool hasMiddleSP = false;
   bool hasTopSP = false;
@@ -339,7 +362,8 @@ bool FW::TrackSeedingPerformanceWriter::prtFindable(
     size_t hit_id = prtHit.second;
     const auto& entry = clusters.begin() + hit_id;  // hit_id is 0-indexed
     if (entry == clusters.end()) {
-      ACTS_INFO("Unable to find hit " << hit_id)
+      ACTS_INFO("Unable to find hit " << hit_id
+                                      << ". (From prtFindable function)")
     }
     Acts::GeometryID geoId = entry->first;
     size_t volumeId = geoId.volume();
@@ -355,7 +379,7 @@ bool FW::TrackSeedingPerformanceWriter::prtFindable(
       hasTopSP = true;
     }
   }
-  return hasBottomSP && hasMiddleSP && hasTopSP;
+  return hasBottomSP && hasMiddleSP && hasTopSP && isValidparticle(prt);
 }
 
 std::set<ActsFatras::Barcode>
@@ -474,7 +498,8 @@ void FW::TrackSeedingPerformanceWriter::writePlots(
     if (tc.second > 0) {
       foundParticles++;
     }
-    if (!prtFindable(tc.first, particleHitsMap, clusters)) {
+    const auto prtPointer = particles.find(tc.first);
+    if (!prtFindable(*prtPointer, particleHitsMap, clusters)) {
       qualityCutNumerator++;
     }
     nTrueSeeds += tc.second;
@@ -484,7 +509,7 @@ void FW::TrackSeedingPerformanceWriter::writePlots(
     }
   }
   for (const auto& particle : particles) {
-    if (!prtFindable(particle.particleId(), particleHitsMap, clusters)) {
+    if (!prtFindable(particle, particleHitsMap, clusters)) {
       qualityCutDenominator++;
     }
   }

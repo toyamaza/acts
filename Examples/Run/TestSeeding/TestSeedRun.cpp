@@ -128,6 +128,9 @@ int main(int argc, char* argv[]) {
   seedPerfCfg.inputClusters = testSeedCfg.inputClusters;
   seedPerfCfg.inputHitParticlesMap = clusterReaderCfg.outputHitParticlesMap;
   seedPerfCfg.outputDir = outputDir;
+  seedPerfCfg.etaMin = -2.7;
+  seedPerfCfg.etaMax = 2.7;
+  seedPerfCfg.ptMin = 0.5;
   sequencer.addWriter(
       std::make_shared<TrackSeedingPerformanceWriter>(seedPerfCfg, logLevel));
 
