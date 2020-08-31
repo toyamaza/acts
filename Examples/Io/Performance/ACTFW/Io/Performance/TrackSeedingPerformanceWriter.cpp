@@ -425,7 +425,7 @@ void FW::TrackSeedingPerformanceWriter::analyzeSeed(
                                   particleHitCounts);
     for (const auto hc : particleHitCounts) {
       auto it = fakeCount.try_emplace(hc.particleId, 0u).first;
-      it->second += 1;
+      it->second += 1; // TODO: Fix how fakeCount is recorded
     }
   }
 }
