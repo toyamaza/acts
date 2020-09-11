@@ -12,6 +12,7 @@
 #include "ActsExamples/Io/Csv/CsvOptionsReader.hpp"
 #include "ActsExamples/Io/Csv/CsvParticleReader.hpp"
 #include "ActsExamples/Io/Csv/CsvPlanarClusterReader.hpp"
+#include "ActsExamples/Io/Performance/SeedingPerformanceWriter.hpp"
 #include "ActsExamples/Options/CommonOptions.hpp"
 #include "ActsExamples/Plugins/Obj/ObjPropagationStepsWriter.hpp"
 #include "ActsExamples/Seeding/SeedingAlgorithm.hpp"
@@ -23,7 +24,8 @@
 
 #include <boost/program_options.hpp>
 
-int seedingExample(int argc, char* argv[], ActsExamples::IBaseDetector& detector) {
+int seedingExample(int argc, char* argv[],
+                   ActsExamples::IBaseDetector& detector) {
   // Setup and parse options
 
   auto desc = ActsExamples::Options::makeDefaultOptions();
@@ -39,7 +41,8 @@ int seedingExample(int argc, char* argv[], ActsExamples::IBaseDetector& detector
   if (vm.empty()) {
     return EXIT_FAILURE;
   }
-  ActsExamples::Sequencer sequencer(ActsExamples::Options::readSequencerConfig(vm));
+  ActsExamples::Sequencer sequencer(
+      ActsExamples::Options::readSequencerConfig(vm));
 
   // Now read the standard options
   auto logLevel = ActsExamples::Options::readLogLevel(vm);
@@ -57,26 +60,43 @@ int seedingExample(int argc, char* argv[], ActsExamples::IBaseDetector& detector
   auto particleReader = ActsExamples::Options::readCsvParticleReaderConfig(vm);
   particleReader.inputStem = "particles_initial";
   particleReader.outputParticles = "particles_initial";
-  sequencer.addReader(std::make_shared<ActsExamples::CsvParticleReader>(particleReader, logLevel));
+  sequencer.addReader(std::make_shared<ActsExamples::CsvParticleReader>(
+      particleReader, logLevel));
 
   // Read clusters from CSV files
-  auto clusterReaderCfg = ActsExamples::Options::readCsvPlanarClusterReaderConfig(vm);
+  auto clusterReaderCfg =
+      ActsExamples::Options::readCsvPlanarClusterReaderConfig(vm);
   clusterReaderCfg.trackingGeometry = tGeometry;
   clusterReaderCfg.outputClusters = "clusters";
   clusterReaderCfg.outputHitIds = "hit_ids";
   clusterReaderCfg.outputHitParticlesMap = "hit_particles_map";
   clusterReaderCfg.outputSimulatedHits = "hits";
-  sequencer.addReader(std::make_shared<ActsExamples::CsvPlanarClusterReader>(clusterReaderCfg, logLevel));
+  sequencer.addReader(std::make_shared<ActsExamples::CsvPlanarClusterReader>(
+      clusterReaderCfg, logLevel));
 
   // Seeding algorithm
   ActsExamples::SeedingAlgorithm::Config seeding;
   seeding.inputSimulatedHits = clusterReaderCfg.outputSimulatedHits;
-  seeding.outputSeeds =  "seeds";
+  seeding.outputSeeds = "seeds";
+  seeding.outputProtoTracks = "protoTracks";  
   seeding.trackingGeometry = tGeometry;
-  sequencer.addAlgorithm( std::make_shared<ActsExamples::SeedingAlgorithm>(seeding, logLevel));
+  sequencer.addAlgorithm(
+      std::make_shared<ActsExamples::SeedingAlgorithm>(seeding, logLevel));
 
- // Performance Writer
- // ... will be added later
+  // Performance Writer
+  ActsExamples::SeedingPerformanceWriter::Config seedPerfCfg;
+  seedPerfCfg.inputSeeds = seeding.outputSeeds;
+  seedPerfCfg.inputProtoTracks = seeding.outputProtoTracks;
+  seedPerfCfg.inputParticles = particleReader.outputParticles;
+  seedPerfCfg.inputClusters = clusterReaderCfg.outputClusters;
+  seedPerfCfg.inputHitParticlesMap = clusterReaderCfg.outputHitParticlesMap;
+  seedPerfCfg.outputFilename = "performance";
+  seedPerfCfg.outputDir = "perf";
+  seedPerfCfg.etaMin = -2.7;
+  seedPerfCfg.etaMax = 2.7;
+  seedPerfCfg.ptMin = 0.5;
+  sequencer.addWriter(
+		      std::make_shared<ActsExamples::SeedingPerformanceWriter>(seedPerfCfg, logLevel));
 
   return sequencer.run();
 }

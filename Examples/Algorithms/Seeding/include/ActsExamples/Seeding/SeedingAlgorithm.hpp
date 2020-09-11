@@ -10,6 +10,10 @@
 
 #include "ActsExamples//Framework/BareAlgorithm.hpp"
 #include "Acts/Geometry/GeometryID.hpp"
+#include "Acts/Seeding/Seed.hpp"
+#include "ActsExamples/EventData/ProtoTrack.hpp"
+#include "ActsExamples/Seeding/SimSpacePoint.hpp"
+
 
 #include <memory>
 #include <string>
@@ -33,6 +37,9 @@ class SeedingAlgorithm final : public BareAlgorithm {
     std::string inputSimulatedHits;
     /// Output collection of clusters.
     std::string outputSeeds;
+    /// Output prototracks
+    std::string outputProtoTracks;
+    
     std::shared_ptr<const Acts::TrackingGeometry> trackingGeometry;
 
   };
@@ -43,8 +50,9 @@ class SeedingAlgorithm final : public BareAlgorithm {
   /// @param lvl is the logging level
   SeedingAlgorithm(Config cfg, Acts::Logging::Level lvl);
 
-  /// Build clusters from input simulation hits.
-  ///
+  /// @brief Converts a seed to a proto track of 3 hits
+  ActsExamples::ProtoTrack seedToProtoTrack(const Acts::Seed<ActsExamples::SimSpacePoint>* seed) const;
+  
   /// @param txt is the algorithm context with event information
   /// @return a process code indication success or failure
   ProcessCode execute(const AlgorithmContext& ctx) const final override;
