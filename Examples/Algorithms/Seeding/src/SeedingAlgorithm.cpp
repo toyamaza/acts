@@ -7,7 +7,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include "ActsExamples/Seeding/SeedingAlgorithm.hpp"
-
+#include "ActsExamples/Io/Csv/CsvPlanarClusterReader.hpp"
 #include "ActsExamples/EventData/GeometryContainers.hpp"
 #include "ActsExamples/EventData/SimHit.hpp"
 #include "ActsExamples/EventData/SimParticle.hpp"
@@ -40,12 +40,24 @@
 #include <stdexcept>
 
 using ProtoTrack = ActsExamples::ProtoTrack;
+using SimSpacePoint = ActsExamples::SimSpacePoint;
+using HitParticlesMap = ActsExamples::IndexMultimap<ActsFatras::Barcode>;
 
 ActsExamples::SeedingAlgorithm::SeedingAlgorithm(
     ActsExamples::SeedingAlgorithm::Config cfg, Acts::Logging::Level lvl)
     : ActsExamples::BareAlgorithm("SeedingAlgorithm", lvl), m_cfg(std::move(cfg)) {
-  if (m_cfg.inputSimulatedHits.empty()) {
-    throw std::invalid_argument("Missing input hits collection");
+  // if (m_cfg.inputSimulatedHits.empty()) {
+  //   throw std::invalid_argument("Missing input hits collection");
+  // }
+  if (m_cfg.inputClusters.empty()) {
+    throw std::invalid_argument(
+        "Missing clusters input collection with the hits");
+  }
+  if (m_cfg.inputHitParticlesMap.empty()) {
+    throw std::invalid_argument("Missing hit-particles map input collection");
+  }
+  if (m_cfg.inputParticles.empty()) {
+    throw std::invalid_argument("Missing input particles collection");
   }
   if (m_cfg.outputSeeds.empty()) {
     throw std::invalid_argument("Missing output seeds collection");
@@ -65,6 +77,48 @@ ActsExamples::SeedingAlgorithm::SeedingAlgorithm(
 
 }
 
+SimSpacePoint* ActsExamples::SeedingAlgorithm::readSP(
+    std::size_t hit_id, const Acts::GeometryID geoId,
+    const Acts::PlanarModuleCluster& cluster,
+    const HitParticlesMap& hitParticlesMap, const AlgorithmContext& ctx) const {
+  const auto& parameters = cluster.parameters();
+  Acts::Vector2D localPos(parameters[0], parameters[1]);
+  Acts::Vector3D globalFakeMom(1, 1, 1);
+  Acts::Vector3D globalPos(0, 0, 0);
+  // transform local into global position information
+  cluster.referenceObject().localToGlobal(ctx.geoContext, localPos,
+                                          globalFakeMom, globalPos);
+  float x, y, z, r, varianceR, varianceZ;
+  x = globalPos.x();
+  y = globalPos.y();
+  z = globalPos.z();
+  r = std::sqrt(x * x + y * y);
+  varianceR = 0;  // initialized to 0 becuse they don't affect seeds generated
+  varianceZ = 0;  // initialized to 0 becuse they don't affect seeds generated
+
+  // get truth particles that are a part of this space point
+  std::vector<ActsExamples::ParticleHitCount> particleHitCount;
+  for (auto hitParticle : makeRange(hitParticlesMap.equal_range(hit_id))) {
+    auto particleId = hitParticle.second;
+    // search for existing particle in the existing hit counts
+    auto isSameParticle = [=](const ParticleHitCount& phc) {
+      return (phc.particleId == particleId);
+    };
+    auto it = std::find_if(particleHitCount.begin(), particleHitCount.end(),
+                           isSameParticle);
+    // either increase count if we saw the particle before or add it
+    if (it != particleHitCount.end()) {
+      it->hitCount += 1;
+    } else {
+      particleHitCount.push_back({particleId, 1u});
+    }
+  }
+
+  SimSpacePoint* SP = new SimSpacePoint{
+      hit_id, x, y, z, r, geoId, varianceR, varianceZ, particleHitCount};
+  return SP;
+}
+
 ProtoTrack ActsExamples::SeedingAlgorithm::seedToProtoTrack(
 							    const Acts::Seed<ActsExamples::SimSpacePoint>* seed) const {
   ProtoTrack track;
@@ -76,9 +130,6 @@ ProtoTrack ActsExamples::SeedingAlgorithm::seedToProtoTrack(
 }
 
 ActsExamples::ProcessCode ActsExamples::SeedingAlgorithm::execute(const AlgorithmContext& ctx) const {
-
-  // Prepare the input and output collections
-  const auto& hits = ctx.eventStore.get<SimHitContainer>(m_cfg.inputSimulatedHits);
 
   Acts::SeedfinderConfig<SimSpacePoint> config;
   // silicon detector max
@@ -124,24 +175,67 @@ ActsExamples::ProcessCode ActsExamples::SeedingAlgorithm::execute(const Algorith
 	    };
 
 
-  std::vector<const SimSpacePoint*> spVec;
-  std::size_t hit_id = 0;
-  for (const auto& hit : hits) {
-    const auto hitPos = hit.position();
-    int layer = 1; // dummy
-    float varR = 0.01;
-    float varZ = 0.5;
-    float hitPosX = hitPos.x();
-    float hitPosY = hitPos.y();
-    float hitPosZ = hitPos.z();
-    float r = sqrt(hitPosX*hitPosX + hitPosY*hitPosY);
-    SimSpacePoint* sp = new SimSpacePoint{
-					  hit_id, hitPosX,hitPosY,hitPosZ, r, layer, varR, varZ
-    };
+  const auto& clusters =
+    ctx.eventStore.get<ActsExamples::GeometryIdMultimap<Acts::PlanarModuleCluster>>(
+									  m_cfg.inputClusters);
+  // read in the map of hitId to particleId truth information
+  const HitParticlesMap hitParticlesMap =
+    ctx.eventStore.get<HitParticlesMap>(m_cfg.inputHitParticlesMap);
+  const auto& particleHitsMap = invertIndexMultimap(hitParticlesMap);
+  // read in particles so we can make proto seeds
+  const auto& particles =
+    ctx.eventStore.get<SimParticleContainer>(m_cfg.inputParticles);
 
-    spVec.push_back(std::move(sp));
+  std::size_t nHitsTotal = hitParticlesMap.size();
+
+  // create the space points
+  std::size_t clustCounter = 0;
+  std::size_t nIgnored = 0;
+  std::vector<const SimSpacePoint*> spVec;
+  // since clusters are ordered, we simply count the hit_id as we read
+  // clusters. Hit_id isn't stored in a cluster. This is how
+  // CsvPlanarClusterWriter did it.
+  std::size_t hit_id = 0;
+  for (const auto& entry : clusters) {
+    Acts::GeometryID geoId = entry.first;
+    const Acts::PlanarModuleCluster& cluster = entry.second;
+    std::size_t volumeId = geoId.volume();
+    std::size_t layerId = geoId.layer();
+
+    // filter out hits that aren't part of the volumes and layers track seeding
+    // is supposed to work on.
+    if (volumeId == 8 && 2 <= layerId && layerId <= 6) {
+      SimSpacePoint* SP = readSP(hit_id, geoId, cluster, hitParticlesMap, ctx);
+      spVec.push_back(SP);
+      clustCounter++;
+
+    } else {
+      nIgnored++;
+    }
     hit_id++;
   }
+  // // Prepare the input and output collections
+  // const auto& hits = ctx.eventStore.get<SimHitContainer>(m_cfg.inputSimulatedHits);
+
+
+  // std::vector<const SimSpacePoint*> spVec;
+  // std::size_t hit_id = 0;
+  // for (const auto& hit : hits) {
+  //   const auto hitPos = hit.position();
+  //   int layer = 1; // dummy
+  //   float varR = 0.01;
+  //   float varZ = 0.5;
+  //   float hitPosX = hitPos.x();
+  //   float hitPosY = hitPos.y();
+  //   float hitPosZ = hitPos.z();
+  //   float r = sqrt(hitPosX*hitPosX + hitPosY*hitPosY);
+  //   SimSpacePoint* sp = new SimSpacePoint{
+  // 					  hit_id, hitPosX,hitPosY,hitPosZ, r, layer, varR, varZ
+  //   };
+
+  //   spVec.push_back(std::move(sp));
+  //   hit_id++;
+  // }
 
   // create grid with bin sizes according to the configured geometry
   std::unique_ptr<Acts::SpacePointGrid<SimSpacePoint>> grid =

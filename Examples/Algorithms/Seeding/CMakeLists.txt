@@ -9,7 +9,7 @@ target_link_libraries(
   ActsExamplesSeeding
   PRIVATE
     ActsCore ActsDigitizationPlugin ActsIdentificationPlugin
-    ActsExamplesFramework
+    ActsExamplesFramework  ActsExamplesIoCsv
     Boost::program_options)
 
 install(

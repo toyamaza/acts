@@ -80,6 +80,9 @@ int seedingExample(int argc, char* argv[],
   seeding.outputSeeds = "seeds";
   seeding.outputProtoTracks = "protoTracks";  
   seeding.trackingGeometry = tGeometry;
+  seeding.inputHitParticlesMap = clusterReaderCfg.outputHitParticlesMap;
+  seeding.inputClusters = clusterReaderCfg.outputClusters;
+  seeding.inputParticles = particleReader.outputParticles;  
   sequencer.addAlgorithm(
       std::make_shared<ActsExamples::SeedingAlgorithm>(seeding, logLevel));
 

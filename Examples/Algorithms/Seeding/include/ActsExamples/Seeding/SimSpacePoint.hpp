@@ -9,7 +9,6 @@
 #pragma once
 
 #include "ActsExamples/Validation/ProtoTrackClassification.hpp"
-
 namespace ActsExamples{
 struct SimSpacePoint {
   size_t m_Id;
@@ -17,10 +16,9 @@ struct SimSpacePoint {
   float m_y;
   float m_z;
   float m_r;
-  int surface;
+  Acts::GeometryID m_geoId;
   float varianceR;
   float varianceZ;
-  Acts::GeometryID m_geoId;
   std::vector<ActsExamples::ParticleHitCount> particles;
   size_t Id() const { return m_Id; }
   float x() const { return m_x; }
@@ -29,13 +27,10 @@ struct SimSpacePoint {
   float r() const { return m_r; }
 };
 
-bool operator==(SimSpacePoint a, SimSpacePoint b) {
-  if (a.m_Id == b.m_Id && a.m_x == b.m_x && a.m_y == b.m_y && a.m_z == b.m_z &&
-      a.surface == b.surface && a.varianceR == b.varianceR &&
-      a.varianceZ == b.varianceZ) {
-    return true;
-  } else {
-    return false;
-  }
+inline bool operator==(SimSpacePoint a, SimSpacePoint b) {
+  return (a.m_Id == b.m_Id && a.m_geoId.volume() == b.m_geoId.volume() &&
+          a.m_geoId.layer() == b.m_geoId.layer() && a.m_x == b.m_x &&
+          a.m_y == b.m_y && a.m_z == b.m_z && a.varianceR == b.varianceR &&
+          a.varianceZ == b.varianceZ);
 }
 }
