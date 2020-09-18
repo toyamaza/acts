@@ -294,33 +294,6 @@ ActsExamples::ProcessCode ActsExamples::SeedingPerformanceWriter::endRun() {
   return ProcessCode::SUCCESS;
 }
 
-void ActsExamples::SeedingPerformanceWriter::printSeed(
-    const Acts::Seed<SimSpacePoint>* seed) const {
-  const SimSpacePoint* sp = seed->sp()[0];
-  std::cout << "Sp Id # " << sp->Id() << ": # of particles "
-            << sp->particles.size() << ": ";
-  std::cout << sp->m_geoId.layer() << " (" << sp->x() << ", " << sp->y() << ", "
-            << sp->z()
-            << ") particle = " << sp->particles[0].particleId.particle()
-            << ", barcode: " << sp->particles[0].particleId;
-  sp = seed->sp()[1];
-  std::cout << "; Sp Id # " << sp->Id() << ": # of particles "
-            << sp->particles.size() << ": ";
-  std::cout << sp->m_geoId.layer() << " (" << sp->x() << ", " << sp->y() << ", "
-            << sp->z()
-            << ") particle = " << sp->particles[0].particleId.particle()
-            << ", barcode: " << sp->particles[0].particleId;
-  sp = seed->sp()[2];
-  std::cout << "; Sp Id # " << sp->Id() << ": # of particles "
-            << sp->particles.size() << ": ";
-  std::cout << sp->m_geoId.layer() << " (" << sp->x() << ", " << sp->y() << ", "
-            << sp->z()
-            << ") particle = " << sp->particles[0].particleId.particle()
-            << ", barcode: " << sp->particles[0].particleId << " with count "
-            << sp->particles[0].hitCount;
-  std::cout << std::endl << std::endl;
-}
-
 bool ActsExamples::SeedingPerformanceWriter::prtFindable(
     const ActsFatras::Particle& prt,
     const IndexMultimap<unsigned long,ActsFatras::Barcode>&  particleHitsMap,

@@ -122,12 +122,6 @@ class SeedingPerformanceWriter final
       const ActsExamples::GeometryIdMultimap<Acts::PlanarModuleCluster>&
           clusters);
 
-  /// @brief Prints out the 3 space points inide of a seed and relevant
-  /// information
-  ///
-  /// @param seed The seed to be printed
-  void printSeed(const Acts::Seed<SimSpacePoint>* seed) const;
-
   /// Construct from configuration and log level.
   SeedingPerformanceWriter(Config cfg, Acts::Logging::Level lvl);
   ~SeedingPerformanceWriter() override;
