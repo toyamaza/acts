@@ -111,9 +111,6 @@ ActsExamples::ProcessCode ActsExamples::SeedingPerformanceWriter::writeT(
   // are three seeds for one particle, this is counted as two duplicate seeds.
   std::set<ActsFatras::Barcode> particlesFoundBySeeds;
 
-  // Counter of truth-unmatched seeds
-  std::map<ActsFatras::Barcode, size_t> unmatched;
-  
   // Map from particles to how many times they were successfully found by a seed
   std::unordered_map<ActsFatras::Barcode, std::size_t> truthCount;
 
@@ -123,15 +120,11 @@ ActsExamples::ProcessCode ActsExamples::SeedingPerformanceWriter::writeT(
       const Acts::Seed<SimSpacePoint>* seed = &regionVec[i];
 
       std::set<ActsFatras::Barcode> prtsInCommon = identifySharedParticles(seed);
-      bool isFake = false;
       if (prtsInCommon.size() > 0) {
 	for (const auto& prt : prtsInCommon) {
 	  auto it = truthCount.try_emplace(prt, 0u).first;
 	  it->second += 1;
 	}
-      }else{
-	isFake = true;
-      }
     }
   }
   ACTS_INFO("Number of seeds: " << nSeeds );
@@ -141,10 +134,8 @@ ActsExamples::ProcessCode ActsExamples::SeedingPerformanceWriter::writeT(
   for (const auto& particle : particles) {
     const auto it1 = truthCount.find(particle.particleId());
     bool isMatched = false;
-    size_t nMatchedSeeds = 0;
 
     if ( it1 != truthCount.end() ){
-      nMatchedSeeds = it1->second;
       isMatched = true;
     }
 
