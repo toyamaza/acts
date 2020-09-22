@@ -26,10 +26,11 @@ using ProtoTrack = ActsExamples::ProtoTrack;
 }  // namespace
 
 ActsExamples::SeedingPerformanceWriter::SeedingPerformanceWriter(
-								 ActsExamples::SeedingPerformanceWriter::Config cfg, Acts::Logging::Level lvl)
-  : WriterT(cfg.inputSeeds, "SeedingPerformanceWriter", lvl),
-    m_cfg(std::move(cfg)),
-    m_effPlotTool(m_cfg.effPlotToolConfig, lvl){
+    ActsExamples::SeedingPerformanceWriter::Config cfg,
+    Acts::Logging::Level lvl)
+    : WriterT(cfg.inputSeeds, "SeedingPerformanceWriter", lvl),
+      m_cfg(std::move(cfg)),
+      m_effPlotTool(m_cfg.effPlotToolConfig, lvl) {
   if (m_cfg.inputSeeds.empty()) {
     throw std::invalid_argument("Missing input seeds collection");
   }
@@ -69,10 +70,9 @@ ActsExamples::ProcessCode ActsExamples::SeedingPerformanceWriter::endRun() {
   return ProcessCode::SUCCESS;
 }
 
-
 std::set<ActsFatras::Barcode>
 ActsExamples::SeedingPerformanceWriter::identifySharedParticles(
-								const Acts::Seed<SimSpacePoint>* seed) const {
+    const Acts::Seed<SimSpacePoint>* seed) const {
   const SimSpacePoint* sp0 = seed->sp()[0];
   const SimSpacePoint* sp1 = seed->sp()[1];
   const SimSpacePoint* sp2 = seed->sp()[2];
@@ -98,11 +98,11 @@ ActsExamples::SeedingPerformanceWriter::identifySharedParticles(
 }
 
 ActsExamples::ProcessCode ActsExamples::SeedingPerformanceWriter::writeT(
-									 const AlgorithmContext& ctx,
-									 const std::vector<std::vector<Acts::Seed<SimSpacePoint>>>& seedVector) {
+    const AlgorithmContext& ctx,
+    const std::vector<std::vector<Acts::Seed<SimSpacePoint>>>& seedVector) {
   // Read truth particles from input collection
   const auto& particles =
-    ctx.eventStore.get<SimParticleContainer>(m_cfg.inputParticles);
+      ctx.eventStore.get<SimParticleContainer>(m_cfg.inputParticles);
 
   // Exclusive access to the tree while writing
   std::lock_guard<std::mutex> lock(m_writeMutex);
@@ -119,28 +119,28 @@ ActsExamples::ProcessCode ActsExamples::SeedingPerformanceWriter::writeT(
     for (size_t i = 0; i < regionVec.size(); i++) {
       const Acts::Seed<SimSpacePoint>* seed = &regionVec[i];
 
-      std::set<ActsFatras::Barcode> prtsInCommon = identifySharedParticles(seed);
+      std::set<ActsFatras::Barcode> prtsInCommon =
+          identifySharedParticles(seed);
       if (prtsInCommon.size() > 0) {
-	for (const auto& prt : prtsInCommon) {
-	  auto it = truthCount.try_emplace(prt, 0u).first;
-	  it->second += 1;
-	}
+        for (const auto& prt : prtsInCommon) {
+          auto it = truthCount.try_emplace(prt, 0u).first;
+          it->second += 1;
+        }
+      }
     }
-  }
-  ACTS_INFO("Number of seeds: " << nSeeds );
+    ACTS_INFO("Number of seeds: " << nSeeds);
 
-  
-  // Fill the effeciency and fake rate plots
-  for (const auto& particle : particles) {
-    const auto it1 = truthCount.find(particle.particleId());
-    bool isMatched = false;
+    // Fill the effeciency and fake rate plots
+    for (const auto& particle : particles) {
+      const auto it1 = truthCount.find(particle.particleId());
+      bool isMatched = false;
 
-    if ( it1 != truthCount.end() ){
-      isMatched = true;
+      if (it1 != truthCount.end()) {
+        isMatched = true;
+      }
+
+      m_effPlotTool.fill(m_effPlotCache, particle, isMatched);
     }
 
-    m_effPlotTool.fill(m_effPlotCache, particle, isMatched);
+    return ProcessCode::SUCCESS;
   }
-
-  return ProcessCode::SUCCESS;
-}

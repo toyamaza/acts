@@ -11,6 +11,6 @@
 #include "ActsExamples/Seeding/SimSpacePoint.hpp"
 
 #include <vector>
-namespace ActsExamples{
-  using SeedContainer = std::vector<Acts::Seed<SimSpacePoint> >;
-} // namespace ActsExamples
+namespace ActsExamples {
+using SeedContainer = std::vector<Acts::Seed<SimSpacePoint> >;
+}  // namespace ActsExamples

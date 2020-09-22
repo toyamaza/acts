@@ -18,4 +18,5 @@ class IBaseDetector;
 /// @param argc the number of argumetns of the call
 /// @param argv the argument list
 /// @param detector The detector descriptor instance
-int seedingExample(int argc, char* argv[], ActsExamples::IBaseDetector& detector);
+int seedingExample(int argc, char* argv[],
+                   ActsExamples::IBaseDetector& detector);

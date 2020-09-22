@@ -70,7 +70,8 @@ SimSpacePoint* ActsExamples::SeedingAlgorithm::transformSP(
   Acts::Vector3D globalPos(0, 0, 0);
   Acts::Vector3D globalFakeMom(1, 1, 1);
   // transform local into global position information
-  globalPos = cluster.referenceObject().localToGlobal(ctx.geoContext, localPos, globalFakeMom);
+  globalPos = cluster.referenceObject().localToGlobal(ctx.geoContext, localPos,
+                                                      globalFakeMom);
   float x, y, z, r, varianceR, varianceZ;
   x = globalPos.x();
   y = globalPos.y();
@@ -104,7 +105,7 @@ SimSpacePoint* ActsExamples::SeedingAlgorithm::transformSP(
 }
 
 ActsExamples::ProcessCode ActsExamples::SeedingAlgorithm::execute(
-								  const AlgorithmContext& ctx) const {
+    const AlgorithmContext& ctx) const {
   Acts::SeedfinderConfig<SimSpacePoint> config;
   // silicon detector max
   config.rMax = 200.;
@@ -133,29 +134,29 @@ ActsExamples::ProcessCode ActsExamples::SeedingAlgorithm::execute(
   gridConf.cotThetaMax = config.cotThetaMax;
 
   auto bottomBinFinder = std::make_shared<Acts::BinFinder<SimSpacePoint>>(
-									  Acts::BinFinder<SimSpacePoint>());
+      Acts::BinFinder<SimSpacePoint>());
   auto topBinFinder = std::make_shared<Acts::BinFinder<SimSpacePoint>>(
-								       Acts::BinFinder<SimSpacePoint>());
+      Acts::BinFinder<SimSpacePoint>());
   Acts::SeedFilterConfig sfconf;
   Acts::GenericDetectorCuts<SimSpacePoint> detectorCuts =
-    Acts::GenericDetectorCuts<SimSpacePoint>();
+      Acts::GenericDetectorCuts<SimSpacePoint>();
   config.seedFilter = std::make_unique<Acts::SeedFilter<SimSpacePoint>>(
-									Acts::SeedFilter<SimSpacePoint>(sfconf, &detectorCuts));
+      Acts::SeedFilter<SimSpacePoint>(sfconf, &detectorCuts));
   Acts::Seedfinder<SimSpacePoint> seedFinder(config);
 
   // covariance tool, sets covariances per spacepoint as required
   auto ct = [=](const SimSpacePoint& sp, float, float,
                 float) -> Acts::Vector2D {
-	      return {sp.varianceR, sp.varianceZ};
-	    };
+    return {sp.varianceR, sp.varianceZ};
+  };
 
   const auto& clusters =
-    ctx.eventStore
-    .get<ActsExamples::GeometryIdMultimap<Acts::PlanarModuleCluster>>(
-								      m_cfg.inputClusters);
+      ctx.eventStore
+          .get<ActsExamples::GeometryIdMultimap<Acts::PlanarModuleCluster>>(
+              m_cfg.inputClusters);
   // read in the map of hitId to particleId truth information
   const HitParticlesMap hitParticlesMap =
-    ctx.eventStore.get<HitParticlesMap>(m_cfg.inputHitParticlesMap);
+      ctx.eventStore.get<HitParticlesMap>(m_cfg.inputHitParticlesMap);
 
   // create the space points
   std::size_t clustCounter = 0;
@@ -169,9 +170,10 @@ ActsExamples::ProcessCode ActsExamples::SeedingAlgorithm::execute(
     const Acts::PlanarModuleCluster& cluster = entry.second;
     std::size_t volumeId = geoId.volume();
 
-    if( volumeId >=7 and volumeId <=9){ // pixel detector 
+    if (volumeId >= 7 and volumeId <= 9) {  // pixel detector
 
-      SimSpacePoint* SP = transformSP(hit_id, geoId, cluster, hitParticlesMap, ctx);
+      SimSpacePoint* SP =
+          transformSP(hit_id, geoId, cluster, hitParticlesMap, ctx);
       spVec.push_back(SP);
       clustCounter++;
     }
@@ -180,21 +182,21 @@ ActsExamples::ProcessCode ActsExamples::SeedingAlgorithm::execute(
 
   // create grid with bin sizes according to the configured geometry
   std::unique_ptr<Acts::SpacePointGrid<SimSpacePoint>> grid =
-    Acts::SpacePointGridCreator::createGrid<SimSpacePoint>(gridConf);
+      Acts::SpacePointGridCreator::createGrid<SimSpacePoint>(gridConf);
   auto spGroup = Acts::BinnedSPGroup<SimSpacePoint>(
-						    spVec.begin(), spVec.end(), ct, bottomBinFinder, topBinFinder,
-						    std::move(grid), config);
+      spVec.begin(), spVec.end(), ct, bottomBinFinder, topBinFinder,
+      std::move(grid), config);
 
   std::vector<std::vector<Acts::Seed<SimSpacePoint>>> seedVector;
   auto groupIt = spGroup.begin();
   auto endOfGroups = spGroup.end();
   for (; !(groupIt == endOfGroups); ++groupIt) {
     seedVector.push_back(seedFinder.createSeedsForGroup(
-							groupIt.bottom(), groupIt.middle(), groupIt.top()));
+        groupIt.bottom(), groupIt.middle(), groupIt.top()));
   }
 
   // SeedContainer seeds;
-  ProtoTrackContainer protoTracks; // Three hits
+  ProtoTrackContainer protoTracks;  // Three hits
   int numSeeds = 0;
   for (auto& outVec : seedVector) {
     numSeeds += outVec.size();
@@ -203,14 +205,14 @@ ActsExamples::ProcessCode ActsExamples::SeedingAlgorithm::execute(
       ProtoTrack ptrack;
       ptrack.reserve(seed->sp().size());
       for (std::size_t j = 0; j < seed->sp().size(); j++) {
-	ptrack.emplace_back(seed->sp()[j]->Id());
+        ptrack.emplace_back(seed->sp()[j]->Id());
       }
       protoTracks.emplace_back(std::move(ptrack));
     }
   }
 
   ACTS_DEBUG(spVec.size() << " hits, " << seedVector.size() << " regions, "
-	     << numSeeds << " seeds");
+                          << numSeeds << " seeds");
 
   ctx.eventStore.add(m_cfg.outputSeeds, std::move(seedVector));
   ctx.eventStore.add(m_cfg.outputProtoTracks, std::move(protoTracks));

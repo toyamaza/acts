@@ -51,7 +51,6 @@ class SeedingPerformanceWriter final
     EffPlotTool::Config effPlotToolConfig;
     FakeRatePlotTool::Config fakeRatePlotToolConfig;
     DuplicationPlotTool::Config duplicationPlotToolConfig;
-    
   };
 
   /// @brief Finds all the particles that are in common to all space points in
@@ -59,7 +58,6 @@ class SeedingPerformanceWriter final
   /// @param seed The seed to be analyzed
   std::set<ActsFatras::Barcode> identifySharedParticles(
       const Acts::Seed<SimSpacePoint>* seed) const;
-
 
   /// Construct from configuration and log level.
   SeedingPerformanceWriter(Config cfg, Acts::Logging::Level lvl);
