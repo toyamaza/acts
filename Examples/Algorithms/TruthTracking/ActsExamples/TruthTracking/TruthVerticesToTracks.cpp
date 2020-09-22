@@ -75,17 +75,14 @@ ActsExamples::ProcessCode ActsExamples::TruthVerticesToTracksAlgorithm::execute(
     vertexAndTracks.vertex = vtx;
 
     // Track objects at current vertex
-    std::vector<Acts::BoundParameters> trackCollection;
+    std::vector<Acts::BoundTrackParameters> trackCollection;
 
     // Iterate over all particle emerging from current vertex
     for (auto const& particle : vtx.outgoing) {
-      const Acts::Vector3D& ptclMom =
-          particle.absMomentum() * particle.unitDirection();
-
       // Define start track params
-      Acts::CurvilinearParameters start(std::nullopt, particle.position(),
-                                        ptclMom, particle.charge(),
-                                        particle.time());
+      Acts::CurvilinearTrackParameters start(
+          particle.position4(), particle.unitDirection(),
+          particle.absMomentum(), particle.charge());
       // Run propagator
       auto result = propagator.propagate(start, *perigeeSurface, pOptions);
       if (!result.ok()) {
@@ -99,7 +96,7 @@ ActsExamples::ProcessCode ActsExamples::TruthVerticesToTracksAlgorithm::execute(
 
       if (m_cfg.doSmearing) {
         // Calculate pt-dependent IP resolution
-        const double particlePt = Acts::VectorHelpers::perp(ptclMom);
+        const double particlePt = particle.transverseMomentum();
         const double ipRes =
             m_cfg.ipResA * std::exp(-m_cfg.ipResB * particlePt) + m_cfg.ipResC;
 
@@ -133,11 +130,11 @@ ActsExamples::ProcessCode ActsExamples::TruthVerticesToTracksAlgorithm::execute(
         covMat.diagonal() << rn_d0 * rn_d0, rn_z0 * rn_z0, rn_ph * rn_ph,
             rn_th * rn_th, rn_qp * rn_qp, 1.;
 
-        trackCollection.push_back(Acts::BoundParameters(
-            context.geoContext, covMat, newTrackParams, perigeeSurface));
+        trackCollection.push_back(
+            Acts::BoundTrackParameters(perigeeSurface, newTrackParams, covMat));
       } else {
-        trackCollection.push_back(Acts::BoundParameters(
-            context.geoContext, std::nullopt, newTrackParams, perigeeSurface));
+        trackCollection.push_back(
+            Acts::BoundTrackParameters(perigeeSurface, newTrackParams));
       }
     }  // end iteration over all particle at vertex
 

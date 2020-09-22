@@ -85,6 +85,8 @@ ActsExamples::ProcessCode ActsExamples::RootVertexAndTracksReader::read(
 
     // The collection to be written
     std::vector<ActsExamples::VertexAndTracks> mCollection;
+    auto perigeeSurface = Acts::Surface::makeShared<Acts::PerigeeSurface>(
+        Acts::Vector3D(0., 0., 0.));
 
     for (size_t ib = 0; ib < m_cfg.batchSize; ++ib) {
       // Read the correct entry: batch size * event_number + ib
@@ -100,16 +102,19 @@ ActsExamples::ProcessCode ActsExamples::RootVertexAndTracksReader::read(
         vtxAndTracks.vertex.position4[2] = (*m_ptrVz)[idx];
         vtxAndTracks.vertex.position4[3] = 0;
 
-        std::vector<Acts::BoundParameters> tracks;
+        std::vector<Acts::BoundTrackParameters> tracks;
         // Loop over all tracks in current event
         for (size_t trkId = 0; trkId < m_ptrD0->size(); ++trkId) {
           // Take only tracks that belong to current vertex
           if (static_cast<size_t>((*m_ptrVtxID)[trkId]) == idx) {
             // Get track parameter
-            Acts::BoundVector newTrackParams;
-            newTrackParams << (*m_ptrD0)[trkId], (*m_ptrZ0)[trkId],
-                (*m_ptrPhi)[trkId], (*m_ptrTheta)[trkId], (*m_ptrQP)[trkId],
-                (*m_ptrTime)[trkId];
+            Acts::BoundVector newTrackParams = Acts::BoundVector::Zero();
+            newTrackParams[Acts::eBoundLoc0] = (*m_ptrD0)[trkId];
+            newTrackParams[Acts::eBoundLoc1] = (*m_ptrZ0)[trkId];
+            newTrackParams[Acts::eBoundPhi] = (*m_ptrPhi)[trkId];
+            newTrackParams[Acts::eBoundTheta] = (*m_ptrTheta)[trkId];
+            newTrackParams[Acts::eBoundQOverP] = (*m_ptrQP)[trkId];
+            newTrackParams[Acts::eBoundTime] = (*m_ptrTime)[trkId];
 
             // Get track covariance vector
             std::vector<double> trkCovVec = (*m_ptrTrkCov)[trkId];
@@ -119,12 +124,8 @@ ActsExamples::ProcessCode ActsExamples::RootVertexAndTracksReader::read(
                 Eigen::Map<Acts::BoundSymMatrix>(trkCovVec.data());
 
             // Create track parameters and add to track list
-            std::shared_ptr<Acts::PerigeeSurface> perigeeSurface =
-                Acts::Surface::makeShared<Acts::PerigeeSurface>(
-                    Acts::Vector3D(0., 0., 0.));
-            tracks.push_back(
-                Acts::BoundParameters(context.geoContext, std::move(covMat),
-                                      newTrackParams, perigeeSurface));
+            tracks.emplace_back(perigeeSurface, newTrackParams,
+                                std::move(covMat));
           }
         }  // End loop over all tracks
         // Set tracks

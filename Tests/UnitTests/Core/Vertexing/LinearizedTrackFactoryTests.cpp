@@ -93,7 +93,7 @@ BOOST_AUTO_TEST_CASE(linearized_track_factory_test) {
   double z0v = z;
 
   // Start constructing nTracks tracks in the following
-  std::vector<BoundParameters> tracks;
+  std::vector<BoundTrackParameters> tracks;
 
   // Construct random track emerging from vicinity of vertex position
   // Vector to store track objects used for vertex fit
@@ -119,8 +119,7 @@ BOOST_AUTO_TEST_CASE(linearized_track_factory_test) {
     covMat << resD0 * resD0, 0., 0., 0., 0., 0., 0., resZ0 * resZ0, 0., 0., 0.,
         0., 0., 0., resPh * resPh, 0., 0., 0., 0., 0., 0., resTh * resTh, 0.,
         0., 0., 0., 0., 0., resQp * resQp, 0., 0., 0., 0., 0., 0., 1.;
-    tracks.push_back(BoundParameters(geoContext, std::move(covMat), paramVec,
-                                     perigeeSurface));
+    tracks.emplace_back(perigeeSurface, paramVec, std::move(covMat));
   }
 
   Linearizer::Config ltConfig(bField, propagator);
@@ -130,12 +129,12 @@ BOOST_AUTO_TEST_CASE(linearized_track_factory_test) {
   BoundVector vecBoundZero = BoundVector::Zero();
   BoundSymMatrix matBoundZero = BoundSymMatrix::Zero();
   Vector4D vecSPZero = Vector4D::Zero();
-  ActsMatrix<BoundParametersScalar, eBoundParametersSize, 4> matBound2SPZero =
-      ActsMatrix<BoundParametersScalar, eBoundParametersSize, 4>::Zero();
-  ActsMatrixD<eBoundParametersSize, 3> matBound2MomZero =
-      ActsMatrixD<eBoundParametersSize, 3>::Zero();
+  ActsMatrix<BoundScalar, eBoundSize, 4> matBound2SPZero =
+      ActsMatrix<BoundScalar, eBoundSize, 4>::Zero();
+  ActsMatrixD<eBoundSize, 3> matBound2MomZero =
+      ActsMatrixD<eBoundSize, 3>::Zero();
 
-  for (const BoundParameters& parameters : tracks) {
+  for (const BoundTrackParameters& parameters : tracks) {
     LinearizedTrack linTrack =
         linFactory
             .linearizeTrack(parameters, Vector4D::Zero(), geoContext,
@@ -184,7 +183,7 @@ BOOST_AUTO_TEST_CASE(linearized_track_factory_straightline_test) {
   double z0v = z;
 
   // Start constructing nTracks tracks in the following
-  std::vector<BoundParameters> tracks;
+  std::vector<BoundTrackParameters> tracks;
 
   // Construct random track emerging from vicinity of vertex position
   // Vector to store track objects used for vertex fit
@@ -210,8 +209,7 @@ BOOST_AUTO_TEST_CASE(linearized_track_factory_straightline_test) {
     covMat << resD0 * resD0, 0., 0., 0., 0., 0., 0., resZ0 * resZ0, 0., 0., 0.,
         0., 0., 0., resPh * resPh, 0., 0., 0., 0., 0., 0., resTh * resTh, 0.,
         0., 0., 0., 0., 0., resQp * resQp, 0., 0., 0., 0., 0., 0., 1.;
-    tracks.push_back(BoundParameters(geoContext, std::move(covMat), paramVec,
-                                     perigeeSurface));
+    tracks.emplace_back(perigeeSurface, paramVec, std::move(covMat));
   }
 
   // Set up helical track linearizer for the case of a non-existing
@@ -223,12 +221,12 @@ BOOST_AUTO_TEST_CASE(linearized_track_factory_straightline_test) {
   BoundVector vecBoundZero = BoundVector::Zero();
   BoundSymMatrix matBoundZero = BoundSymMatrix::Zero();
   Vector4D vecSPZero = Vector4D::Zero();
-  ActsMatrix<BoundParametersScalar, eBoundParametersSize, 4> matBound2SPZero =
-      ActsMatrix<BoundParametersScalar, eBoundParametersSize, 4>::Zero();
-  ActsMatrixD<eBoundParametersSize, 3> matBound2MomZero =
-      ActsMatrixD<eBoundParametersSize, 3>::Zero();
+  ActsMatrix<BoundScalar, eBoundSize, 4> matBound2SPZero =
+      ActsMatrix<BoundScalar, eBoundSize, 4>::Zero();
+  ActsMatrixD<eBoundSize, 3> matBound2MomZero =
+      ActsMatrixD<eBoundSize, 3>::Zero();
 
-  for (const BoundParameters& parameters : tracks) {
+  for (const BoundTrackParameters& parameters : tracks) {
     LinearizedTrack linTrack =
         linFactory
             .linearizeTrack(parameters, Vector4D::Zero(), geoContext,

@@ -85,7 +85,7 @@ BOOST_AUTO_TEST_CASE(zscan_finder_test) {
     // Set up propagator with void navigator
     auto propagator = std::make_shared<Propagator>(stepper);
 
-    typedef FullBilloirVertexFitter<BoundParameters, Linearizer_t>
+    typedef FullBilloirVertexFitter<BoundTrackParameters, Linearizer_t>
         BilloirFitter;
 
     // Create perigee surface
@@ -102,7 +102,7 @@ BOOST_AUTO_TEST_CASE(zscan_finder_test) {
     double z0_v = z;
 
     // Start constructing nTracks tracks in the following
-    std::vector<BoundParameters> tracks;
+    std::vector<BoundTrackParameters> tracks;
 
     // Construct random track emerging from vicinity of vertex position
     // Vector to store track objects used for vertex fit
@@ -111,10 +111,12 @@ BOOST_AUTO_TEST_CASE(zscan_finder_test) {
       double q = qDist(gen) < 0 ? -1. : 1.;
 
       // Construct random track parameters
-      BoundVector paramVec;
-      double z0track = z0_v + z0Dist(gen);
-      paramVec << d0_v + d0Dist(gen), z0track, phiDist(gen), thetaDist(gen),
-          q / pTDist(gen), 0.;
+      BoundVector paramVec = BoundVector::Zero();
+      paramVec[eBoundLoc0] = d0_v + d0Dist(gen);
+      paramVec[eBoundLoc1] = z0_v + z0Dist(gen);
+      paramVec[eBoundPhi] = phiDist(gen);
+      paramVec[eBoundTheta] = thetaDist(gen);
+      paramVec[eBoundQOverP] = q / pTDist(gen);
 
       // Resolutions
       double resD0 = resIPDist(gen);
@@ -130,11 +132,10 @@ BOOST_AUTO_TEST_CASE(zscan_finder_test) {
           0., 0., 0., 0., resPh * resPh, 0., 0., 0., 0., 0., 0., resTh * resTh,
           0., 0., 0., 0., 0., 0., resQp * resQp, 0., 0., 0., 0., 0., 0., 1.;
 
-      tracks.push_back(BoundParameters(geoContext, std::move(covMat), paramVec,
-                                       perigeeSurface));
+      tracks.emplace_back(perigeeSurface, paramVec, std::move(covMat));
     }
 
-    std::vector<const BoundParameters*> tracksPtr;
+    std::vector<const BoundTrackParameters*> tracksPtr;
     for (const auto& trk : tracks) {
       tracksPtr.push_back(&trk);
     }
@@ -145,7 +146,7 @@ BOOST_AUTO_TEST_CASE(zscan_finder_test) {
                   "Vertex finder does not fulfill vertex finder concept.");
 
     // Impact point estimator
-    using IPEstimator = ImpactPointEstimator<BoundParameters, Propagator>;
+    using IPEstimator = ImpactPointEstimator<BoundTrackParameters, Propagator>;
 
     IPEstimator::Config ipEstimatorCfg(bField, propagator);
     IPEstimator ipEstimator(ipEstimatorCfg);
@@ -154,8 +155,8 @@ BOOST_AUTO_TEST_CASE(zscan_finder_test) {
 
     VertexFinder finder(cfg);
 
-    VertexingOptions<BoundParameters> vertexingOptions(geoContext,
-                                                       magFieldContext);
+    VertexingOptions<BoundTrackParameters> vertexingOptions(geoContext,
+                                                            magFieldContext);
 
     VertexFinder::State state;
     auto res = finder.find(tracksPtr, vertexingOptions, state);
@@ -176,14 +177,14 @@ BOOST_AUTO_TEST_CASE(zscan_finder_test) {
 
 // Dummy user-defined InputTrack type
 struct InputTrack {
-  InputTrack(const BoundParameters& params) : m_parameters(params) {}
+  InputTrack(const BoundTrackParameters& params) : m_parameters(params) {}
 
-  const BoundParameters& parameters() const { return m_parameters; }
+  const BoundTrackParameters& parameters() const { return m_parameters; }
 
   // store e.g. link to original objects here
 
  private:
-  BoundParameters m_parameters;
+  BoundTrackParameters m_parameters;
 };
 
 ///
@@ -253,8 +254,8 @@ BOOST_AUTO_TEST_CASE(zscan_finder_usertrack_test) {
           0., 0., 0., 0., resPh * resPh, 0., 0., 0., 0., 0., 0., resTh * resTh,
           0., 0., 0., 0., 0., 0., resQp * resQp, 0., 0., 0., 0., 0., 0., 1.;
 
-      tracks.push_back(InputTrack(BoundParameters(geoContext, std::move(covMat),
-                                                  paramVec, perigeeSurface)));
+      tracks.emplace_back(
+          BoundTrackParameters(perigeeSurface, paramVec, std::move(covMat)));
     }
 
     std::vector<const InputTrack*> tracksPtr;
@@ -275,9 +276,9 @@ BOOST_AUTO_TEST_CASE(zscan_finder_usertrack_test) {
 
     VertexFinder::Config cfg(ipEstimator);
 
-    // Create a custom std::function to extract BoundParameters from
+    // Create a custom std::function to extract BoundTrackParameters from
     // user-defined InputTrack
-    std::function<BoundParameters(InputTrack)> extractParameters =
+    std::function<BoundTrackParameters(InputTrack)> extractParameters =
         [](InputTrack params) { return params.parameters(); };
 
     VertexFinder finder(cfg, extractParameters);

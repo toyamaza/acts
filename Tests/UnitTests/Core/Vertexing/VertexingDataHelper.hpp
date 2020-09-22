@@ -43,13 +43,10 @@ struct VertexInfo {
   double trk1Chi2;
 };
 
-std::tuple<
-    Vertex<BoundParameters>, std::vector<VertexInfo>,
-    std::vector<
-        BoundParameters>> inline readTracksAndVertexCSV(std::string toolString,
-                                                        std::string fileBase =
-                                                            "vertexing_event_"
-                                                            "mu20") {
+inline std::tuple<Vertex<BoundTrackParameters>, std::vector<VertexInfo>,
+                  std::vector<BoundTrackParameters>>
+readTracksAndVertexCSV(std::string toolString,
+                       std::string fileBase = "vertexing_event_mu20") {
   const auto beamspotDataPath =
       Acts::Test::getDataPath(fileBase + "_beamspot.csv");
   const auto tracksDataPath = Acts::Test::getDataPath(fileBase + "_tracks.csv");
@@ -67,9 +64,9 @@ std::tuple<
   std::string line{};
 
   std::shared_ptr<PerigeeSurface> perigeeSurface;
-  std::vector<BoundParameters> tracks;
+  std::vector<BoundTrackParameters> tracks;
   std::vector<VertexInfo> vertices;
-  Vertex<BoundParameters> beamspotConstraint;
+  Vertex<BoundTrackParameters> beamspotConstraint;
 
   // Read in beamspot data
   std::getline(beamspotData, line);  // skip header
@@ -119,9 +116,7 @@ std::tuple<
         std::stod(row[16]), std::stod(row[20]), std::stod(row[23]),
         std::stod(row[25]) * 1. / (1_MeV), std::stod(row[26]);
 
-    auto boundParams =
-        BoundParameters(geoCtx, std::move(covMat), params, perigeeSurface);
-    tracks.push_back(boundParams);
+    tracks.emplace_back(perigeeSurface, params, std::move(covMat));
   }
 
   // Read in reference vertex data

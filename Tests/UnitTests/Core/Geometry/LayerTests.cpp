@@ -10,7 +10,6 @@
 #include <boost/test/tools/output_test_stream.hpp>
 #include <boost/test/unit_test.hpp>
 
-#include "Acts/EventData/SingleTrackParameters.hpp"
 #include "Acts/Geometry/CuboidVolumeBounds.hpp"
 #include "Acts/Geometry/GenericApproachDescriptor.hpp"
 #include "Acts/Geometry/GeometryContext.hpp"
@@ -60,11 +59,10 @@ BOOST_AUTO_TEST_CASE(LayerProperties, *utf::expected_failures(1)) {
   // Make a dummy layer to play with
   // bounds object, rectangle type
   auto rBounds = std::make_shared<const RectangleBounds>(1., 1.);
-  /// Constructor with transform pointer
-  std::shared_ptr<const Transform3D> pNullTransform{};
+  /// Constructor
   const std::vector<std::shared_ptr<const Surface>> aSurfaces{
-      Surface::makeShared<PlaneSurface>(pNullTransform, rBounds),
-      Surface::makeShared<PlaneSurface>(pNullTransform, rBounds)};
+      Surface::makeShared<PlaneSurface>(Transform3D::Identity(), rBounds),
+      Surface::makeShared<PlaneSurface>(Transform3D::Identity(), rBounds)};
   std::unique_ptr<ApproachDescriptor> ad(
       new GenericApproachDescriptor(aSurfaces));
   auto adPtr = ad.get();

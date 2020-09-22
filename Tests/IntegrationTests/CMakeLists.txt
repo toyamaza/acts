@@ -4,7 +4,7 @@ add_custom_target(integrationtests)
 # add an integrationtest exectuable w/ default dependencies and register it.
 #
 # the common libraries which are linked to every integrationtest can be
-# extended by setting the `unittest_extra_libraries` variables before
+# extended by setting the `integrationtest_extra_libraries` variables before
 # calling the macro.
 macro(add_integrationtest _name)
   # automatically prefix the target name
@@ -41,4 +41,4 @@ add_integrationtest(PropagationCompareAtlasEigenConstant PropagationCompareAtlas
 add_integrationtest(PropagationCompareEigenStraightLine PropagationCompareEigenStraightLine.cpp)
 
 add_subdirectory_if(Fatras ACTS_BUILD_FATRAS)
-add_subdirectory_if(Legacy ACTS_BUILD_LEGACY)
+add_subdirectory_if(Legacy ACTS_BUILD_PLUGIN_LEGACY)

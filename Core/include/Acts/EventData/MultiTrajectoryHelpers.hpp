@@ -8,7 +8,7 @@
 
 #pragma once
 #include "Acts/EventData/MultiTrajectory.hpp"
-#include "Acts/EventData/detail/coordinate_transformations.hpp"
+#include "Acts/EventData/detail/TransformationBoundToFree.hpp"
 #include "Acts/Geometry/Layer.hpp"
 #include "Acts/Geometry/TrackingVolume.hpp"
 #include "Acts/Surfaces/Surface.hpp"
@@ -34,7 +34,7 @@ struct TrajectoryState {
 
 // Container for trajectory summary info at a specific volume
 using VolumeTrajectoryStateContainer =
-    std::unordered_map<GeometryID::Value, TrajectoryState>;
+    std::unordered_map<GeometryIdentifier::Value, TrajectoryState>;
 
 /// @brief Getter for global trajectory info
 ///
@@ -79,11 +79,12 @@ TrajectoryState trajectoryState(
 template <typename source_link_t>
 VolumeTrajectoryStateContainer trajectoryState(
     const Acts::MultiTrajectory<source_link_t>& multiTraj,
-    const size_t& entryIndex, const std::vector<GeometryID::Value>& volumeIds) {
+    const size_t& entryIndex,
+    const std::vector<GeometryIdentifier::Value>& volumeIds) {
   VolumeTrajectoryStateContainer trajStateContainer;
   multiTraj.visitBackwards(entryIndex, [&](const auto& state) {
     // Get the volume Id of this surface
-    const auto& geoID = state.referenceSurface().geoID();
+    const auto& geoID = state.referenceSurface().geometryId();
     const auto& volume = geoID.volume();
     // Check if the track info for this sub-detector is requested
     auto it = std::find(volumeIds.begin(), volumeIds.end(), volume);
@@ -119,8 +120,8 @@ VolumeTrajectoryStateContainer trajectoryState(
 template <typename track_state_proxy_t>
 FreeVector freeFiltered(const GeometryContext& gctx,
                         const track_state_proxy_t& trackStateProxy) {
-  return detail::coordinate_transformation::boundParameters2freeParameters(
-      gctx, trackStateProxy.filtered(), trackStateProxy.referenceSurface());
+  return detail::transformBoundToFreeParameters(
+      trackStateProxy.referenceSurface(), gctx, trackStateProxy.filtered());
 }
 
 /// @brief Transforms the smoothed parameters from a @c TrackStateProxy to free
@@ -134,8 +135,8 @@ FreeVector freeFiltered(const GeometryContext& gctx,
 template <typename track_state_proxy_t>
 FreeVector freeSmoothed(const GeometryContext& gctx,
                         const track_state_proxy_t& trackStateProxy) {
-  return detail::coordinate_transformation::boundParameters2freeParameters(
-      gctx, trackStateProxy.smoothed(), trackStateProxy.referenceSurface());
+  return detail::transformBoundToFreeParameters(
+      trackStateProxy.referenceSurface(), gctx, trackStateProxy.smoothed());
 }
 }  // namespace MultiTrajectoryHelpers
 
