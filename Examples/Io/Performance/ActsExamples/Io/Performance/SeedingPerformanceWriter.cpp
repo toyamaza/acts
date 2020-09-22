@@ -21,7 +21,6 @@
 namespace {
 using Acts::VectorHelpers::eta;
 using SimParticleContainer = ActsExamples::SimParticleContainer;
-using HitParticlesMap = ActsExamples::IndexMultimap<ActsFatras::Barcode>;
 using ProtoTrackContainer = ActsExamples::ProtoTrackContainer;
 using ProtoTrack = ActsExamples::ProtoTrack;
 }  // namespace
@@ -44,7 +43,7 @@ ActsExamples::SeedingPerformanceWriter::SeedingPerformanceWriter(
   // the output file can not be given externally since TFile accesses to the
   // same file from multiple threads are unsafe.
   // must always be opened internally
-  auto path = joinPaths(m_cfg.outputDir, m_cfg.outputFilename);
+  auto path = m_cfg.outputFilename;
   m_outputFile = TFile::Open(path.c_str(), "RECREATE");
   if (not m_outputFile) {
     throw std::invalid_argument("Could not open '" + path + "'");
@@ -105,10 +104,6 @@ ActsExamples::ProcessCode ActsExamples::SeedingPerformanceWriter::writeT(
   const auto& particles =
     ctx.eventStore.get<SimParticleContainer>(m_cfg.inputParticles);
 
-  // Read in hit to particles map
-  const auto& hitParticlesMap =
-    ctx.eventStore.get<HitParticlesMap>(m_cfg.inputHitParticlesMap);
-
   // Exclusive access to the tree while writing
   std::lock_guard<std::mutex> lock(m_writeMutex);
   size_t nSeeds = 0;
@@ -142,7 +137,6 @@ ActsExamples::ProcessCode ActsExamples::SeedingPerformanceWriter::writeT(
   ACTS_INFO("Number of seeds: " << nSeeds );
 
   
-  const auto& particleHitsMap = invertIndexMultimap(hitParticlesMap);
   // Fill the effeciency and fake rate plots
   for (const auto& particle : particles) {
     const auto it1 = truthCount.find(particle.particleId());
@@ -156,10 +150,6 @@ ActsExamples::ProcessCode ActsExamples::SeedingPerformanceWriter::writeT(
 
     m_effPlotTool.fill(m_effPlotCache, particle, isMatched);
   }
-
-  // Read seeds in as proto tracks
-  const auto& protoTracks =
-    ctx.eventStore.get<ProtoTrackContainer>(m_cfg.inputProtoTracks);
 
   return ProcessCode::SUCCESS;
 }

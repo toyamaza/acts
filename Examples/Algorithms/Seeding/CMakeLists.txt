@@ -8,7 +8,7 @@ target_include_directories(
 target_link_libraries(
   ActsExamplesSeeding
   PRIVATE
-    ActsCore ActsDigitizationPlugin ActsIdentificationPlugin
+    ActsCore ActsPluginDigitization ActsPluginIdentification
     ActsExamplesFramework  ActsExamplesIoCsv
     Boost::program_options)
 

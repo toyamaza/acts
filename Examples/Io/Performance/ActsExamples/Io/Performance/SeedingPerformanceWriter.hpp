@@ -44,8 +44,6 @@ class SeedingPerformanceWriter final
     std::string inputProtoTracks;
     /// input Clusters from the event#-hits.csv file for calculating efficiency.
     std::string inputClusters;
-    /// Output directory.
-    std::string outputDir;
     /// Output filename.
     std::string outputFilename = "performance_track_seeding.root";
 

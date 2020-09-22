@@ -16,7 +16,7 @@ namespace ActsExamples{
     float m_y;
     float m_z;
     float m_r;
-    Acts::GeometryID m_geoId;
+    Acts::GeometryIdentifier m_geoId;
     float varianceR;
     float varianceZ;
     std::vector<ActsExamples::ParticleHitCount> particles;

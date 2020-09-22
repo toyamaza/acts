@@ -93,7 +93,6 @@ int seedingExample(int argc, char* argv[],
   seedPerfCfg.inputClusters = clusterReaderCfg.outputClusters;
   seedPerfCfg.inputHitParticlesMap = clusterReaderCfg.outputHitParticlesMap;
   seedPerfCfg.outputFilename = "performance.root";
-  seedPerfCfg.outputDir = "perf";
   sequencer.addWriter(
 		      std::make_shared<ActsExamples::SeedingPerformanceWriter>(seedPerfCfg, logLevel));
 

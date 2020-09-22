@@ -9,7 +9,7 @@
 #pragma once
 
 #include "ActsExamples//Framework/BareAlgorithm.hpp"
-#include "Acts/Geometry/GeometryID.hpp"
+#include "Acts/Geometry/GeometryIdentifier.hpp"
 #include "Acts/Plugins/Digitization/PlanarModuleCluster.hpp"
 #include "Acts/Seeding/Seed.hpp"
 #include "ActsExamples/EventData/ProtoTrack.hpp"
@@ -53,7 +53,7 @@ class SeedingAlgorithm final : public BareAlgorithm {
   /// @param cluster The hit with local hit information
   /// Returns a space point with a particle barcode stored in .particles for
   /// each particle that made this space point.
-  ActsExamples::SimSpacePoint* readSP(std::size_t hit_id, const Acts::GeometryID geoId,
+  ActsExamples::SimSpacePoint* transformSP(std::size_t hit_id, const Acts::GeometryIdentifier geoId,
                      const Acts::PlanarModuleCluster& cluster,
                      const IndexMultimap<ActsFatras::Barcode>& hitParticlesMap,
                      const AlgorithmContext& ctx) const;
