@@ -7,22 +7,10 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include "ActsExamples/Seeding/SeedingAlgorithm.hpp"
-#include "ActsExamples/Io/Csv/CsvPlanarClusterReader.hpp"
-#include "ActsExamples/EventData/GeometryContainers.hpp"
-#include "ActsExamples/EventData/SimHit.hpp"
-#include "ActsExamples/EventData/SimParticle.hpp"
-#include "ActsExamples/EventData/SimVertex.hpp"
-#include "ActsExamples/Framework/WhiteBoard.hpp"
-#include "ActsExamples/EventData/SimHit.hpp"
-// #include "ActsExamples/EventData/ProtoTrack.hpp"
-#include "ActsExamples/Validation/ProtoTrackClassification.hpp"
+
 #include "Acts/EventData/TrackParameters.hpp"
 #include "Acts/Geometry/DetectorElementBase.hpp"
 #include "Acts/Geometry/GeometryID.hpp"
-#include "Acts/Geometry/TrackingGeometry.hpp"
-#include "Acts/Surfaces/Surface.hpp"
-#include "Acts/Utilities/ParameterDefinitions.hpp"
-#include "Acts/Utilities/Units.hpp"
 #include "Acts/Seeding/BinFinder.hpp"
 #include "Acts/Seeding/BinnedSPGroup.hpp"
 #include "Acts/Seeding/InternalSeed.hpp"
@@ -31,10 +19,19 @@
 #include "Acts/Seeding/SeedFilter.hpp"
 #include "Acts/Seeding/Seedfinder.hpp"
 #include "Acts/Seeding/SpacePointGrid.hpp"
-
-#include "ActsExamples/Seeding/SimSpacePoint.hpp"
+#include "Acts/Surfaces/Surface.hpp"
+#include "Acts/Utilities/ParameterDefinitions.hpp"
+#include "Acts/Utilities/Units.hpp"
+#include "ActsExamples/EventData/GeometryContainers.hpp"
+#include "ActsExamples/EventData/SimHit.hpp"
+#include "ActsExamples/EventData/SimParticle.hpp"
+#include "ActsExamples/EventData/SimVertex.hpp"
+#include "ActsExamples/Framework/WhiteBoard.hpp"
+#include "ActsExamples/Io/Csv/CsvPlanarClusterReader.hpp"
 #include "ActsExamples/Seeding/GenericDetectorCuts.hpp"
 #include "ActsExamples/Seeding/SeedContainer.hpp"
+#include "ActsExamples/Seeding/SimSpacePoint.hpp"
+#include "ActsExamples/Validation/ProtoTrackClassification.hpp"
 
 #include <iostream>
 #include <stdexcept>
@@ -45,10 +42,8 @@ using HitParticlesMap = ActsExamples::IndexMultimap<ActsFatras::Barcode>;
 
 ActsExamples::SeedingAlgorithm::SeedingAlgorithm(
     ActsExamples::SeedingAlgorithm::Config cfg, Acts::Logging::Level lvl)
-    : ActsExamples::BareAlgorithm("SeedingAlgorithm", lvl), m_cfg(std::move(cfg)) {
-  // if (m_cfg.inputSimulatedHits.empty()) {
-  //   throw std::invalid_argument("Missing input hits collection");
-  // }
+    : ActsExamples::BareAlgorithm("SeedingAlgorithm", lvl),
+      m_cfg(std::move(cfg)) {
   if (m_cfg.inputClusters.empty()) {
     throw std::invalid_argument(
         "Missing clusters input collection with the hits");
@@ -62,26 +57,16 @@ ActsExamples::SeedingAlgorithm::SeedingAlgorithm(
   if (m_cfg.outputSeeds.empty()) {
     throw std::invalid_argument("Missing output seeds collection");
   }
-  if (not m_cfg.trackingGeometry) {
-    throw std::invalid_argument("Missing tracking geometry");
+  if (m_cfg.outputProtoTracks.empty()) {
+    throw std::invalid_argument("Missing output proto-tracks collection");
   }
-
-  // fill the surface map to allow lookup by geometry id only
-  m_cfg.trackingGeometry->visitSurfaces([this](const Acts::Surface* surface) {
-    // for now we just require a valid surface
-    if (not surface) {
-      return;
-    }
-    this->m_surfaces.insert_or_assign(surface->geoID(), surface);
-  });
-
 }
 
 SimSpacePoint* ActsExamples::SeedingAlgorithm::readSP(
     std::size_t hit_id, const Acts::GeometryID geoId,
     const Acts::PlanarModuleCluster& cluster,
     const HitParticlesMap& hitParticlesMap, const AlgorithmContext& ctx) const {
-  const auto& parameters = cluster.parameters();
+  const auto parameters = cluster.parameters();
   Acts::Vector2D localPos(parameters[0], parameters[1]);
   Acts::Vector3D globalFakeMom(1, 1, 1);
   Acts::Vector3D globalPos(0, 0, 0);
@@ -93,8 +78,8 @@ SimSpacePoint* ActsExamples::SeedingAlgorithm::readSP(
   y = globalPos.y();
   z = globalPos.z();
   r = std::sqrt(x * x + y * y);
-  varianceR = 0;  // initialized to 0 becuse they don't affect seeds generated
-  varianceZ = 0;  // initialized to 0 becuse they don't affect seeds generated
+  varianceR = 0.;
+  varianceZ = 0.;
 
   // get truth particles that are a part of this space point
   std::vector<ActsExamples::ParticleHitCount> particleHitCount;
@@ -116,37 +101,28 @@ SimSpacePoint* ActsExamples::SeedingAlgorithm::readSP(
 
   SimSpacePoint* SP = new SimSpacePoint{
       hit_id, x, y, z, r, geoId, varianceR, varianceZ, particleHitCount};
+
   return SP;
 }
 
-ProtoTrack ActsExamples::SeedingAlgorithm::seedToProtoTrack(
-							    const Acts::Seed<ActsExamples::SimSpacePoint>* seed) const {
-  ProtoTrack track;
-  track.reserve(seed->sp().size());
-  for (std::size_t i = 0; i < seed->sp().size(); i++) {
-    track.emplace_back(seed->sp()[i]->Id());
-  }
-  return track;
-}
-
-ActsExamples::ProcessCode ActsExamples::SeedingAlgorithm::execute(const AlgorithmContext& ctx) const {
-
+ActsExamples::ProcessCode ActsExamples::SeedingAlgorithm::execute(
+								  const AlgorithmContext& ctx) const {
   Acts::SeedfinderConfig<SimSpacePoint> config;
   // silicon detector max
   config.rMax = 200.;
-  config.deltaRMin = 5.;
-  config.deltaRMax = 160.;
+  config.deltaRMin = 1.;
+  config.deltaRMax = 60.;
   config.collisionRegionMin = -250;
   config.collisionRegionMax = 250.;
-  config.zMin = -2000.;
-  config.zMax = 2000.;
+  config.zMin = -500.;
+  config.zMax = 500.;
   config.maxSeedsPerSpM = 5;
   config.cotThetaMax = 7.40627;  // 2.7 eta
-  config.sigmaScattering = 1.00000;
+  config.sigmaScattering = 2.25;
   config.minPt = 500.;
   config.bFieldInZ = 0.00199724;
   config.beamPos = {-.5, -.5};
-  config.impactMax = 10.;
+  config.impactMax = 1.;
 
   // setup spacepoint grid config
   Acts::SpacePointGridConfig gridConf;
@@ -163,21 +139,22 @@ ActsExamples::ProcessCode ActsExamples::SeedingAlgorithm::execute(const Algorith
   auto topBinFinder = std::make_shared<Acts::BinFinder<SimSpacePoint>>(
 								       Acts::BinFinder<SimSpacePoint>());
   Acts::SeedFilterConfig sfconf;
-  Acts::GenericDetectorCuts<SimSpacePoint> detectorCuts = Acts::GenericDetectorCuts<SimSpacePoint>();
+  Acts::GenericDetectorCuts<SimSpacePoint> detectorCuts =
+    Acts::GenericDetectorCuts<SimSpacePoint>();
   config.seedFilter = std::make_unique<Acts::SeedFilter<SimSpacePoint>>(
 									Acts::SeedFilter<SimSpacePoint>(sfconf, &detectorCuts));
   Acts::Seedfinder<SimSpacePoint> seedFinder(config);
 
-
   // covariance tool, sets covariances per spacepoint as required
-  auto ct = [=](const SimSpacePoint& sp, float, float, float) -> Acts::Vector2D {
+  auto ct = [=](const SimSpacePoint& sp, float, float,
+                float) -> Acts::Vector2D {
 	      return {sp.varianceR, sp.varianceZ};
 	    };
 
-
   const auto& clusters =
-    ctx.eventStore.get<ActsExamples::GeometryIdMultimap<Acts::PlanarModuleCluster>>(
-									  m_cfg.inputClusters);
+    ctx.eventStore
+    .get<ActsExamples::GeometryIdMultimap<Acts::PlanarModuleCluster>>(
+								      m_cfg.inputClusters);
   // read in the map of hitId to particleId truth information
   const HitParticlesMap hitParticlesMap =
     ctx.eventStore.get<HitParticlesMap>(m_cfg.inputHitParticlesMap);
@@ -190,7 +167,6 @@ ActsExamples::ProcessCode ActsExamples::SeedingAlgorithm::execute(const Algorith
 
   // create the space points
   std::size_t clustCounter = 0;
-  std::size_t nIgnored = 0;
   std::vector<const SimSpacePoint*> spVec;
   // since clusters are ordered, we simply count the hit_id as we read
   // clusters. Hit_id isn't stored in a cluster. This is how
@@ -202,77 +178,51 @@ ActsExamples::ProcessCode ActsExamples::SeedingAlgorithm::execute(const Algorith
     std::size_t volumeId = geoId.volume();
     std::size_t layerId = geoId.layer();
 
-    // filter out hits that aren't part of the volumes and layers track seeding
-    // is supposed to work on.
-    if (volumeId == 8 && 2 <= layerId && layerId <= 6) {
+    if( volumeId >=7 and volumeId <=9){ // pixel detector 
+
       SimSpacePoint* SP = readSP(hit_id, geoId, cluster, hitParticlesMap, ctx);
       spVec.push_back(SP);
       clustCounter++;
-
-    } else {
-      nIgnored++;
     }
     hit_id++;
   }
-  // // Prepare the input and output collections
-  // const auto& hits = ctx.eventStore.get<SimHitContainer>(m_cfg.inputSimulatedHits);
-
-
-  // std::vector<const SimSpacePoint*> spVec;
-  // std::size_t hit_id = 0;
-  // for (const auto& hit : hits) {
-  //   const auto hitPos = hit.position();
-  //   int layer = 1; // dummy
-  //   float varR = 0.01;
-  //   float varZ = 0.5;
-  //   float hitPosX = hitPos.x();
-  //   float hitPosY = hitPos.y();
-  //   float hitPosZ = hitPos.z();
-  //   float r = sqrt(hitPosX*hitPosX + hitPosY*hitPosY);
-  //   SimSpacePoint* sp = new SimSpacePoint{
-  // 					  hit_id, hitPosX,hitPosY,hitPosZ, r, layer, varR, varZ
-  //   };
-
-  //   spVec.push_back(std::move(sp));
-  //   hit_id++;
-  // }
 
   // create grid with bin sizes according to the configured geometry
   std::unique_ptr<Acts::SpacePointGrid<SimSpacePoint>> grid =
     Acts::SpacePointGridCreator::createGrid<SimSpacePoint>(gridConf);
-  auto spGroup = Acts::BinnedSPGroup<SimSpacePoint>(spVec.begin(), spVec.end(), ct,
-						    bottomBinFinder, topBinFinder,
+  auto spGroup = Acts::BinnedSPGroup<SimSpacePoint>(
+						    spVec.begin(), spVec.end(), ct, bottomBinFinder, topBinFinder,
 						    std::move(grid), config);
 
   std::vector<std::vector<Acts::Seed<SimSpacePoint>>> seedVector;
   auto groupIt = spGroup.begin();
   auto endOfGroups = spGroup.end();
   for (; !(groupIt == endOfGroups); ++groupIt) {
-    seedVector.push_back(seedFinder.createSeedsForGroup(groupIt.bottom(), groupIt.middle(), groupIt.top()));
+    seedVector.push_back(seedFinder.createSeedsForGroup(
+							groupIt.bottom(), groupIt.middle(), groupIt.top()));
   }
 
   // SeedContainer seeds;
-  ProtoTrackContainer protoTracks;
+  ProtoTrackContainer protoTracks; // Three hits
   int numSeeds = 0;
   for (auto& outVec : seedVector) {
     numSeeds += outVec.size();
     for (size_t i = 0; i < outVec.size(); i++) {
       const Acts::Seed<SimSpacePoint>* seed = &outVec[i];
-      ProtoTrack ptrack = seedToProtoTrack(seed);
-      // protoTracks.emplace_back(std::move(ptrack));
-      // seeds.emplace_back(*seed);
+      ProtoTrack ptrack;
+      ptrack.reserve(seed->sp().size());
+      for (std::size_t i = 0; i < seed->sp().size(); i++) {
+	ptrack.emplace_back(seed->sp()[i]->Id());
+      }
       protoTracks.emplace_back(std::move(ptrack));
-      // seeds.emplace_back(*seed);
     }
   }
 
+  ACTS_DEBUG(spVec.size() << " hits, " << seedVector.size() << " regions, "
+	     << numSeeds << " seeds");
 
-  ACTS_DEBUG(spVec.size() << " hits, " << seedVector.size() << " regions, " << numSeeds << " seeds" );
-
-  // ctx.eventStore.add(m_cfg.outputSeeds, std::move(seeds) );
-  ctx.eventStore.add(m_cfg.outputSeeds, std::move(seedVector) );  
-  ctx.eventStore.add(m_cfg.outputProtoTracks, std::move(protoTracks) );
-
+  ctx.eventStore.add(m_cfg.outputSeeds, std::move(seedVector));
+  ctx.eventStore.add(m_cfg.outputProtoTracks, std::move(protoTracks));
 
   return ActsExamples::ProcessCode::SUCCESS;
 }

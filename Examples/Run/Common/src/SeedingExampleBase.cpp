@@ -76,10 +76,8 @@ int seedingExample(int argc, char* argv[],
 
   // Seeding algorithm
   ActsExamples::SeedingAlgorithm::Config seeding;
-  seeding.inputSimulatedHits = clusterReaderCfg.outputSimulatedHits;
   seeding.outputSeeds = "seeds";
   seeding.outputProtoTracks = "protoTracks";  
-  seeding.trackingGeometry = tGeometry;
   seeding.inputHitParticlesMap = clusterReaderCfg.outputHitParticlesMap;
   seeding.inputClusters = clusterReaderCfg.outputClusters;
   seeding.inputParticles = particleReader.outputParticles;  
@@ -88,16 +86,14 @@ int seedingExample(int argc, char* argv[],
 
   // Performance Writer
   ActsExamples::SeedingPerformanceWriter::Config seedPerfCfg;
-  seedPerfCfg.inputSeeds = seeding.outputSeeds;
+  // seedPerfCfg.inputSeeds = seeding.outputSeeds;
+  seedPerfCfg.inputSeeds = "seeds";
   seedPerfCfg.inputProtoTracks = seeding.outputProtoTracks;
   seedPerfCfg.inputParticles = particleReader.outputParticles;
   seedPerfCfg.inputClusters = clusterReaderCfg.outputClusters;
   seedPerfCfg.inputHitParticlesMap = clusterReaderCfg.outputHitParticlesMap;
-  seedPerfCfg.outputFilename = "performance";
+  seedPerfCfg.outputFilename = "performance.root";
   seedPerfCfg.outputDir = "perf";
-  seedPerfCfg.etaMin = -2.7;
-  seedPerfCfg.etaMax = 2.7;
-  seedPerfCfg.ptMin = 0.5;
   sequencer.addWriter(
 		      std::make_shared<ActsExamples::SeedingPerformanceWriter>(seedPerfCfg, logLevel));
 

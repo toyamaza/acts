@@ -49,30 +49,11 @@ class SeedingPerformanceWriter final
     /// Output filename.
     std::string outputFilename = "performance_track_seeding.root";
 
-    // The quality cuts to be applied when evaluating seed finder efficiency
-    /// Maximum distance from the origin in the transverse plane
-    double rhoMax = std::numeric_limits<double>::max();
-    /// Maximum absolute distance from the origin along z
-    double absZMax = std::numeric_limits<double>::max();
-    // Truth particle kinematic cuts
-    double phiMin = std::numeric_limits<double>::lowest();
-    double phiMax = std::numeric_limits<double>::max();
-    double etaMin = std::numeric_limits<double>::lowest();
-    double etaMax = std::numeric_limits<double>::max();
-    double absEtaMin = std::numeric_limits<double>::lowest();
-    double absEtaMax = std::numeric_limits<double>::max();
-    double ptMin = 0.0;
-    double ptMax = std::numeric_limits<double>::max();
-    /// Keep neutral particles
-    bool keepNeutral = false;
-    /// Requirement on number of recorded hits
-    //@TODO: implement detector-specific requirements
-    size_t nHitsMin = 0;
-    size_t nHitsMax = std::numeric_limits<size_t>::max();
-
     /// Plot tool configurations.
     EffPlotTool::Config effPlotToolConfig;
-    FakeRatePlotTool::Config fakeRatePlotConfig;
+    FakeRatePlotTool::Config fakeRatePlotToolConfig;
+    DuplicationPlotTool::Config duplicationPlotToolConfig;
+    
   };
 
   /// @brief Finds all the particles that are in common to all space points in
@@ -81,46 +62,6 @@ class SeedingPerformanceWriter final
   std::set<ActsFatras::Barcode> identifySharedParticles(
       const Acts::Seed<SimSpacePoint>* seed) const;
 
-  /// @brief Returns true if we expect the seed finder to be able to find this
-  /// particle
-  /// @param prt The particle to see whether it's findable
-  /// @param particleHitsMap inverted map from hitParticlesMap, maps from
-  /// particle barcodes to hits. TODO: get type information
-  /// @param clusters Used to get information on the hits that a particle has
-  /// made. TODO: Verify this is a valid filter
-  bool prtFindable(
-      const ActsFatras::Particle& prt,
-      // const auto& particleHitsMap,
-      const IndexMultimap<unsigned long,ActsFatras::Barcode>&  particleHitsMap,
-      const ActsExamples::GeometryIdMultimap<Acts::PlanarModuleCluster>&
-          clusters) const;
-
-  /// @brief Analyzes onse seed. Finds whether or not the seed contains a truth
-  /// particle. Technically, space points can have multiple particles that are a
-  /// part of them, so analyzeSeed finds how many particles are in common.
-  /// @param seed The seed to be processed.
-  /// @param hitParticlesMap map from hits to particles
-  /// @param truthCount map from particles found to how many seeds found them
-  /// @param fakeCount map from particles to how many fake seeds they were a
-  /// part of
-  void analyzeSeed(
-      const Acts::Seed<SimSpacePoint>* seed,
-      const ActsExamples::IndexMultimap<ActsFatras::Barcode>& hitParticlesMap,
-      std::unordered_map<ActsFatras::Barcode, std::size_t>& truthCount,
-      std::unordered_map<ActsFatras::Barcode, std::size_t>& fakeCount) const;
-
-  /// @brief Converts a seed to a proto track of 3 hits
-  ActsExamples::ProtoTrack seedToProtoTrack(
-      const Acts::Seed<SimSpacePoint>* seed) const;
-
-  /// @brief Writes the fake rate and efficiency plots
-  /// TODO: Add the rests of the fake rate plots.
-  void writePlots(
-      const std::vector<std::vector<Acts::Seed<SimSpacePoint>>>& seedVector,
-      const IndexMultimap<ActsFatras::Barcode>& hitParticlesMap,
-      const SimParticleContainer& particles,
-      const ActsExamples::GeometryIdMultimap<Acts::PlanarModuleCluster>&
-          clusters);
 
   /// Construct from configuration and log level.
   SeedingPerformanceWriter(Config cfg, Acts::Logging::Level lvl);
@@ -130,26 +71,26 @@ class SeedingPerformanceWriter final
   ProcessCode endRun() final override;
 
  private:
-  /// @brief Calls TTrees writing function, and the writePlots function
-  /// These create two files, one that has premade plots, and another that can
-  /// be browsed.
   ProcessCode writeT(const AlgorithmContext& ctx,
                      const std::vector<std::vector<Acts::Seed<SimSpacePoint>>>&
                          seedVector) final override;
-  /// @brief Used for writing the TTrees
-  struct Impl;
-  std::unique_ptr<Impl> m_impl;
 
   Config m_cfg;
   /// Mutex used to protect multi-threaded writes.
   std::mutex m_writeMutex;
   TFile* m_outputFile{nullptr};
-  /// Plot tool for fakerate
-  FakeRatePlotTool m_fakeRatePlotTool;
-  FakeRatePlotTool::FakeRatePlotCache m_fakeRatePlotCache;
   /// Plot tool for efficiency
   EffPlotTool m_effPlotTool;
   EffPlotTool::EffPlotCache m_effPlotCache;
+  // /// Plot tool for fake rate
+  // FakeRatePlotTool m_fakeRatePlotTool;
+  // FakeRatePlotTool::FakeRatePlotCache m_fakeRatePlotCache{};
+  // // /// Plot tool for duplication rate
+  // DuplicationPlotTool m_duplicationPlotTool;
+  // DuplicationPlotTool::DuplicationPlotCache m_duplicationPlotCache{};
+  // /// Plot tool for track hit info
+  // TrackSummaryPlotTool m_trackSummaryPlotTool;
+  // TrackSummaryPlotTool::TrackSummaryPlotCache m_trackSummaryPlotCache;
 };
 
 }  // namespace ActsExamples
