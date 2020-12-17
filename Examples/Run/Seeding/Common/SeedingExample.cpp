@@ -22,6 +22,7 @@
 #include "ActsExamples/Plugins/Obj/ObjPropagationStepsWriter.hpp"
 #include "ActsExamples/TrackFinding/SeedingAlgorithm.hpp"
 #include "ActsExamples/TrackFinding/SpacePointMaker.hpp"
+#include "ActsExamples/TruthTracking/TruthSeedSelector.hpp"
 #include "ActsExamples/Utilities/Options.hpp"
 #include "ActsExamples/Utilities/Paths.hpp"
 
@@ -95,6 +96,21 @@ int runSeedingExample(int argc, char* argv[],
   sequencer.addAlgorithm(
       std::make_shared<HitSmearing>(hitSmearingCfg, logLevel));
 
+  // Pre-select particles
+  // The pre-selection will select truth particles satisfying provided criteria
+  // from all particles read in by particle reader for further processing. It
+  // has no impact on the truth hits read-in by the cluster reader.
+  // @TODO: add options for truth particle selection criteria
+  TruthSeedSelector::Config particleSelectorCfg;
+  particleSelectorCfg.inputParticles = particleReader.outputParticles;
+  particleSelectorCfg.inputMeasurementParticlesMap =
+      hitSmearingCfg.outputMeasurementParticlesMap;
+  particleSelectorCfg.outputParticles = "particles_selected";
+  particleSelectorCfg.ptMin = 1_GeV;
+  particleSelectorCfg.nHitsMin = 9;
+  sequencer.addAlgorithm(
+      std::make_shared<TruthSeedSelector>(particleSelectorCfg, logLevel));
+
   // Create space points
   SpacePointMaker::Config spCfg;
   spCfg.inputSourceLinks = hitSmearingCfg.outputSourceLinks;
@@ -147,7 +163,8 @@ int runSeedingExample(int argc, char* argv[],
   // Performance Writer
   TrackFinderPerformanceWriter::Config tfPerfCfg;
   tfPerfCfg.inputProtoTracks = seedingCfg.outputProtoTracks;
-  tfPerfCfg.inputParticles = particleReader.outputParticles;
+  // tfPerfCfg.inputParticles = particleReader.outputParticles;
+  tfPerfCfg.inputParticles = particleSelectorCfg.outputParticles;
   tfPerfCfg.inputMeasurementParticlesMap =
       hitSmearingCfg.outputMeasurementParticlesMap;
   tfPerfCfg.outputDir = outputDir;
@@ -157,7 +174,7 @@ int runSeedingExample(int argc, char* argv[],
 
   SeedingPerformanceWriter::Config seedPerfCfg;
   seedPerfCfg.inputSeeds = seedingCfg.outputSeeds;
-  seedPerfCfg.inputParticles = particleReader.outputParticles;
+  seedPerfCfg.inputParticles =   particleSelectorCfg.outputParticles;
   seedPerfCfg.inputMeasurementParticlesMap =
       hitSmearingCfg.outputMeasurementParticlesMap;
   seedPerfCfg.outputDir = outputDir;
