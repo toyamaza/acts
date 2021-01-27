@@ -105,8 +105,10 @@ int runSeedingExample(int argc, char* argv[],
       hitSmearingCfg.outputMeasurementParticlesMap;
   particleSelectorCfg.outputParticles = "particles_selected";
   particleSelectorCfg.ptMin = 1_GeV;
-  particleSelectorCfg.etaMax = 2.5;
-  particleSelectorCfg.etaMin = -2.5;
+  // particleSelectorCfg.etaMax = 2.5;
+  // particleSelectorCfg.etaMin = -2.5;
+  particleSelectorCfg.etaMax = 4.0;
+  particleSelectorCfg.etaMin = -4.0;
   particleSelectorCfg.nHitsMin = 9;
   sequencer.addAlgorithm(
       std::make_shared<TruthSeedSelector>(particleSelectorCfg, logLevel));
@@ -127,14 +129,19 @@ int runSeedingExample(int argc, char* argv[],
   };
   seedingCfg.outputSeeds = "seeds";
   seedingCfg.outputProtoTracks = "prototracks";
-  seedingCfg.rMax = 200.;
-  seedingCfg.deltaRMax = 60.;
+  // seedingCfg.rMax = 200.;
+  seedingCfg.rMax = 300.;
+  // seedingCfg.deltaRMax = 60.;
+  seedingCfg.deltaRMax = 100.;
   seedingCfg.collisionRegionMin = -250;
   seedingCfg.collisionRegionMax = 250.;
-  seedingCfg.zMin = -2000.;
-  seedingCfg.zMax = 2000.;
+  // seedingCfg.zMin = -2000.;
+  // seedingCfg.zMax = 2000.;
+  seedingCfg.zMin = -3000.;
+  seedingCfg.zMax = 3000.;
   seedingCfg.maxSeedsPerSpM = 1;
-  seedingCfg.cotThetaMax = 7.40627;  // 2.7 eta
+  // seedingCfg.cotThetaMax = 7.40627;  // 2.7 eta
+  seedingCfg.cotThetaMax = 20;  // 2.7 eta
   seedingCfg.sigmaScattering = 50;
   seedingCfg.radLengthPerSeed = 0.1;
   seedingCfg.minPt = 500.;
