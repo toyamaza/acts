@@ -62,12 +62,16 @@ ActsExamples::ProcessCode ActsExamples::SeedingPerformanceWriter::endRun() {
   float fakeRate = float(m_nTotalSeeds - m_nTotalMatchedSeeds) / m_nTotalSeeds;
   float duplicationRate =
       float(m_nTotalDuplicatedParticles) / m_nTotalMatchedParticles;
-
+  float nSeedsPerPart = float(m_nTotalSeeds) / m_nTotalParticles;
+  
   ACTS_INFO("Efficiency (nMatchedParticles / nAllParticles) = " << eff);
   ACTS_INFO("Fake rate (nUnMatchedSeeds / nAllSeeds) =" << fakeRate);
   ACTS_INFO(
       "Duplication rate (nDuplicatedMatchedParticles / nMatchedParticles) ="
       << duplicationRate);
+  ACTS_INFO(
+	    "Number of seeds per particles (nSeeds / nAllParticles) ="
+	    << nSeedsPerPart);
 
   if (m_outputFile) {
     m_outputFile->cd();
