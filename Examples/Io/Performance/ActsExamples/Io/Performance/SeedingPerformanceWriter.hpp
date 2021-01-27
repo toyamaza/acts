@@ -11,6 +11,7 @@
 #include "Acts/Seeding/Seed.hpp"
 #include "ActsExamples/EventData/SimSpacePoint.hpp"
 #include "ActsExamples/Framework/WriterT.hpp"
+#include "ActsExamples/Validation/DuplicationPlotTool.hpp"
 #include "ActsExamples/Validation/EffPlotTool.hpp"
 
 #include <mutex>
@@ -37,6 +38,7 @@ class SeedingPerformanceWriter final
     std::string outputFilename = "performance_track_seeding.root";
     /// Plot tool configurations.
     EffPlotTool::Config effPlotToolConfig;
+    DuplicationPlotTool::Config duplicationPlotToolConfig;
   };
 
   /// Construct from configuration and log level.
@@ -58,6 +60,9 @@ class SeedingPerformanceWriter final
   /// Plot tool for efficiency
   EffPlotTool m_effPlotTool;
   EffPlotTool::EffPlotCache m_effPlotCache;
+  /// Plot tool for duplication rate
+  DuplicationPlotTool m_duplicationPlotTool;
+  DuplicationPlotTool::DuplicationPlotCache m_duplicationPlotCache{};
 
   size_t m_nTotalSeeds = 0;
   size_t m_nTotalMatchedSeeds = 0;
