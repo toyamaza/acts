@@ -70,7 +70,7 @@ ActsExamples::ProcessCode ActsExamples::SeedingPerformanceWriter::endRun() {
       "Duplication rate (nDuplicatedMatchedParticles / nMatchedParticles) ="
       << duplicationRate);
   ACTS_INFO(
-	    "Number of seeds per particles (nSeeds / nAllParticles) ="
+	    "Number of seeds per particle (nSeeds / nAllParticles) ="
 	    << nSeedsPerPart);
 
   if (m_outputFile) {
