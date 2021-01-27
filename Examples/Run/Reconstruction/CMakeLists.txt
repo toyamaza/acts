@@ -20,10 +20,20 @@ target_link_libraries(
     ActsExamplesRecTracksCommon 
     ActsExamplesDetectorGeneric)
 
+add_executable(
+  ActsExampleCKFTracksTGeo
+  TGeoRecCKFTracks.cpp)
+target_link_libraries(
+  ActsExampleCKFTracksTGeo
+  PRIVATE
+    ActsExamplesRecTracksCommon 
+    ActsExamplesDetectorTGeo)
+
 install(
   TARGETS
     ActsExampleTruthTracksGeneric
     ActsExampleCKFTracksGeneric
+    ActsExampleCKFTracksTGeo
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 
 add_subdirectory_if(DD4hep ACTS_BUILD_EXAMPLES_DD4HEP)
