@@ -118,14 +118,19 @@ int runSeedingExample(int argc, char* argv[],
   };
   seedingCfg.outputSeeds = "seeds";
   seedingCfg.outputProtoTracks = "prototracks";
-  seedingCfg.rMax = 200.;
-  seedingCfg.deltaRMax = 60.;
+  // seedingCfg.rMax = 200.;
+  seedingCfg.rMax = 300.;  
+  // seedingCfg.deltaRMax = 60.;
+  seedingCfg.deltaRMax = 100.;  
   seedingCfg.collisionRegionMin = -250;
   seedingCfg.collisionRegionMax = 250.;
-  seedingCfg.zMin = -2000.;
-  seedingCfg.zMax = 2000.;
+  // seedingCfg.zMin = -2000.;
+  // seedingCfg.zMax = 2000.;
+  seedingCfg.zMin = -3000.;
+  seedingCfg.zMax = 3000.;
   seedingCfg.maxSeedsPerSpM = 1;
-  seedingCfg.cotThetaMax = 7.40627;  // 2.7 eta
+  // seedingCfg.cotThetaMax = 7.40627;  // 2.7 eta
+  seedingCfg.cotThetaMax = 30;
   seedingCfg.sigmaScattering = 50;
   seedingCfg.radLengthPerSeed = 0.1;
   seedingCfg.minPt = 500.;
