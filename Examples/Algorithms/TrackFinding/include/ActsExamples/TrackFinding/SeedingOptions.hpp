@@ -23,8 +23,7 @@ void addSeedingOptions(Description& desc);
 /// Read Seeding options to create the algorithm config.
 ///
 /// @param variables The variables to read from
-SeedingAlgorithm::Config readSeedingConfig(
-    const Variables& variables);
+SeedingAlgorithm::Config readSeedingConfig(const Variables& variables);
 
 }  // namespace Options
 }  // namespace ActsExamples

@@ -15,7 +15,8 @@
 #include <functional>
 
 // void ActsExamples::to_json(nlohmann::json& j,
-//                            const ActsExamples::ParameterSmearingConfig& psc) {
+//                            const ActsExamples::ParameterSmearingConfig& psc)
+//                            {
 //   j["index"] = psc.index;
 //   // Gauss:
 //   const Digitization::Gauss* gauss =
@@ -88,7 +89,8 @@
 // }
 
 // void ActsExamples::to_json(
-//     nlohmann::json& j, const ActsExamples::GeometricDigitizationConfig& gdc) {
+//     nlohmann::json& j, const ActsExamples::GeometricDigitizationConfig& gdc)
+//     {
 //   std::vector<size_t> indices;
 //   for (const auto& idx : gdc.indices) {
 //     indices.push_back(static_cast<size_t>(idx));
@@ -101,7 +103,8 @@
 // }
 
 // void ActsExamples::from_json(const nlohmann::json& j,
-//                              ActsExamples::GeometricDigitizationConfig& gdc) {
+//                              ActsExamples::GeometricDigitizationConfig& gdc)
+//                              {
 //   for (const auto& jidx : j["indices"]) {
 //     gdc.indices.push_back(static_cast<Acts::BoundIndices>(jidx));
 //   }

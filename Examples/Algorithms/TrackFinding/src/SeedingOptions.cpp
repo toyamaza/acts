@@ -19,23 +19,18 @@ void ActsExamples::Options::addSeedingOptions(
   using boost::program_options::value;
 
   auto opt = desc.add_options();
-  opt("ckf-selection-chi2max", value<double>()->default_value(15),
-      "Global criteria of maximum chi2 for CKF measurement selection");
-  opt("ckf-selection-nmax", value<size_t>()->default_value(10),
-      "Global criteria of maximum number of measurement candidates on a "
-      "surface for CKF measurement selection");
+  opt("seed-config-file", value<std::string>()->default_value(""),
+      "Configuration (.json) file for seeding");
+  
 }
 
-ActsExamples::SeedingAlgorithm::Config
-ActsExamples::Options::readSeedingConfig(
+ActsExamples::SeedingAlgorithm::Config ActsExamples::Options::readSeedingConfig(
     const ActsExamples::Options::Variables& variables) {
   auto chi2Max = variables["ckf-selection-chi2max"].template as<double>();
   auto nMax = variables["ckf-selection-nmax"].template as<size_t>();
 
   // config is a GeometryHierarchyMap with just the global default
   SeedingAlgorithm::Config cfg;
-  // cfg.measurementSelectorCfg = {
-  //     {Acts::GeometryIdentifier(), {chi2Max, nMax}},
-  // };
+
   return cfg;
 }

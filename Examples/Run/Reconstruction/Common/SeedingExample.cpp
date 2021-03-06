@@ -15,6 +15,7 @@
 #include "ActsExamples/Io/Csv/CsvOptionsReader.hpp"
 #include "ActsExamples/Io/Csv/CsvParticleReader.hpp"
 #include "ActsExamples/Io/Csv/CsvSimHitReader.hpp"
+#include "ActsExamples/Io/Json/JsonSeedingConfig.hpp"
 #include "ActsExamples/Io/Performance/SeedingPerformanceWriter.hpp"
 #include "ActsExamples/Io/Performance/TrackFinderPerformanceWriter.hpp"
 #include "ActsExamples/Io/Root/RootTrackParameterWriter.hpp"
@@ -27,7 +28,6 @@
 #include "ActsExamples/TruthTracking/TruthSeedSelector.hpp"
 #include "ActsExamples/Utilities/Options.hpp"
 #include "ActsExamples/Utilities/Paths.hpp"
-#include "ActsExamples/Io/Json/JsonSeedingConfig.hpp"
 
 #include <memory>
 
@@ -50,6 +50,7 @@ int runSeedingExample(int argc, char* argv[],
   Options::addOutputOptions(desc, OutputFormat::DirectoryOnly);
   Options::addInputOptions(desc);
   Options::addMagneticFieldOptions(desc);
+  Options::addSeedingOptions(desc);
   // Add specific options for this geometry
   detector->addOptions(desc);
   auto vm = Options::parse(desc, argc, argv);
@@ -67,7 +68,7 @@ int runSeedingExample(int argc, char* argv[],
   auto tGeometry = geometry.first;
   auto contextDecorators = geometry.second;
   auto rnd =
-    std::make_shared<RandomNumbers>(Options::readRandomNumbersConfig(vm));
+      std::make_shared<RandomNumbers>(Options::readRandomNumbersConfig(vm));
 
   // Add the decorator to the sequencer
   for (auto cdr : contextDecorators) {
@@ -88,16 +89,13 @@ int runSeedingExample(int argc, char* argv[],
                                             simHitReaderCfg.outputSimHits);
   // Read json config file
   auto cfile = vm["seed-config-file"].as<std::string>();
-  
   if (not cfile.empty()) {
-
     auto in = std::ifstream(cfile, std::ifstream::in | std::ifstream::binary);
     if (in.good()) {
       // Get the json file for the configuration
       nlohmann::json djson;
       in >> djson;
       in.close();
-
     }
   }
   // Run the particle selection
@@ -107,14 +105,14 @@ int runSeedingExample(int argc, char* argv[],
   TruthSeedSelector::Config particleSelectorCfg;
   particleSelectorCfg.inputParticles = particleReader.outputParticles;
   particleSelectorCfg.inputMeasurementParticlesMap =
-    hitSmearingCfg.outputMeasurementParticlesMap;
+      hitSmearingCfg.outputMeasurementParticlesMap;
   particleSelectorCfg.outputParticles = "particles_selected";
   particleSelectorCfg.ptMin = 500_MeV;
   particleSelectorCfg.etaMax = 2.5;
   particleSelectorCfg.etaMin = -2.5;
   particleSelectorCfg.nHitsMin = 9;
   sequencer.addAlgorithm(
-			 std::make_shared<TruthSeedSelector>(particleSelectorCfg, logLevel));
+      std::make_shared<TruthSeedSelector>(particleSelectorCfg, logLevel));
 
   // The selected particles
   const auto& inputParticles = particleSelectorCfg.outputParticles;
@@ -131,7 +129,7 @@ int runSeedingExample(int argc, char* argv[],
   // Seeding algorithm
   SeedingAlgorithm::Config seedingCfg;
   seedingCfg.inputSpacePoints = {
-    spCfg.outputSpacePoints,
+      spCfg.outputSpacePoints,
   };
   seedingCfg.outputSeeds = "seeds";
   seedingCfg.outputProtoTracks = "prototracks";
@@ -151,7 +149,7 @@ int runSeedingExample(int argc, char* argv[],
   seedingCfg.beamPosY = 0;
   seedingCfg.impactMax = 3.;
   sequencer.addAlgorithm(
-			 std::make_shared<SeedingAlgorithm>(seedingCfg, logLevel));
+      std::make_shared<SeedingAlgorithm>(seedingCfg, logLevel));
 
   // Algorithm estimating track parameter from seed
   TrackParamsEstimationAlgorithm::Config paramsEstimationCfg;
@@ -162,47 +160,47 @@ int runSeedingExample(int argc, char* argv[],
   paramsEstimationCfg.trackingGeometry = tGeometry;
   paramsEstimationCfg.magneticField = magneticField;
   sequencer.addAlgorithm(std::make_shared<TrackParamsEstimationAlgorithm>(
-									  paramsEstimationCfg, logLevel));
+      paramsEstimationCfg, logLevel));
 
   // Seeding performance Writers
   TrackFinderPerformanceWriter::Config tfPerfCfg;
   tfPerfCfg.inputProtoTracks = seedingCfg.outputProtoTracks;
   tfPerfCfg.inputParticles = inputParticles;
   tfPerfCfg.inputMeasurementParticlesMap =
-    hitSmearingCfg.outputMeasurementParticlesMap;
+      hitSmearingCfg.outputMeasurementParticlesMap;
   tfPerfCfg.outputDir = outputDir;
   tfPerfCfg.outputFilename = "performance_seeding_trees.root";
   sequencer.addWriter(
-		      std::make_shared<TrackFinderPerformanceWriter>(tfPerfCfg, logLevel));
+      std::make_shared<TrackFinderPerformanceWriter>(tfPerfCfg, logLevel));
 
   SeedingPerformanceWriter::Config seedPerfCfg;
   seedPerfCfg.inputSeeds = seedingCfg.outputSeeds;
   seedPerfCfg.inputParticles = inputParticles;
   seedPerfCfg.inputMeasurementParticlesMap =
-    hitSmearingCfg.outputMeasurementParticlesMap;
+      hitSmearingCfg.outputMeasurementParticlesMap;
   seedPerfCfg.outputDir = outputDir;
   seedPerfCfg.outputFilename = "performance_seeding_hists.root";
   sequencer.addWriter(
-		      std::make_shared<SeedingPerformanceWriter>(seedPerfCfg, logLevel));
+      std::make_shared<SeedingPerformanceWriter>(seedPerfCfg, logLevel));
 
   // The track parameters estimation writer
   RootTrackParameterWriter::Config trackParamsWriterCfg;
   trackParamsWriterCfg.inputSeeds = seedingCfg.outputSeeds;
   trackParamsWriterCfg.inputTrackParameters =
-    paramsEstimationCfg.outputTrackParameters;
+      paramsEstimationCfg.outputTrackParameters;
   trackParamsWriterCfg.inputTrackParametersSeedMap =
-    paramsEstimationCfg.outputTrackParametersSeedMap;
+      paramsEstimationCfg.outputTrackParametersSeedMap;
   trackParamsWriterCfg.inputParticles = particleReader.outputParticles;
   trackParamsWriterCfg.inputSimHits = simHitReaderCfg.outputSimHits;
   trackParamsWriterCfg.inputMeasurementParticlesMap =
-    hitSmearingCfg.outputMeasurementParticlesMap;
+      hitSmearingCfg.outputMeasurementParticlesMap;
   trackParamsWriterCfg.inputMeasurementSimHitsMap =
-    hitSmearingCfg.outputMeasurementSimHitsMap;
+      hitSmearingCfg.outputMeasurementSimHitsMap;
   trackParamsWriterCfg.outputDir = outputDir;
   trackParamsWriterCfg.outputFilename = "estimatedparams.root";
   trackParamsWriterCfg.outputTreename = "estimatedparams";
   sequencer.addWriter(std::make_shared<RootTrackParameterWriter>(
-								 trackParamsWriterCfg, logLevel));
+      trackParamsWriterCfg, logLevel));
 
   return sequencer.run();
 }
