@@ -13,6 +13,7 @@ auto Acts::AdaptiveMultiVertexFinder<vfitter_t, sfinder_t>::find(
     const std::vector<const InputTrack_t*>& allTracks,
     const VertexingOptions<InputTrack_t>& vertexingOptions,
     State& /*state*/) const -> Result<std::vector<Vertex<InputTrack_t>>> {
+  std::cout << "MyACTS used" << std::endl;
   if (allTracks.empty()) {
     return VertexingError::EmptyInput;
   }
