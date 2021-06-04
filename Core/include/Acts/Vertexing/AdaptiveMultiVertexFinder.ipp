@@ -7,7 +7,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include "Acts/Vertexing/VertexingError.hpp"
-
+#include <iostream>
 template <typename vfitter_t, typename sfinder_t>
 auto Acts::AdaptiveMultiVertexFinder<vfitter_t, sfinder_t>::find(
     const std::vector<const InputTrack_t*>& allTracks,
