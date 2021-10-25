@@ -47,8 +47,7 @@ class SimSpacePoint {
   constexpr float varianceR() const { return m_varianceRho; }
   constexpr float varianceZ() const { return m_varianceZ; }
 
-  // constexpr Index measurementIndex() const { return m_measurementIndex; }
-  const std::vector<Index>& measurementIndices() const {
+    const std::vector<Index>& measurementIndices() const {
     return m_measurementIndices;
   }
 

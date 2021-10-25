@@ -1,6 +1,6 @@
 // This file is part of the Acts project.
 //
-// Copyright (C) 2016-2018 CERN for the benefit of the Acts project
+// Copyright (C) 2016-2021 CERN for the benefit of the Acts project
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -95,7 +95,6 @@ struct CubicTrackingGeometry {
       rotation_strip.col(1) = yPos;
       rotation_strip.col(2) = zPos;
 
-      // Transform3 trafo(Transform3::Identity() * rotation_strip*rotation);
       Transform3 trafo(Transform3::Identity() * rotation * rotation_strip);
       trafo.translation() = translations[i];
 
