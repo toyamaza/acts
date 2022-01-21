@@ -139,8 +139,7 @@ void fillTrackState(const TestTrackState& pc, TrackStatePropMask mask,
   }
   // create calibrated measurements from source link
   if (ACTS_CHECK_BIT(mask, TrackStatePropMask::Calibrated)) {
-    auto meas = TestSourceLinkCalibrator()(pc.sourceLink, nullptr);
-    std::visit([&](const auto& m) { ts.setCalibrated(m); }, meas);
+    testSourceLinkCalibrator(Acts::GeometryContext{}, ts);
   }
 }
 
@@ -188,6 +187,23 @@ BOOST_AUTO_TEST_CASE(Build) {
   act.clear();
   t.applyBackwards(i2b, collect);
   BOOST_CHECK_EQUAL_COLLECTIONS(act.begin(), act.end(), exp.begin(), exp.end());
+}
+
+BOOST_AUTO_TEST_CASE(Clear) {
+  constexpr TrackStatePropMask kMask = TrackStatePropMask::Predicted;
+  MultiTrajectory t;
+  BOOST_CHECK_EQUAL(t.size(), 0);
+
+  auto i0 = t.addTrackState(kMask);
+  // trajectory bifurcates here into multiple hypotheses
+  auto i1a = t.addTrackState(kMask, i0);
+  auto i1b = t.addTrackState(kMask, i0);
+  t.addTrackState(kMask, i1a);
+  t.addTrackState(kMask, i1b);
+
+  BOOST_CHECK_EQUAL(t.size(), 5);
+  t.clear();
+  BOOST_CHECK_EQUAL(t.size(), 0);
 }
 
 BOOST_AUTO_TEST_CASE(ApplyWithAbort) {
@@ -486,9 +502,9 @@ BOOST_AUTO_TEST_CASE(TrackStateReassignment) {
 
   // use temporary measurement to reset calibrated data
   TestTrackState ttsb(rng, 2u);
-  auto meas = TestSourceLinkCalibrator()(ttsb.sourceLink, nullptr);
+  ts.setUncalibrated(ttsb.sourceLink);
+  auto meas = testSourceLinkCalibratorReturn(gctx, ts);
   auto m2 = std::get<Measurement<BoundIndices, 2u>>(meas);
-  ts.setCalibrated(m2);
 
   BOOST_CHECK_EQUAL(ts.calibratedSize(), 2);
   BOOST_CHECK_EQUAL(ts.effectiveCalibrated(), m2.parameters());
@@ -571,7 +587,7 @@ BOOST_DATA_TEST_CASE(TrackStateProxyStorage, bd::make({1u, 2u}),
   fullProj.setZero();
   {
     // create a temporary measurement to extract the projector matrix
-    auto meas = TestSourceLinkCalibrator()(pc.sourceLink, nullptr);
+    auto meas = testSourceLinkCalibratorReturn(gctx, ts);
     std::visit(
         [&](const auto& m) {
           fullProj.topLeftCorner(nMeasurements, eBoundSize) = m.projector();
@@ -779,6 +795,96 @@ BOOST_AUTO_TEST_CASE(TrackStateProxyCopy) {
   BOOST_CHECK_EQUAL(ts1.pathLength(), ts2.pathLength());  // always copied
   BOOST_CHECK_EQUAL(&ts1.referenceSurface(),
                     &ts2.referenceSurface());  // always copied
+}
+
+BOOST_AUTO_TEST_CASE(TrackStateProxyCopyDiffMTJ) {
+  using PM = TrackStatePropMask;
+
+  std::array<PM, 6> values{PM::Predicted, PM::Filtered,     PM::Smoothed,
+                           PM::Jacobian,  PM::Uncalibrated, PM::Calibrated};
+
+  MultiTrajectory mj;
+  MultiTrajectory mj2;
+  auto mkts = [&](PM mask) { return mj.getTrackState(mj.addTrackState(mask)); };
+  auto mkts2 = [&](PM mask) {
+    return mj2.getTrackState(mj2.addTrackState(mask));
+  };
+
+  // orthogonal ones
+  for (PM a : values) {
+    for (PM b : values) {
+      auto tsa = mkts(a);
+      auto tsb = mkts2(b);
+      // doesn't work
+      if (a != b) {
+        BOOST_CHECK_THROW(tsa.copyFrom(tsb), std::runtime_error);
+        BOOST_CHECK_THROW(tsb.copyFrom(tsa), std::runtime_error);
+      } else {
+        tsa.copyFrom(tsb);
+        tsb.copyFrom(tsa);
+      }
+    }
+  }
+
+  // make sure they are actually on different MultiTrajectories
+  BOOST_CHECK_EQUAL(mj.size(), 36);
+  BOOST_CHECK_EQUAL(mj2.size(), 36);
+
+  auto ts1 = mkts(PM::Filtered | PM::Predicted);  // this has both
+  ts1.filtered().setRandom();
+  ts1.filteredCovariance().setRandom();
+  ts1.predicted().setRandom();
+  ts1.predictedCovariance().setRandom();
+
+  // ((src XOR dst) & src) == 0
+  auto ts2 = mkts2(PM::Predicted);
+  ts2.predicted().setRandom();
+  ts2.predictedCovariance().setRandom();
+
+  // they are different before
+  BOOST_CHECK(ts1.predicted() != ts2.predicted());
+  BOOST_CHECK(ts1.predictedCovariance() != ts2.predictedCovariance());
+
+  // ts1 -> ts2 fails
+  BOOST_CHECK_THROW(ts2.copyFrom(ts1), std::runtime_error);
+  BOOST_CHECK(ts1.predicted() != ts2.predicted());
+  BOOST_CHECK(ts1.predictedCovariance() != ts2.predictedCovariance());
+
+  // ts2 -> ts1 is ok
+  ts1.copyFrom(ts2);
+  BOOST_CHECK(ts1.predicted() == ts2.predicted());
+  BOOST_CHECK(ts1.predictedCovariance() == ts2.predictedCovariance());
+}
+
+BOOST_AUTO_TEST_CASE(ProxyAssignment) {
+  constexpr TrackStatePropMask kMask = TrackStatePropMask::Predicted;
+  MultiTrajectory t;
+  auto i0 = t.addTrackState(kMask);
+
+  MultiTrajectory::TrackStateProxy tp = t.getTrackState(i0);  // mutable
+  MultiTrajectory::TrackStateProxy tp2{tp};       // mutable to mutable
+  MultiTrajectory::ConstTrackStateProxy tp3{tp};  // mutable to const
+  // const to mutable: this won't compile
+  // MultiTrajectory::TrackStateProxy tp4{tp3};
+}
+
+// Check if the copy from const does compile, assume the copy is done correctly
+BOOST_AUTO_TEST_CASE(CopyFromConst) {
+  using PM = TrackStatePropMask;
+  MultiTrajectory mj;
+
+  const auto idx_a = mj.addTrackState(PM::All);
+  const auto idx_b = mj.addTrackState(PM::All);
+
+  MultiTrajectory::TrackStateProxy mutableProxy = mj.getTrackState(idx_a);
+
+  const MultiTrajectory& cmj = mj;
+  MultiTrajectory::ConstTrackStateProxy constProxy = cmj.getTrackState(idx_b);
+
+  mutableProxy.copyFrom(constProxy);
+
+  // copy mutable to const: this won't compile
+  // constProxy.copyFrom(mutableProxy);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

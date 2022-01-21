@@ -30,9 +30,8 @@ class TrackFittingAlgorithm final : public BareAlgorithm {
  public:
   /// Track fitter function that takes input measurements, initial trackstate
   /// and fitter options and returns some track-fitter-specific result.
-  using TrackFitterOptions =
-      Acts::KalmanFitterOptions<MeasurementCalibrator, Acts::VoidOutlierFinder,
-                                Acts::VoidReverseFilteringLogic>;
+  using TrackFitterOptions = Acts::KalmanFitterOptions;
+
   using TrackFitterResult = Acts::Result<Acts::KalmanFitterResult>;
 
   /// Fit function that takes the above parameters and runs a fit
@@ -95,6 +94,9 @@ class TrackFittingAlgorithm final : public BareAlgorithm {
     bool energyLoss = true;
     /// Pick a single track for debugging (-1 process all tracks)
     int pickTrack = -1;
+    /// Switch to fully-fledged backwards filtering below this pt value
+    /// (default: never)
+    double reverseFilteringMomThreshold = 0;
   };
 
   /// Constructor of the fitting algorithm
@@ -129,9 +131,7 @@ ActsExamples::TrackFittingAlgorithm::fitTrack(
     const std::vector<std::reference_wrapper<
         const ActsExamples::IndexSourceLink>>& sourceLinks,
     const ActsExamples::TrackParameters& initialParameters,
-    const Acts::KalmanFitterOptions<MeasurementCalibrator,
-                                    Acts::VoidOutlierFinder,
-                                    Acts::VoidReverseFilteringLogic>& options,
+    const Acts::KalmanFitterOptions& options,
     const std::vector<const Acts::Surface*>& surfSequence) const {
   if (m_cfg.directNavigation) {
     return (*m_cfg.dFit)(sourceLinks, initialParameters, options, surfSequence);

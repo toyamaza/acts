@@ -215,7 +215,7 @@ def test_root_clusters_writer(
     s.addReader(evGen)
     s.addAlgorithm(simAlg)
     digiAlg = PlanarSteppingAlgorithm(
-        level=acts.logging.WARNING,
+        level=acts.logging.INFO,
         inputSimHits=simAlg.config.outputSimHits,
         outputClusters="clusters",
         outputSourceLinks="sourcelinks",
@@ -236,7 +236,7 @@ def test_root_clusters_writer(
     s.addWriter(
         conf_const(
             RootPlanarClusterWriter,
-            level=acts.logging.WARNING,
+            level=acts.logging.INFO,
             filePath=str(out),
             inputSimHits=simAlg.config.outputSimHits,
             inputClusters=digiAlg.config.outputClusters,
@@ -472,7 +472,10 @@ def test_csv_multitrajectory_writer(tmp_path):
         trackingGeometry,
         field,
         digiConfigFile=Path(
-            "Examples/Algorithms/Digitization/share/default-smearing-config-generic.json"
+            str(
+                Path(__file__).parent.parent.parent.parent
+                / "Examples/Algorithms/Digitization/share/default-smearing-config-generic.json"
+            )
         ),
         outputDir=tmp_path,
         s=s,

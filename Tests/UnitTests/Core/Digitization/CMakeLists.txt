@@ -1,3 +1,2 @@
-
 add_unittest(CartesianSegmentation CartesianSegmentationTests.cpp)
 add_unittest(PlanarModuleStepper PlanarModuleStepperTests.cpp)
