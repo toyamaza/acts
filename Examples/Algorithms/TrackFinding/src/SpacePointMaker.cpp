@@ -84,8 +84,7 @@ ActsExamples::SpacePointMaker::SpacePointMaker(Config cfg,
   }
   auto spBuilderConfig = Acts::SpacePointBuilderConfig();
   spBuilderConfig.trackingGeometry = m_cfg.trackingGeometry;
-  m_spacePointBuilder =
-      Acts::SpacePointBuilder<SimSpacePoint>(spBuilderConfig);
+  m_spacePointBuilder = Acts::SpacePointBuilder<SimSpacePoint>(spBuilderConfig);
 }
 
 ActsExamples::ProcessCode ActsExamples::SpacePointMaker::execute(
@@ -95,8 +94,7 @@ ActsExamples::ProcessCode ActsExamples::SpacePointMaker::execute(
   const auto& measurements =
       ctx.eventStore.get<MeasurementContainer>(m_cfg.inputMeasurements);
 
-  //std::vector<Cluster> selectedClusters;
-  std::vector<Measurement> selectedMeasurements;
+  std::vector<const Measurement> selectedMeasurements;
   // TODO Support strip measurements
 
   for (Acts::GeometryIdentifier geoId : m_cfg.geometrySelection) {
@@ -111,12 +109,11 @@ ActsExamples::ProcessCode ActsExamples::SpacePointMaker::execute(
       for (auto& sourceLink : moduleSourceLinks) {
         const auto& meas = measurements[sourceLink.get().index()];
         selectedMeasurements.emplace_back(meas);
-        }
+      }
     }
   }
   SimSpacePointContainer spacePoints;
-  m_spacePointBuilder.calculateSpacePoints(ctx.geoContext, selectedMeasurements,
-                                         spacePoints);
+  m_spacePointBuilder.calculateSpacePoints(ctx.geoContext, spacePoints,&selectedMeasurements);
   spacePoints.shrink_to_fit();
 
   ctx.eventStore.add(m_cfg.outputSpacePoints, std::move(spacePoints));

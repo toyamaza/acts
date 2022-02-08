@@ -80,6 +80,6 @@ class SpacePointMaker final : public BareAlgorithm {
   Config m_cfg;
 
   Acts::SpacePointBuilderConfig m_singleSPBuilderCfg;
-  Acts::SpacePointBuilder<SimSpacePoint>   m_spacePointBuilder;
+  Acts::SpacePointBuilder<SimSpacePoint> m_spacePointBuilder;
 };
 }  // namespace ActsExamples

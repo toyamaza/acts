@@ -65,7 +65,6 @@ struct TestSourceLink final : public SourceLink {
 
   constexpr size_t index() const { return sourceId; }
   // constexpr GeometryIdentifier geometryId() const { return geoId; }
-
 };
 
 bool operator==(const TestSourceLink& lhs, const TestSourceLink& rhs);
