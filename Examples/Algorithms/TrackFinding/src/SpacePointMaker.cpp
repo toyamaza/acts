@@ -113,7 +113,8 @@ ActsExamples::ProcessCode ActsExamples::SpacePointMaker::execute(
     }
   }
   SimSpacePointContainer spacePoints;
-  m_spacePointBuilder.calculateSpacePoints(ctx.geoContext, spacePoints,&selectedMeasurements);
+  m_spacePointBuilder.calculateSpacePoints(ctx.geoContext, spacePoints,
+                                           &selectedMeasurements);
   spacePoints.shrink_to_fit();
 
   ctx.eventStore.add(m_cfg.outputSpacePoints, std::move(spacePoints));
