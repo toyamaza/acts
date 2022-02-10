@@ -141,19 +141,35 @@ BOOST_DATA_TEST_CASE(SpacePointBuilder_basic, bdata::xrange(1), index) {
   //    testMeasurements;
   std::vector<const Cluster*> clusters_front;
   std::vector<const Cluster*> clusters_back;
-  std::vector<TestMeasurement> frontMeasurements;
-  std::vector<TestMeasurement> backMeasurements;
+  std::vector<const TestMeasurement> frontMeasurements;
+  std::vector<const TestMeasurement> backMeasurements;
   // std::vector<const TestMeasurement> selectedMeasurements;
   std::vector<const TestMeasurement> singleHitMeasurements;
   for (auto& sl : sourceLinks) {
-    // const auto geoId = sl.geoId;
+    const auto geoId = sl.geometryId();
+
     // if (geoId.volume() == 3)
     //   sl.parameters[1] = 0;  // strip center is used for the second
     //   coordinate
 
     const auto meas = makeMeasurement(sl, sl.parameters, sl.covariance,
                                       sl.indices[0], sl.indices[1]);
-    singleHitMeasurements.emplace_back(meas);
+
+    const auto volumeId = geoId.volume();
+
+    if (volumeId == 2) {  // pixel type detector
+      singleHitMeasurements.emplace_back(meas);
+    } else if (volumeId == 3) {  // strip type detector
+
+      const auto layerId = geoId.layer();
+
+      if (layerId == 2 || layerId == 6) {
+        frontMeasurements.emplace_back(meas);
+      } else if (layerId == 4 || layerId == 8) {
+        backMeasurements.emplace_back(meas);
+      }
+    }
+
     // auto index1 = sl.indices[1];
     // if (index1 == Acts::eBoundSize) {  // eBoundSize is stored in the 2nd
     //   double localHit = sl.parameters[0];
@@ -204,8 +220,13 @@ BOOST_DATA_TEST_CASE(SpacePointBuilder_basic, bdata::xrange(1), index) {
   //  spBuilder.calculateSingleHitSpacePoints(tgContext, singleHitMeasurements,
   //  spacePoints);
 
+  // pixel SP building
   spBuilder.calculateSpacePoints(tgContext, spacePoints,
                                  &singleHitMeasurements);
+
+  // strip SP building
+  spBuilder.calculateSpacePoints(tgContext, spacePoints, &frontMeasurements,
+                                 &backMeasurements);
   // spBuilder.makeClusterPairs(tgContext, clusters_front, clusters_back,
   //                                  clusterPairs);
   // BOOST_CHECK_NE(clusterPairs.size(), 0);

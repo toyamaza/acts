@@ -111,6 +111,8 @@ class SpacePointBuilder {
                               const Measurement& meas_back,
                               const double theta) const;
 
+  const Acts::SourceLink* getSourceLink(const Measurement meas) const;
+
   // configuration of the single hit space point builder
   SpacePointBuilderConfig m_config;
   // Acts::Vector3 globalPos(const Acts::GeometryContext& gctx, const
