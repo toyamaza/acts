@@ -1,6 +1,6 @@
 // This file is part of the Acts project.
 //
-// Copyright (C) 2016-2021 CERN for the benefit of the Acts project
+// Copyright (C) 2016-2018 CERN for the benefit of the Acts project
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -30,7 +30,7 @@ using SurfacePtrVector = std::vector<SurfacePtr>;
 ///
 /// Since the segmentation description might be identical for many elements
 /// while the lorentz angle may change, lorentzAngle and readoutDirection
-/// are provided and the segmenation class only creates the surfaces for the
+/// are provided and th the segmenation class only creates the surfaces for the
 /// module,
 /// but hosts the binning information.
 ///
