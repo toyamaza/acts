@@ -226,8 +226,7 @@ inline bool recoverSpacePoint(SpacePointParameters& spaPoPa,
     spaPoPa.m -= biggerOvershoot;
     spaPoPa.n -= (biggerOvershoot / secOnFirstScale);
     // Check if this recovered the space point
-    return fabs(spaPoPa.m) < spaPoPa.limit && fabs(spaPoPa.n) <
-    spaPoPa.limit;
+    return fabs(spaPoPa.m) < spaPoPa.limit && fabs(spaPoPa.n) < spaPoPa.limit;
   }
   // Check if both overshoots are in the same direction
   if (spaPoPa.m < -1. && spaPoPa.n < -1.) {
@@ -241,8 +240,7 @@ inline bool recoverSpacePoint(SpacePointParameters& spaPoPa,
     spaPoPa.m += biggerOvershoot;
     spaPoPa.n += (biggerOvershoot / secOnFirstScale);
     // Check if this recovered the space point
-    return fabs(spaPoPa.m) < spaPoPa.limit && fabs(spaPoPa.n) <
-    spaPoPa.limit;
+    return fabs(spaPoPa.m) < spaPoPa.limit && fabs(spaPoPa.n) < spaPoPa.limit;
   }
   // No solution could be found
   return false;
@@ -261,10 +259,9 @@ inline bool recoverSpacePoint(SpacePointParameters& spaPoPa,
 /// detector element length
 ///
 /// @return Boolean statement whether the space point calculation was succesful
-inline bool calculateSpacePoint(const std::pair<Vector3, Vector3>&
-stripEnds1,
-                                const std::pair<Vector3, Vector3>&
-                                stripEnds2, const Vector3& posVertex,
+inline bool calculateSpacePoint(const std::pair<Vector3, Vector3>& stripEnds1,
+                                const std::pair<Vector3, Vector3>& stripEnds2,
+                                const Vector3& posVertex,
                                 SpacePointParameters& spaPoPa,
                                 const double stripLengthTolerance) {
   /// The following algorithm is meant for finding the position on the first
@@ -520,29 +517,27 @@ void Acts::SpacePointBuilder<spacepoint_t>::calculateDoubleHitSpacePoints(
       }
     }
 
-      bool spFound = calculateSpacePoint(ends1, ends2, m_config.vertex,
-      spaPoPa, m_config.stripLengthTolerance);
+    bool spFound = calculateSpacePoint(ends1, ends2, m_config.vertex, spaPoPa,
+                                       m_config.stripLengthTolerance);
 
-      if (!spFound)
-        spFound =
-            detail::recoverSpacePoint(spaPoPa,
-            m_config.stripLengthGapTolerance);
+    if (!spFound)
+      spFound =
+          detail::recoverSpacePoint(spaPoPa, m_config.stripLengthGapTolerance);
 
-      if (spFound) {
-        Vector3 pos = 0.5 * (ends1.first + ends1.second + spaPoPa.m *
-        spaPoPa.q);
+    if (spFound) {
+      Vector3 pos = 0.5 * (ends1.first + ends1.second + spaPoPa.m * spaPoPa.q);
 
-        double theta = acos(spaPoPa.q.dot(spaPoPa.r) /
-                            (spaPoPa.q.norm() * spaPoPa.r.norm()));
+      double theta = acos(spaPoPa.q.dot(spaPoPa.r) /
+                          (spaPoPa.q.norm() * spaPoPa.r.norm()));
 
-        const auto gcov = getGlobalVars(gctx, *(mp.first), *(mp.second),
-        theta); const double varRho = gcov[0]; const double varZ = gcov[1];
-        auto sp = spacepoint_t(pos, varRho, varZ,
-        std::move(slinks)); spacePoints.push_back(std::move(sp));
-      }
+      const auto gcov = getGlobalVars(gctx, *(mp.first), *(mp.second), theta);
+      const double varRho = gcov[0];
+      const double varZ = gcov[1];
+      auto sp = spacepoint_t(pos, varRho, varZ, std::move(slinks));
+      spacePoints.push_back(std::move(sp));
+    }
   }
 }
-
 
 template <typename spacepoint_t>
 std::pair<Acts::Vector3, Acts::Vector3>
@@ -552,7 +547,7 @@ Acts::SpacePointBuilder<spacepoint_t>::endsOfStrip(
   std::cout << "endsofstrip " << std::endl;
   auto localPos = getLocalPos(measurement);
 
-  const auto& slink = getSourceLink(measurement);  
+  const auto& slink = getSourceLink(measurement);
   //  const auto &slink = getSourceLink(meas);
 
   // Receive the binning

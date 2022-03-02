@@ -21,7 +21,6 @@
 #include <stdexcept>
 #include <utility>
 
-using Cluster = ActsExamples::ModuleCluster<ActsExamples::Measurement>;
 ActsExamples::SpacePointMaker::SpacePointMaker(Config cfg,
                                                Acts::Logging::Level lvl)
     : BareAlgorithm("SpacePointMaker", lvl), m_cfg(std::move(cfg)) {

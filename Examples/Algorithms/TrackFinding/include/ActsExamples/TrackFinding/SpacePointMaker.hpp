@@ -12,7 +12,6 @@
 #include "Acts/SpacePointFormation/SpacePointBuilder.hpp"
 #include "Acts/SpacePointFormation/SpacePointBuilderConfig.h"
 #include "ActsExamples/EventData/IndexSourceLink.hpp"
-#include "ActsExamples/EventData/ModuleCluster.hpp"
 #include "ActsExamples/EventData/SimSpacePoint.hpp"
 #include "ActsExamples/Framework/BareAlgorithm.hpp"
 
