@@ -1,6 +1,6 @@
 // This file is part of the Acts project.
 //
-// Copyright (C) 2021 CERN for the benefit of the Acts project
+// Copyright (C) 2022 CERN for the benefit of the Acts project
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -29,7 +29,6 @@
 #include "Acts/Tests/CommonHelpers/DetectorElementStub.hpp"
 #include "Acts/Tests/CommonHelpers/GenerateParameters.hpp"
 #include "Acts/Tests/CommonHelpers/MeasurementsCreator.hpp"
-#include "Acts/Tests/CommonHelpers/TestCluster.hpp"
 #include "Acts/Tests/CommonHelpers/TestSpacePoint.hpp"
 #include "Acts/Utilities/CalibrationContext.hpp"
 #include "Acts/Utilities/Helpers.hpp"
@@ -49,7 +48,7 @@ using StraightPropagator =
     Acts::Propagator<Acts::StraightLineStepper, Acts::Navigator>;
 
 using TestMeasurement = Acts::BoundVariantMeasurement;
-using Cluster = TestCluster<TestMeasurement>;
+// using Cluster = TestCluster<TestMeasurement>;
 using ConstantFieldStepper = Acts::EigenStepper<>;
 using ConstantFieldPropagator =
     Acts::Propagator<ConstantFieldStepper, Acts::Navigator>;
@@ -139,8 +138,8 @@ BOOST_DATA_TEST_CASE(SpacePointBuilder_basic, bdata::xrange(1), index) {
 
   // std::vector<Acts::Measurement<Acts::BoundIndices, 2>>
   //    testMeasurements;
-  std::vector<const Cluster*> clusters_front;
-  std::vector<const Cluster*> clusters_back;
+  // std::vector<const Cluster*> clusters_front;
+  // std::vector<const Cluster*> clusters_back;
   std::vector<const TestMeasurement> frontMeasurements;
   std::vector<const TestMeasurement> backMeasurements;
   // std::vector<const TestMeasurement> selectedMeasurements;
@@ -214,9 +213,9 @@ BOOST_DATA_TEST_CASE(SpacePointBuilder_basic, bdata::xrange(1), index) {
   auto spBuilder = Acts::SpacePointBuilder<TestSpacePoint>(spBuilderConfig);
 
   TestSpacePointContainer spacePoints;
-  std::cout << "number of front/back clusters " << clusters_front.size()
-            << " / " << clusters_back.size() << std::endl;
-  std::vector<std::pair<const Cluster*, const Cluster*>> clusterPairs;
+  // std::cout << "number of front/back clusters " << clusters_front.size()
+  //           << " / " << clusters_back.size() << std::endl;
+  // std::vector<std::pair<const Cluster*, const Cluster*>> clusterPairs;
   //  spBuilder.calculateSingleHitSpacePoints(tgContext, singleHitMeasurements,
   //  spacePoints);
 
