@@ -27,14 +27,10 @@ namespace Acts {
 template <typename spacepoint_t>
 class SpacePointBuilder {
  public:
-  struct Config {
-    // Tracking geometry for transformation lookup.
-    std::shared_ptr<const Acts::TrackingGeometry> trackingGeometry;
-  };
   using Measurement = Acts::BoundVariantMeasurement;
   // Constructor
   SpacePointBuilder(SpacePointBuilderConfig cfg);
-  ///// Default constructor
+  // Default constructor
   SpacePointBuilder() = default;
 
   void calculateSpacePoints(
