@@ -109,113 +109,112 @@ const auto measPropagator = makeStraightPropagator(geometry);
 
 std::default_random_engine rng(42);
 
-  BOOST_DATA_TEST_CASE(SpacePointBuilder_basic, bdata::xrange(1), index) {
-    (void)index;
+BOOST_DATA_TEST_CASE(SpacePointBuilder_basic, bdata::xrange(1), index) {
+  (void)index;
 
-    double phi = 5._degree;
-    double theta = 95._degree;
-    double p = 20._GeV;
-    double q = 1;
+  double phi = 5._degree;
+  double theta = 95._degree;
+  double p = 20._GeV;
+  double q = 1;
 
-    Acts::Navigator navigator({
-	geometry,
-	true,  // sensitive
-	true,  // material
-	false  // passive
-      });
-    auto field =
+  Acts::Navigator navigator({
+      geometry,
+      true,  // sensitive
+      true,  // material
+      false  // passive
+  });
+  auto field =
       std::make_shared<Acts::ConstantBField>(Acts::Vector3(0.0, 0.0, 2._T));
-    ConstantFieldStepper stepper(std::move(field));
+  ConstantFieldStepper stepper(std::move(field));
 
-    ConstantFieldPropagator propagator(std::move(stepper), std::move(navigator));
-    auto start = makeParameters(phi, theta, p, q);
+  ConstantFieldPropagator propagator(std::move(stepper), std::move(navigator));
+  auto start = makeParameters(phi, theta, p, q);
 
-    auto measurements =
+  auto measurements =
       createMeasurements(propagator, geoCtx, magCtx, start, resolutions, rng);
 
-    auto sourceLinks = measurements.sourceLinks;
+  auto sourceLinks = measurements.sourceLinks;
 
-    std::vector<const TestMeasurement> frontMeasurements;
-    std::vector<const TestMeasurement> backMeasurements;
-    std::vector<const TestMeasurement> singleHitMeasurements;
-    for (auto& sl : sourceLinks) {
-      const auto geoId = sl.geometryId();
+  std::vector<const TestMeasurement> frontMeasurements;
+  std::vector<const TestMeasurement> backMeasurements;
+  std::vector<const TestMeasurement> singleHitMeasurements;
+  for (auto& sl : sourceLinks) {
+    const auto geoId = sl.geometryId();
 
-      // if (geoId.volume() == 3)
-      //   sl.parameters[1] = 0;  // strip center is used for the second
-      //   coordinate
+    // if (geoId.volume() == 3)
+    //   sl.parameters[1] = 0;  // strip center is used for the second
+    //   coordinate
 
-      const auto meas = makeMeasurement(sl, sl.parameters, sl.covariance,
-					sl.indices[0], sl.indices[1]);
+    const auto meas = makeMeasurement(sl, sl.parameters, sl.covariance,
+                                      sl.indices[0], sl.indices[1]);
 
-      const auto volumeId = geoId.volume();
+    const auto volumeId = geoId.volume();
 
-      if (volumeId == 2) {  // pixel type detector
-	singleHitMeasurements.emplace_back(meas);
-      } else if (volumeId == 3) {  // strip type detector
+    if (volumeId == 2) {  // pixel type detector
+      singleHitMeasurements.emplace_back(meas);
+    } else if (volumeId == 3) {  // strip type detector
 
-	const auto layerId = geoId.layer();
+      const auto layerId = geoId.layer();
 
-	if (layerId == 2 || layerId == 6) {
-	  frontMeasurements.emplace_back(meas);
-	} else if (layerId == 4 || layerId == 8) {
-	  backMeasurements.emplace_back(meas);
-	}
+      if (layerId == 2 || layerId == 6) {
+        frontMeasurements.emplace_back(meas);
+      } else if (layerId == 4 || layerId == 8) {
+        backMeasurements.emplace_back(meas);
+      }
 
-	// auto index1 = sl.indices[1];
-	// if (index1 == Acts::eBoundSize) {  // eBoundSize is stored in the 2nd
-      
-	double localHit = sl.parameters[0];
+      // auto index1 = sl.indices[1];
+      // if (index1 == Acts::eBoundSize) {  // eBoundSize is stored in the 2nd
 
-	// Build bounds
-	std::shared_ptr<const RectangleBounds> recBounds(
-							 new RectangleBounds(35_um, 50_cm));
+      double localHit = sl.parameters[0];
 
-	// Build binning and segmentation
-	std::vector<float> boundariesX, boundariesY;
-	boundariesX.push_back(localHit - 35_um);
-	boundariesX.push_back(localHit + 35_um);
-	boundariesY.push_back(-50_cm);
-	boundariesY.push_back(50_cm);
+      // Build bounds
+      std::shared_ptr<const RectangleBounds> recBounds(
+          new RectangleBounds(35_um, 50_cm));
 
-	BinningData binDataX(BinningOption::open, BinningValue::binX,
-			     boundariesX);
-	std::shared_ptr<BinUtility> buX(new BinUtility(binDataX));
-	BinningData binDataY(BinningOption::open, BinningValue::binY,
-			     boundariesY);
-	std::shared_ptr<BinUtility> buY(new BinUtility(binDataY));
-	(*buX) += (*buY);
+      // Build binning and segmentation
+      std::vector<float> boundariesX, boundariesY;
+      boundariesX.push_back(localHit - 35_um);
+      boundariesX.push_back(localHit + 35_um);
+      boundariesY.push_back(-50_cm);
+      boundariesY.push_back(50_cm);
 
-	std::shared_ptr<const Segmentation> segmentation(
-							 new CartesianSegmentation(buX, recBounds));
-      } // volume 3 (strip detector)
-      
-    }
-    auto spBuilderConfig = SpacePointBuilderConfig();
-    spBuilderConfig.trackingGeometry = geometry;
+      BinningData binDataX(BinningOption::open, BinningValue::binX,
+                           boundariesX);
+      std::shared_ptr<BinUtility> buX(new BinUtility(binDataX));
+      BinningData binDataY(BinningOption::open, BinningValue::binY,
+                           boundariesY);
+      std::shared_ptr<BinUtility> buY(new BinUtility(binDataY));
+      (*buX) += (*buY);
 
-    auto spBuilder = Acts::SpacePointBuilder<TestSpacePoint>(spBuilderConfig);
-
-    TestSpacePointContainer spacePoints;
-    std::cout << "number of front/back measurements " << frontMeasurements.size()
-              << " / " << backMeasurements.size() << std::endl;
-    // pixel SP building
-    spBuilder.calculateSpacePoints(tgContext, spacePoints,
-				   &singleHitMeasurements);
-
-    // strip SP building
-    spBuilder.calculateSpacePoints(tgContext, spacePoints, &frontMeasurements,
-				   &backMeasurements);
-
-    std::cout << "Number of space points " << spacePoints.size() << std::endl;
-
-    for (auto& sp : spacePoints) {
-      std::cout << "space point (" << sp.x() << " " << sp.y() << " " << sp.z()
-		<< ") var: " << sp.varianceR() << " " << sp.varianceZ()
-		<< std::endl;
-    }
-    std::cout << "Space point calculated" << std::endl;
+      std::shared_ptr<const Segmentation> segmentation(
+          new CartesianSegmentation(buX, recBounds));
+    }  // volume 3 (strip detector)
   }
+  auto spBuilderConfig = SpacePointBuilderConfig();
+  spBuilderConfig.trackingGeometry = geometry;
+
+  auto spBuilder = Acts::SpacePointBuilder<TestSpacePoint>(spBuilderConfig);
+
+  TestSpacePointContainer spacePoints;
+  std::cout << "number of front/back measurements " << frontMeasurements.size()
+            << " / " << backMeasurements.size() << std::endl;
+  // pixel SP building
+  spBuilder.calculateSpacePoints(tgContext, spacePoints,
+                                 &singleHitMeasurements);
+
+  // strip SP building
+  spBuilder.calculateSpacePoints(tgContext, spacePoints, &frontMeasurements,
+                                 &backMeasurements);
+
+  std::cout << "Number of space points " << spacePoints.size() << std::endl;
+
+  for (auto& sp : spacePoints) {
+    std::cout << "space point (" << sp.x() << " " << sp.y() << " " << sp.z()
+              << ") var: " << sp.varianceR() << " " << sp.varianceZ()
+              << std::endl;
+  }
+  std::cout << "Space point calculated" << std::endl;
+}
 
 }  // end of namespace Test
 }  // namespace Acts
