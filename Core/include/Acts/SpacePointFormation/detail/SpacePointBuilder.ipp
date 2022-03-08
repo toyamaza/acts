@@ -305,8 +305,8 @@ inline bool calculateSpacePoint(const std::pair<Vector3, Vector3>& stripEnds1,
 
 template <typename spacepoint_t>
 Acts::SpacePointBuilder<spacepoint_t>::SpacePointBuilder(
-    Acts::SpacePointBuilderConfig cfg)
-    : m_config(cfg) {}
+    Acts::SpacePointBuilderConfig cfg, std::unique_ptr<const Logger> logger)
+    : m_config(cfg), m_logger(std::move(logger)) {}
 
 template <typename spacepoint_t>
 std::pair<Acts::Vector3, Acts::Vector2>
@@ -394,10 +394,10 @@ void Acts::SpacePointBuilder<spacepoint_t>::calculateSpacePoints(
     const GeometryContext& gctx, std::vector<spacepoint_t>& spacePointStorage,
     const std::vector<const Measurement>* FrontMeasurements,
     const std::vector<const Measurement>* BackMeasurements) const {
-  // if ( FrontMeasurements == nullptr ){
-  //   ACTS_WARNING(" No measurements found in the SP formation");
-  //   return;
-  // }
+  if (FrontMeasurements == nullptr) {
+    ACTS_WARNING(" No measurements found in the SP formation");
+    return;
+  }
 
   if (BackMeasurements == nullptr) {  // pixel SP building
     calculateSingleHitSpacePoints(gctx, *FrontMeasurements, spacePointStorage);
@@ -543,21 +543,25 @@ std::pair<Acts::Vector3, Acts::Vector3>
 Acts::SpacePointBuilder<spacepoint_t>::endsOfStrip(
     const Acts::GeometryContext& gctx, const Measurement& measurement) const {
   // Calculate the local coordinates of the Cluster
-  std::cout << "endsofstrip " << std::endl;
+
+  Acts::Vector3 topGlobal(0, 0, 0);
+  Acts::Vector3 bottomGlobal(0, 0, 0);
+
   auto localPos = getLocalPos(measurement);
 
   const auto& slink = getSourceLink(measurement);
   const auto geoId = slink->geometryId();
   const Acts::Surface* surface = m_config.trackingGeometry->findSurface(geoId);
 
-  const auto detElement = surface->associatedDetectorElement();
-
   auto detectorElement = dynamic_cast<const Acts::IdentifiedDetectorElement*>(
       surface->associatedDetectorElement());
+
   if (!detectorElement && detectorElement->digitizationModule()) {
-    // ACTS_ERROR(" No detector element found for the strip SP formation");
-    ;
+    ACTS_ERROR(" No detector element found for the strip SP formation");
+
+    return std::make_pair(topGlobal, bottomGlobal);
   }
+
   auto digitationModule = detectorElement->digitizationModule();
   const Acts::Segmentation& segment = digitationModule->segmentation();
 
@@ -565,12 +569,9 @@ Acts::SpacePointBuilder<spacepoint_t>::endsOfStrip(
       detail::findLocalTopAndBottomEnd(localPos, &segment);
 
   // Calculate the global coordinates of the top and bottom end of the strip
-
   Acts::Vector3 globalFakeMom(1, 1, 1);
-
-  Acts::Vector3 topGlobal =
-      surface->localToGlobal(gctx, topBottomLocal.first, globalFakeMom);
-  Acts::Vector3 bottomGlobal =
+  topGlobal = surface->localToGlobal(gctx, topBottomLocal.first, globalFakeMom);
+  bottomGlobal =
       surface->localToGlobal(gctx, topBottomLocal.second, globalFakeMom);
 
   // Return the top and bottom end of the strip in global coordinates
@@ -628,7 +629,7 @@ template <typename spacepoint_t>
 Acts::Vector2 Acts::SpacePointBuilder<spacepoint_t>::getLocalPos(
     const Measurement& meas) const {
   std::cout << "getLocalPos" << std::endl;
-  std::visit(
+  Acts::Vector2 local = std::visit(
       [](const auto& x) {
         auto expander = x.expander();
         Acts::BoundVector par = expander * x.parameters();
@@ -638,6 +639,7 @@ Acts::Vector2 Acts::SpacePointBuilder<spacepoint_t>::getLocalPos(
         return local;
       },
       meas);
+  return local;
 }
 
 template <typename spacepoint_t>

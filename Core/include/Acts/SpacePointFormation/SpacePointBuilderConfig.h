@@ -29,7 +29,7 @@ struct SpacePointBuilderConfig{
   Vector3 vertex = {0., 0., 0.};
   /// Perform the perpendicular projection for space point finding
   bool usePerpProj = false;
-
+  
    SpacePointBuilderConfig()=default;
 };
 

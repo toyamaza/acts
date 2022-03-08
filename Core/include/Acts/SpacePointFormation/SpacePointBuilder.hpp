@@ -7,6 +7,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #pragma once
+
 #include "Acts/Definitions/TrackParametrization.hpp"
 #include "Acts/Digitization/CartesianSegmentation.hpp"
 #include "Acts/Digitization/DigitizationModule.hpp"
@@ -33,7 +34,10 @@ class SpacePointBuilder {
  public:
   using Measurement = Acts::BoundVariantMeasurement;
   // Constructor
-  SpacePointBuilder(SpacePointBuilderConfig cfg);
+  SpacePointBuilder(SpacePointBuilderConfig cfg,
+                    std::unique_ptr<const Logger> logger =
+                        getDefaultLogger("SpacePointBuilder", Logging::INFO));
+
   // Default constructor
   SpacePointBuilder() = default;
 
@@ -97,8 +101,6 @@ class SpacePointBuilder {
   std::pair<Acts::Vector3, Acts::Vector3> endsOfStrip(
       const Acts::GeometryContext& gctx, const Measurement& measurement) const;
 
-  // Acts::SourceLink getSourceLink( const Measurement& meas) const;
-
   Acts::Vector2 globalCov(const Acts::GeometryContext& gctx,
                           const Acts::GeometryIdentifier& geoId,
                           const Acts::Vector2& localPos,
@@ -115,8 +117,11 @@ class SpacePointBuilder {
 
   // configuration of the single hit space point builder
   SpacePointBuilderConfig m_config;
-  // Acts::Vector3 globalPos(const Acts::GeometryContext& gctx, const
-  // Measurement& meas) const;
+
+  /// the logging instance
+  std::unique_ptr<const Acts::Logger> m_logger;
+
+  const Logger& logger() const { return *m_logger; }
 };
 
 }  // namespace Acts

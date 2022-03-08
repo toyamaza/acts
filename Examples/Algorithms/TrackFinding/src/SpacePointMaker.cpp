@@ -83,7 +83,8 @@ ActsExamples::SpacePointMaker::SpacePointMaker(Config cfg,
   }
   auto spBuilderConfig = Acts::SpacePointBuilderConfig();
   spBuilderConfig.trackingGeometry = m_cfg.trackingGeometry;
-  m_spacePointBuilder = Acts::SpacePointBuilder<SimSpacePoint>(spBuilderConfig);
+  m_spacePointBuilder = Acts::SpacePointBuilder<SimSpacePoint>(
+      spBuilderConfig, Acts::getDefaultLogger("SpacePointBuilder", lvl));
 }
 
 ActsExamples::ProcessCode ActsExamples::SpacePointMaker::execute(
