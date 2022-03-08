@@ -83,43 +83,42 @@ inline double differenceOfMeasurementsChecked(const Acts::Vector3& pos1,
   return diffTheta2 + diffPhi2;
 }
 
-// /// @brief This function finds the top and bottom end of a detector segment in
-// /// local coordinates
-// ///
-// /// @param [in] local Local position of the Cluster
-// /// @param [in] segment Segmentation of the detector element
-// ///
-// /// @return Pair containing the top and bottom end
-// inline std::pair<Vector2, Vector2> findLocalTopAndBottomEnd(
-//     const Vector2& local, const CartesianSegmentation* segment) {
-//   auto& binData = segment->binUtility().binningData();
-//   auto& boundariesX = binData[0].boundaries();
-//   auto& boundariesY = binData[1].boundaries();
+/// @brief This function finds the top and bottom end of a detector segment in
+/// local coordinates
+///
+/// @param [in] local Local position of the Cluster
+/// @param [in] segment Segmentation of the detector element
+///
+/// @return Pair containing the top and bottom end
+inline std::pair<Vector2, Vector2> findLocalTopAndBottomEnd(
+    const Vector2& local, const Segmentation* segment) {
+  auto& binData = segment->binUtility().binningData();
+  auto& boundariesX = binData[0].boundaries();
+  auto& boundariesY = binData[1].boundaries();
 
-//   // Search the x-/y-bin of the Cluster
-//   size_t binX = binData[0].searchLocal(local);
-//   size_t binY = binData[1].searchLocal(local);
+  // Search the x-/y-bin of the Cluster
+  size_t binX = binData[0].searchLocal(local);
+  size_t binY = binData[1].searchLocal(local);
 
-//   // Storage of the local top (first) and bottom (second) end
-//   std::pair<Vector2, Vector2> topBottomLocal;
+  // Storage of the local top (first) and bottom (second) end
+  std::pair<Vector2, Vector2> topBottomLocal;
 
-//   if (boundariesX[binX + 1] - boundariesX[binX] <
-//       boundariesY[binY + 1] - boundariesY[binY]) {
-//     topBottomLocal.first = {(boundariesX[binX] + boundariesX[binX + 1]) / 2,
-//                             boundariesY[binY + 1]};
-//     topBottomLocal.second = {(boundariesX[binX] + boundariesX[binX + 1]) / 2,
-//                              boundariesY[binY]};
-//   } else {
-//     // Set the top and bottom end of the strip in local coordinates
-//     topBottomLocal.first = {boundariesX[binX],
-//                             (boundariesY[binY] + boundariesY[binY + 1]) / 2};
-//     topBottomLocal.second = {boundariesX[binX + 1],
-//                              (boundariesY[binY] + boundariesY[binY + 1]) /
-//                              2};
-//   }
+  if (boundariesX[binX + 1] - boundariesX[binX] <
+      boundariesY[binY + 1] - boundariesY[binY]) {
+    topBottomLocal.first = {(boundariesX[binX] + boundariesX[binX + 1]) / 2,
+                            boundariesY[binY + 1]};
+    topBottomLocal.second = {(boundariesX[binX] + boundariesX[binX + 1]) / 2,
+                             boundariesY[binY]};
+  } else {
+    // Set the top and bottom end of the strip in local coordinates
+    topBottomLocal.first = {boundariesX[binX],
+                            (boundariesY[binY] + boundariesY[binY + 1]) / 2};
+    topBottomLocal.second = {boundariesX[binX + 1],
+                             (boundariesY[binY] + boundariesY[binY + 1]) / 2};
+  }
 
-//   return topBottomLocal;
-// }
+  return topBottomLocal;
+}
 
 // /// @brief Calculates a space point whithout using the vertex
 // /// @note This is mostly to resolve space points from cosmic data
@@ -143,7 +142,7 @@ inline double calcPerpendicularProjection(const Vector3& a, const Vector3& c,
   /// lambda1 * r.
   /// x get resolved by resolving lambda0 from the condition that |x-y| is  the
   /// shortest distance between two skew lines.
-  std::cout << "calcperpendicularprojection" << std::endl;
+
   Vector3 ac = c - a;
   double qr = q.dot(r);
   double denom = q.dot(q) - qr * qr;
@@ -548,35 +547,34 @@ Acts::SpacePointBuilder<spacepoint_t>::endsOfStrip(
   auto localPos = getLocalPos(measurement);
 
   const auto& slink = getSourceLink(measurement);
-  //  const auto &slink = getSourceLink(meas);
+  const auto geoId = slink->geometryId();
+  const Acts::Surface* surface = m_config.trackingGeometry->findSurface(geoId);
 
-  // Receive the binning
-  // const auto segment = Acts::CartesianSegmentation();
-  // const auto segment = dynamic_cast<const Acts::CartesianSegmentation*>(
-  // &(cluster.segmentation()));
+  const auto detElement = surface->associatedDetectorElement();
 
-  // std::pair<Acts::Vector2, Acts::Vector2> topBottomLocal =
-  //     detail::findLocalTopAndBottomEnd(localPos, segment);
+  auto detectorElement = dynamic_cast<const Acts::IdentifiedDetectorElement*>(
+      surface->associatedDetectorElement());
+  if (!detectorElement && detectorElement->digitizationModule()) {
+    // ACTS_ERROR(" No detector element found for the strip SP formation");
+    ;
+  }
+  auto digitationModule = detectorElement->digitizationModule();
+  const Acts::Segmentation& segment = digitationModule->segmentation();
 
-  // // Calculate the global coordinates of the top and bottom end of the strip
+  std::pair<Acts::Vector2, Acts::Vector2> topBottomLocal =
+      detail::findLocalTopAndBottomEnd(localPos, &segment);
 
-  // Acts::Vector3 globalFakeMom(1, 1, 1);
+  // Calculate the global coordinates of the top and bottom end of the strip
 
-  // auto meas = cluster.measurement();
-  // auto slink = std::visit([](const auto& x) { return x.sourceLink(); },
-  // meas); const auto geoId = slink.geometryId();
+  Acts::Vector3 globalFakeMom(1, 1, 1);
 
-  // const Acts::Surface* surface =
-  // m_config.trackingGeometry->findSurface(geoId); Acts::Vector3 topGlobal =
-  //     surface->localToGlobal(gctx, topBottomLocal.first, globalFakeMom);
-  // Acts::Vector3 bottomGlobal =
-  //     surface->localToGlobal(gctx, topBottomLocal.second, globalFakeMom);
-  // // Return the top and bottom end of the strip in global coordinates
+  Acts::Vector3 topGlobal =
+      surface->localToGlobal(gctx, topBottomLocal.first, globalFakeMom);
+  Acts::Vector3 bottomGlobal =
+      surface->localToGlobal(gctx, topBottomLocal.second, globalFakeMom);
 
-  // return std::make_pair(topGlobal, bottomGlobal);
-
-  Acts::Vector3 tmpGlobal(0, 0, 0);  // dummy
-  return std::make_pair(tmpGlobal, tmpGlobal);
+  // Return the top and bottom end of the strip in global coordinates
+  return std::make_pair(topGlobal, bottomGlobal);
 }
 
 template <typename spacepoint_t>
