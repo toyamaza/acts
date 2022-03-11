@@ -15,11 +15,11 @@
 
 #include "Acts/Definitions/Algebra.hpp"
 #include "Acts/Geometry/DetectorElementBase.hpp"
+#include "Acts/Identification/IdentifiedDetectorElement.hpp"
+#include "Acts/Identification/Identifier.hpp"
 #include "Acts/Surfaces/PlanarBounds.hpp"
 #include "Acts/Surfaces/PlaneSurface.hpp"
 #include "Acts/Tests/CommonHelpers/LineSurfaceStub.hpp"
-#include "Acts/Identification/IdentifiedDetectorElement.hpp"
-#include "Acts/Identification/Identifier.hpp"
 
 namespace Acts {
 
@@ -52,7 +52,8 @@ class DetectorElementStub : public IdentifiedDetectorElement {
       const Transform3& transform, std::shared_ptr<const PlanarBounds> pBounds,
       double thickness,
       std::shared_ptr<const ISurfaceMaterial> material = nullptr,
-      std::shared_ptr<const Acts::DigitizationModule> digitizationModule =nullptr)
+      std::shared_ptr<const Acts::DigitizationModule> digitizationModule =
+          nullptr)
       : IdentifiedDetectorElement(),
         m_elementTransform(transform),
         m_elementThickness(thickness),
@@ -73,7 +74,8 @@ class DetectorElementStub : public IdentifiedDetectorElement {
       const Transform3& transform, std::shared_ptr<const LineBounds> lBounds,
       double thickness,
       std::shared_ptr<const ISurfaceMaterial> material = nullptr,
-      std::shared_ptr<const Acts::DigitizationModule> digitizationModule =nullptr)
+      std::shared_ptr<const Acts::DigitizationModule> digitizationModule =
+          nullptr)
       : IdentifiedDetectorElement(),
         m_elementTransform(transform),
         m_elementThickness(thickness),
@@ -104,8 +106,9 @@ class DetectorElementStub : public IdentifiedDetectorElement {
   Identifier identifier() const override final;
 
   /// Retrieve the DigitizationModule
-  const std::shared_ptr<const Acts::DigitizationModule> digitizationModule()const final override;
-  
+  const std::shared_ptr<const Acts::DigitizationModule> digitizationModule()
+      const final override;
+
  private:
   /// the transform for positioning in 3D space
   Transform3 m_elementTransform;
@@ -116,8 +119,8 @@ class DetectorElementStub : public IdentifiedDetectorElement {
   /// identifier
   Identifier m_elementIdentifier;
   /// The Digitization module
-  std::shared_ptr<const Acts::DigitizationModule> m_digitizationModule =  nullptr;
-  
+  std::shared_ptr<const Acts::DigitizationModule> m_digitizationModule =
+      nullptr;
 };
 
 inline const Transform3& DetectorElementStub::transform(
@@ -133,8 +136,7 @@ inline double DetectorElementStub::thickness() const {
   return m_elementThickness;
 }
 
-inline Identifier DetectorElementStub::identifier()
-    const {
+inline Identifier DetectorElementStub::identifier() const {
   return m_elementIdentifier;
 }
 
@@ -142,6 +144,6 @@ inline const std::shared_ptr<const Acts::DigitizationModule>
 DetectorElementStub::digitizationModule() const {
   return m_digitizationModule;
 }
-  
+
 }  // namespace Test
 }  // namespace Acts
