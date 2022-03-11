@@ -10,7 +10,6 @@
 #include <boost/test/unit_test.hpp>
 
 #include "Acts/Definitions/Units.hpp"
-#include "Acts/Digitization/CartesianSegmentation.hpp"
 #include "Acts/EventData/Measurement.hpp"
 #include "Acts/EventData/TrackParameters.hpp"
 #include "Acts/MagneticField/ConstantBField.hpp"
@@ -21,10 +20,6 @@
 #include "Acts/Propagator/StraightLineStepper.hpp"
 #include "Acts/SpacePointFormation/SpacePointBuilder.hpp"
 #include "Acts/SpacePointFormation/SpacePointBuilderConfig.h"
-#include "Acts/Surfaces/ConeSurface.hpp"
-#include "Acts/Surfaces/PlaneSurface.hpp"
-#include "Acts/Surfaces/RectangleBounds.hpp"
-#include "Acts/Surfaces/Surface.hpp"
 #include "Acts/Tests/CommonHelpers/CubicTrackingGeometry.hpp"
 #include "Acts/Tests/CommonHelpers/DetectorElementStub.hpp"
 #include "Acts/Tests/CommonHelpers/GenerateParameters.hpp"
@@ -141,10 +136,6 @@ BOOST_DATA_TEST_CASE(SpacePointBuilder_basic, bdata::xrange(1), index) {
   for (auto& sl : sourceLinks) {
     const auto geoId = sl.geometryId();
 
-    // if (geoId.volume() == 3)
-    //   sl.parameters[1] = 0;  // strip center is used for the second
-    //   coordinate
-
     const auto meas = makeMeasurement(sl, sl.parameters, sl.covariance,
                                       sl.indices[0], sl.indices[1]);
 
@@ -162,32 +153,6 @@ BOOST_DATA_TEST_CASE(SpacePointBuilder_basic, bdata::xrange(1), index) {
         backMeasurements.emplace_back(meas);
       }
 
-      // auto index1 = sl.indices[1];
-      // if (index1 == Acts::eBoundSize) {  // eBoundSize is stored in the 2nd
-
-      double localHit = sl.parameters[0];
-
-      // Build bounds
-      std::shared_ptr<const RectangleBounds> recBounds(
-          new RectangleBounds(35_um, 50_cm));
-
-      // Build binning and segmentation
-      std::vector<float> boundariesX, boundariesY;
-      boundariesX.push_back(localHit - 35_um);
-      boundariesX.push_back(localHit + 35_um);
-      boundariesY.push_back(-50_cm);
-      boundariesY.push_back(50_cm);
-
-      BinningData binDataX(BinningOption::open, BinningValue::binX,
-                           boundariesX);
-      std::shared_ptr<BinUtility> buX(new BinUtility(binDataX));
-      BinningData binDataY(BinningOption::open, BinningValue::binY,
-                           boundariesY);
-      std::shared_ptr<BinUtility> buY(new BinUtility(binDataY));
-      (*buX) += (*buY);
-
-      std::shared_ptr<const Segmentation> segmentation(
-          new CartesianSegmentation(buX, recBounds));
     }  // volume 3 (strip detector)
   }
   auto spBuilderConfig = SpacePointBuilderConfig();
