@@ -629,7 +629,7 @@ template <typename spacepoint_t>
 Acts::Vector2 Acts::SpacePointBuilder<spacepoint_t>::getLocalPos(
     const Measurement& meas) const {
   std::cout << "getLocalPos" << std::endl;
-  Acts::Vector2 local = std::visit(
+  Acts::Vector2 localPos = std::visit(
       [](const auto& x) {
         auto expander = x.expander();
         Acts::BoundVector par = expander * x.parameters();
@@ -639,7 +639,7 @@ Acts::Vector2 Acts::SpacePointBuilder<spacepoint_t>::getLocalPos(
         return local;
       },
       meas);
-  return local;
+  return localPos;
 }
 
 template <typename spacepoint_t>
