@@ -136,8 +136,8 @@ BOOST_DATA_TEST_CASE(SpacePointBuilder_basic, bdata::xrange(1), index) {
   for (auto& sl : sourceLinks) {
     const auto geoId = sl.geometryId();
 
-    const TestMeasurement meas = makeMeasurement(sl, sl.parameters, sl.covariance,
-                                      sl.indices[0], sl.indices[1]);
+    const TestMeasurement meas = makeMeasurement(
+        sl, sl.parameters, sl.covariance, sl.indices[0], sl.indices[1]);
 
     const auto volumeId = geoId.volume();
 

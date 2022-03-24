@@ -444,9 +444,9 @@ void Acts::SpacePointBuilder<spacepoint_t>::makeMeasurementPairs(
       // auto gpos_front = globalPos(gctx,
       // measurementsFront[iMeasurementsFront]);
       auto [gposFront, gcovFront] =
-	globalCoords(gctx, *(measurementsFront[iMeasurementsFront]));
+          globalCoords(gctx, *(measurementsFront[iMeasurementsFront]));
       auto [gposBack, gcovBack] =
-	globalCoords(gctx, *(measurementsBack[iMeasurementsBack]));
+          globalCoords(gctx, *(measurementsBack[iMeasurementsBack]));
 
       currentDiff = detail::differenceOfMeasurementsChecked(
           gposFront, gposBack, m_config.vertex, m_config.diffDist,
