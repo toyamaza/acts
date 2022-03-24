@@ -94,7 +94,7 @@ ActsExamples::ProcessCode ActsExamples::SpacePointMaker::execute(
   const auto& measurements =
       ctx.eventStore.get<MeasurementContainer>(m_cfg.inputMeasurements);
 
-  std::vector<const Measurement> selectedMeasurements;
+  std::vector<const Measurement*> selectedMeasurements;
   // TODO Support strip measurements
 
   for (Acts::GeometryIdentifier geoId : m_cfg.geometrySelection) {
@@ -108,7 +108,7 @@ ActsExamples::ProcessCode ActsExamples::SpacePointMaker::execute(
       // find corresponding surface
       for (auto& sourceLink : moduleSourceLinks) {
         const auto& meas = measurements[sourceLink.get().index()];
-        selectedMeasurements.emplace_back(meas);
+        selectedMeasurements.emplace_back(&meas);
       }
     }
   }

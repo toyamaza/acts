@@ -43,8 +43,8 @@ class SpacePointBuilder {
 
   void calculateSpacePoints(
       const GeometryContext& gctx, std::vector<spacepoint_t>& spacePointStorage,
-      const std::vector<const Measurement>* frontMeasurements,
-      const std::vector<const Measurement>* backMeasurements = nullptr) const;
+      const std::vector<const Measurement*>* frontMeasurements,
+      const std::vector<const Measurement*>* backMeasurements = nullptr) const;
 
  protected:
   /// @brief Getter method for the local coordinates of a cluster
@@ -73,7 +73,7 @@ class SpacePointBuilder {
   /// @param spacePointStorage storage of the results
   void calculateSingleHitSpacePoints(
       const GeometryContext& gctx,
-      const std::vector<const Measurement>& measurements,
+      const std::vector<const Measurement*>& measurements,
       std::vector<spacepoint_t>& spacePointStorage) const;
 
   /// @brief Searches possible combinations of two clusters on different
@@ -87,8 +87,8 @@ class SpacePointBuilder {
   /// meant to be clusters[Independent clusters on a single surface]
   void makeMeasurementPairs(
       const GeometryContext& gctx,
-      const std::vector<const Measurement>& measurementsFront,
-      const std::vector<const Measurement>& measurementsBack,
+      const std::vector<const Measurement*>& measurementsFront,
+      const std::vector<const Measurement*>& measurementsBack,
       std::vector<std::pair<const Measurement*, const Measurement*>>&
           measurementPairs) const;
 

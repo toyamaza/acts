@@ -371,15 +371,15 @@ Acts::SpacePointBuilder<spacepoint_t>::globalCoords(
 template <typename spacepoint_t>
 void Acts::SpacePointBuilder<spacepoint_t>::calculateSingleHitSpacePoints(
     const GeometryContext& gctx,
-    const std::vector<const Measurement>& measurements,
+    const std::vector<const Measurement*>& measurements,
     std::vector<spacepoint_t>& spacePointStorage) const {
   for (const auto& meas : measurements) {
-    auto [gPos, gCov] = globalCoords(gctx, meas);
+    auto [gPos, gCov] = globalCoords(gctx, *meas);
 
     std::cout << "gpos " << gPos << std::endl;
 
     const auto& slink =
-        std::visit([](const auto& x) { return &x.sourceLink(); }, meas);
+        std::visit([](const auto& x) { return &x.sourceLink(); }, *meas);
 
     std::vector<const SourceLink*> slinks;
     slinks.emplace_back(slink);
@@ -392,8 +392,8 @@ void Acts::SpacePointBuilder<spacepoint_t>::calculateSingleHitSpacePoints(
 template <typename spacepoint_t>
 void Acts::SpacePointBuilder<spacepoint_t>::calculateSpacePoints(
     const GeometryContext& gctx, std::vector<spacepoint_t>& spacePointStorage,
-    const std::vector<const Measurement>* FrontMeasurements,
-    const std::vector<const Measurement>* BackMeasurements) const {
+    const std::vector<const Measurement*>* FrontMeasurements,
+    const std::vector<const Measurement*>* BackMeasurements) const {
   if (FrontMeasurements == nullptr) {
     ACTS_WARNING(" No measurements found in the SP formation");
     return;
@@ -418,8 +418,8 @@ void Acts::SpacePointBuilder<spacepoint_t>::calculateSpacePoints(
 template <typename spacepoint_t>
 void Acts::SpacePointBuilder<spacepoint_t>::makeMeasurementPairs(
     const GeometryContext& gctx,
-    const std::vector<const Measurement>& measurementsFront,
-    const std::vector<const Measurement>& measurementsBack,
+    const std::vector<const Measurement*>& measurementsFront,
+    const std::vector<const Measurement*>& measurementsBack,
     std::vector<std::pair<const Measurement*, const Measurement*>>&
         measurementPairs) const {
   std::cout << "make measurement pairs" << std::endl;
@@ -444,9 +444,9 @@ void Acts::SpacePointBuilder<spacepoint_t>::makeMeasurementPairs(
       // auto gpos_front = globalPos(gctx,
       // measurementsFront[iMeasurementsFront]);
       auto [gposFront, gcovFront] =
-          globalCoords(gctx, measurementsFront[iMeasurementsFront]);
+	globalCoords(gctx, *(measurementsFront[iMeasurementsFront]));
       auto [gposBack, gcovBack] =
-          globalCoords(gctx, measurementsBack[iMeasurementsBack]);
+	globalCoords(gctx, *(measurementsBack[iMeasurementsBack]));
 
       currentDiff = detail::differenceOfMeasurementsChecked(
           gposFront, gposBack, m_config.vertex, m_config.diffDist,
@@ -462,8 +462,8 @@ void Acts::SpacePointBuilder<spacepoint_t>::makeMeasurementPairs(
     // Store the best (=closest) result
     if (measurementMinDist < measurementsBack.size()) {
       std::pair<const Measurement*, const Measurement*> measurementPair;
-      measurementPair = std::make_pair(&measurementsFront[iMeasurementsFront],
-                                       &measurementsBack[measurementMinDist]);
+      measurementPair = std::make_pair(measurementsFront[iMeasurementsFront],
+                                       measurementsBack[measurementMinDist]);
       measurementPairs.push_back(measurementPair);
     }
   }
