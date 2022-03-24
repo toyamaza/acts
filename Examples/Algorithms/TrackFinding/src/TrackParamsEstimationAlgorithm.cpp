@@ -151,9 +151,6 @@ ActsExamples::TrackParamsEstimationAlgorithm::createSeeds(
 
 ActsExamples::ProcessCode ActsExamples::TrackParamsEstimationAlgorithm::execute(
     const ActsExamples::AlgorithmContext& ctx) const {
-  // Read source links (necesary for retrieving the geometry identifer)
-  const auto& sourceLinks =
-      ctx.eventStore.get<IndexSourceLinkContainer>(m_cfg.inputSourceLinks);
   // Read seeds or create them from proto tracks and space points
   SimSeedContainer seeds;
   SimSpacePointContainer spacePoints;
@@ -188,8 +185,6 @@ ActsExamples::ProcessCode ActsExamples::TrackParamsEstimationAlgorithm::execute(
     //  ACTS_WARNING("Missing measurement index in the space point")
     //  continue;
     //}
-    // const auto hitIdx = bottomSP->measurementIndices()[0];
-    // const auto sourceLink = sourceLinks.nth(hitIdx);
     const auto sourceLink = bottomSP->sourceLinks()[0];
     auto geoId = sourceLink->geometryId();
     const Acts::Surface* surface = m_cfg.trackingGeometry->findSurface(geoId);
