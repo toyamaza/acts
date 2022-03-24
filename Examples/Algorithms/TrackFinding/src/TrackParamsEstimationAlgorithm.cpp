@@ -80,10 +80,14 @@ ActsExamples::TrackParamsEstimationAlgorithm::createSeeds(
   std::unordered_map<Index, const SimSpacePoint*> spMap;
 
   for (const SimSpacePoint& sp : spacePoints) {
+    if (sp.sourceLinks().size() == 0) {
+      ACTS_WARNING("Missing soucelink in space point");
+      continue;
+    }
     const auto slink =
         static_cast<const IndexSourceLink&>(*(sp.sourceLinks()[0]));
     spMap.emplace(slink.index(),
-                  &sp);  // TO DO: add the second measurement for strips
+                  &sp);  // The second measurement is ignored for strips
   }
 
   for (std::size_t itrack = 0; itrack < protoTracks.size(); ++itrack) {
@@ -181,10 +185,10 @@ ActsExamples::ProcessCode ActsExamples::TrackParamsEstimationAlgorithm::execute(
     const auto& seed = seeds[iseed];
     // Get the bottom space point and its reference surface
     const auto bottomSP = seed.sp().front();
-    // if (bottomSP->measurementIndices().size() == 0) {
-    //  ACTS_WARNING("Missing measurement index in the space point")
-    //  continue;
-    //}
+    if (bottomSP->sourceLinks().size() == 0) {
+      ACTS_WARNING("Missing sourcelink in the space point")
+      continue;
+    }
     const auto sourceLink = bottomSP->sourceLinks()[0];
     auto geoId = sourceLink->geometryId();
     const Acts::Surface* surface = m_cfg.trackingGeometry->findSurface(geoId);
@@ -224,14 +228,8 @@ ActsExamples::ProcessCode ActsExamples::TrackParamsEstimationAlgorithm::execute(
           ACTS_WARNING("Missing sourceLinks in the space point")
           continue;
         }
-
-        // const auto slink0 = static_cast<const
-        // IndexSourceLink&>(*(spacePointPtr->sourceLinks()[0])); *slink0);
-        // std::cout << islink0.index() << std::endl;
-        // protoTrack.emplace_back(slink0.index() );
         const auto slink =
             static_cast<const IndexSourceLink&>(*(sp->sourceLinks()[0]));
-        // protoTrack.emplace_back(slink.index());
         track.push_back(slink.index());
       }
       tracks.emplace_back(track);

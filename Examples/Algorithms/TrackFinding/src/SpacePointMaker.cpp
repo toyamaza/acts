@@ -9,6 +9,7 @@
 #include "ActsExamples/TrackFinding/SpacePointMaker.hpp"
 
 #include "Acts/Geometry/TrackingGeometry.hpp"
+#include "Acts/SpacePointFormation/SpacePointBuilderConfig.h"
 #include "Acts/Surfaces/Surface.hpp"
 #include "ActsExamples/EventData/GeometryContainers.hpp"
 #include "ActsExamples/EventData/IndexSourceLink.hpp"
@@ -117,6 +118,7 @@ ActsExamples::ProcessCode ActsExamples::SpacePointMaker::execute(
                                            &selectedMeasurements);
   spacePoints.shrink_to_fit();
 
+  ACTS_DEBUG("Created " << spacePoints.size() << " space points");
   ctx.eventStore.add(m_cfg.outputSpacePoints, std::move(spacePoints));
 
   return ActsExamples::ProcessCode::SUCCESS;

@@ -10,7 +10,6 @@
 
 #include "Acts/Geometry/GeometryIdentifier.hpp"
 #include "Acts/SpacePointFormation/SpacePointBuilder.hpp"
-#include "Acts/SpacePointFormation/SpacePointBuilderConfig.h"
 #include "ActsExamples/EventData/IndexSourceLink.hpp"
 #include "ActsExamples/EventData/SimSpacePoint.hpp"
 #include "ActsExamples/Framework/BareAlgorithm.hpp"
@@ -78,7 +77,6 @@ class SpacePointMaker final : public BareAlgorithm {
  private:
   Config m_cfg;
 
-  Acts::SpacePointBuilderConfig m_singleSPBuilderCfg;
   Acts::SpacePointBuilder<SimSpacePoint> m_spacePointBuilder;
 };
 }  // namespace ActsExamples
