@@ -66,7 +66,6 @@ ActsExamples::ProcessCode ActsExamples::CsvSpacePointReader::read(
     if (m_cfg.inputCollection == "pixel" || m_cfg.inputCollection == "strip" ||
         m_cfg.inputCollection == "overlap") {
       std::vector<const Acts::SourceLink*> sLinks;
-      // TODO Store source links
       auto sp = SimSpacePoint(globalPos, data.sp_covr, data.sp_covz, sLinks);
       spacePoints.emplace_back(sp);
 
