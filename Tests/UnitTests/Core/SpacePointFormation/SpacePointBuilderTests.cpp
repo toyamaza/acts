@@ -136,21 +136,20 @@ BOOST_DATA_TEST_CASE(SpacePointBuilder_basic, bdata::xrange(1), index) {
   for (auto& sl : sourceLinks) {
     const auto geoId = sl.geometryId();
 
-    const TestMeasurement meas = makeMeasurement(
-        sl, sl.parameters, sl.covariance, sl.indices[0], sl.indices[1]);
+    const TestMeasurement *meas = new TestMeasurement(makeMeasurement(sl, sl.parameters, sl.covariance, sl.indices[0], sl.indices[1]));
 
     const auto volumeId = geoId.volume();
 
     if (volumeId == 2) {  // pixel type detector
-      singleHitMeasurements.emplace_back(&meas);
+      singleHitMeasurements.emplace_back(meas);
     } else if (volumeId == 3) {  // strip type detector
 
       const auto layerId = geoId.layer();
 
       if (layerId == 2 || layerId == 6) {
-        frontMeasurements.emplace_back(&meas);
+        frontMeasurements.emplace_back(meas);
       } else if (layerId == 4 || layerId == 8) {
-        backMeasurements.emplace_back(&meas);
+        backMeasurements.emplace_back(meas);
       }
 
     }  // volume 3 (strip detector)
