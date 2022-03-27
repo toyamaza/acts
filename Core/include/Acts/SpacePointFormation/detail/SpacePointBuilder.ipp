@@ -331,14 +331,10 @@ Acts::SpacePointBuilder<spacepoint_t>::globalCoords(
         return std::make_pair(lpar, lcov);
       },
       meas);
-
-  // transform local position to global coordinates
-  Acts::Vector3 globalFakeMom(1, 1, 1);
-
   Acts::Vector3 globalPos =
-      surface->localToGlobal(gctx, localPos, globalFakeMom);
+      surface->localToGlobal(gctx, localPos, Acts::Vector3());
   Acts::RotationMatrix3 rotLocalToGlobal =
-      surface->referenceFrame(gctx, globalPos, globalFakeMom);
+      surface->referenceFrame(gctx, globalPos, Acts::Vector3());
 
   // the space point requires only the variance of the transverse and
   // longitudinal position. reduce computations by transforming the
@@ -556,14 +552,17 @@ Acts::SpacePointBuilder<spacepoint_t>::endsOfStrip(
   auto detectorElement = dynamic_cast<const Acts::IdentifiedDetectorElement*>(
       surface->associatedDetectorElement());
 
-  if (!detectorElement && detectorElement->digitizationModule()) {
-    ACTS_ERROR(" No detector element found for the strip SP formation");
-
+  if (!detectorElement) {
+    ACTS_ERROR(" No detector element found in the strip SP formation");
     return std::make_pair(topGlobal, bottomGlobal);
   }
 
-  auto digitationModule = detectorElement->digitizationModule();
-  const Acts::Segmentation& segment = digitationModule->segmentation();
+  auto digitizationModule = detectorElement->digitizationModule();
+  if (!digitizationModule) {
+    ACTS_ERROR(" No digitizationModule found in the strip SP formation");
+    return std::make_pair(topGlobal, bottomGlobal);
+  }
+  const Acts::Segmentation& segment = digitizationModule->segmentation();
 
   std::pair<Acts::Vector2, Acts::Vector2> topBottomLocal =
       detail::findLocalTopAndBottomEnd(localPos, &segment);
