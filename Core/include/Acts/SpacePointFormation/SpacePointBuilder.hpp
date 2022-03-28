@@ -25,9 +25,8 @@ namespace Acts {
 /// @class SpacePointBuilder
 ///
 /// After the particle interaction with surfaces are recorded and digitized
-/// the clusters pixel detectors need further treatment. This class takes
-/// the digitized clusters on a pixel detector element and provides the
-/// corresponding space point.
+/// measurements on the pixel or strip detectors need further treatment. This class takes
+/// the measurements and provides the corresponding space points.
 ///
 template <typename spacepoint_t>
 class SpacePointBuilder {
@@ -47,44 +46,44 @@ class SpacePointBuilder {
       const std::vector<const Measurement*>* backMeasurements = nullptr) const;
 
  protected:
-  /// @brief Getter method for the local coordinates of a cluster
+  /// @brief Getter method for the local coordinates of a measurement
   /// on its corresponding surface
   ///
-  /// @param clus cluster that holds the neccesary information of the 2D hit position.
-  /// @return vector of the local coordinates of the cluster on the surface
+  /// @param meas measurement that holds the neccesary information of the hit position.
+  /// @return vector of the local coordinates of the measurement on the surface
   Vector2 getLocalPos(const Measurement& meas) const;
   std::pair<Acts::Vector2, Acts::SymMatrix2> getLocalPosCov(
       const Measurement& meas) const;
 
-  /// @brief Getter method for the global coordinates of a cluster
+  /// @brief Getter method for the global coordinates of a measurement
   ///
   /// @param gctx The current geometry context object, e.g. alignment
-  /// @param cluster cluster that holds the necessary
+  /// @param measurement measurement that holds the necessary
   /// information
-  /// @return vector of the global coordinates and covariance of the cluster
+  /// @return vector of the global coordinates and covariance of the measurement
   std::pair<Vector3, Vector2> globalCoords(const GeometryContext& gctx,
                                            const Measurement& meas) const;
 
-  /// @brief Calculates the space points out of a given collection of clusters
+  /// @brief Calculates the space points out of a given collection of measurements
   /// and stores the results
   ///
   /// @param gctx The current geometry context object, e.g. alignment
-  /// @param clusters vector of clusters
+  /// @param measurements vector of measurements
   /// @param spacePointStorage storage of the results
   void calculateSingleHitSpacePoints(
       const GeometryContext& gctx,
       const std::vector<const Measurement*>& measurements,
       std::vector<spacepoint_t>& spacePointStorage) const;
 
-  /// @brief Searches possible combinations of two clusters on different
+  /// @brief Searches possible combinations of two measurements on different
   /// surfaces that may come from the same particles
   ///
   /// @param gctx The current geometry context object, e.g. alignment
-  /// @param clustersFront vector of clusters on a surface
-  /// @param clustersBack vector of clusters on another surface
-  /// @param clusterPairs storage of the cluster pairs
-  /// @note The structure of @p clustersFront and @p clustersBack is
-  /// meant to be clusters[Independent clusters on a single surface]
+  /// @param measurementsFront vector of measurements on a surface
+  /// @param measurementsBack vector of measurements on another surface
+  /// @param measurementPairs storage of the measurement pairs
+  /// @note The structure of @p measurementsFront and @p measurementsBack is
+  /// meant to be measurements[Independent measurements on a single surface]
   void makeMeasurementPairs(
       const GeometryContext& gctx,
       const std::vector<const Measurement*>& measurementsFront,
