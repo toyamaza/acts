@@ -126,13 +126,13 @@ class SpacePointBuilder {
 
   /// @brief Calculate the global covariance from the front and back measurement in the strip SP formation
   /// @param gctx The current geometry context object, e.g. alignment
-  /// @param meas_Front The measurement on the front layer
-  /// @param meas_Back The measurement on the back layer
+  /// @param measFront The measurement on the front layer
+  /// @param measBack The measurement on the back layer
   /// @param theta The angle between the two strips
   /// @return (rho, z) components of the global covariance
   Acts::Vector2 calcGlobalVars(const Acts::GeometryContext& gctx,
-                               const Measurement& meas_front,
-                               const Measurement& meas_back,
+                               const Measurement& measFront,
+                               const Measurement& measBack,
                                const double theta) const;
 
   /// @brief Get source link from the measurement

@@ -569,10 +569,10 @@ Acts::SpacePointBuilder<spacepoint_t>::endsOfStrip(
 
 template <typename spacepoint_t>
 Acts::Vector2 Acts::SpacePointBuilder<spacepoint_t>::calcGlobalVars(
-    const Acts::GeometryContext& gctx, const Measurement& meas_front,
-    const Measurement& meas_back, const double theta) const {
-  const auto var1 = getLoc0Var(meas_front);
-  const auto var2 = getLoc0Var(meas_back);
+    const Acts::GeometryContext& gctx, const Measurement& measFront,
+    const Measurement& measBack, const double theta) const {
+  const auto var1 = getLoc0Var(measFront);
+  const auto var2 = getLoc0Var(measBack);
   // strip1 and strip2 are tilted at +/- theta/2
 
   double sigma_x = std::hypot(var1, var2) / (2 * sin(theta * 0.5));
@@ -584,10 +584,10 @@ Acts::Vector2 Acts::SpacePointBuilder<spacepoint_t>::calcGlobalVars(
   Acts::SymMatrix2 lcov;
   lcov << sig_x1, 0, 0, sig_y1;
 
-  auto [localPos, localCov] = getLocalPosCov(meas_front);
+  auto [localPos, localCov] = getLocalPosCov(measFront);
 
   const auto& slink_meas1 =
-      std::visit([](const auto& x) { return &x.sourceLink(); }, meas_front);
+      std::visit([](const auto& x) { return &x.sourceLink(); }, measFront);
 
   const auto geoId = slink_meas1->geometryId();
 
