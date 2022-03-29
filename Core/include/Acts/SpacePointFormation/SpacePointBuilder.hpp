@@ -112,8 +112,8 @@ class SpacePointBuilder {
   /// @brief Get global covariance from the local position and covariance
   /// @param gctx The current geometry context object, e.g. alignment
   /// @param geoId The geometry ID
-  /// @param local Pos The local position
-  /// @param the local covariance matrix
+  /// @param localPos The local position
+  /// @param localCov The local covariance matrix
   /// @return (rho, z) components of the global covariance
   Acts::Vector2 globalCov(const Acts::GeometryContext& gctx,
                           const Acts::GeometryIdentifier& geoId,
