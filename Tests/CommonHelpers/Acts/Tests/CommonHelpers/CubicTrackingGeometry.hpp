@@ -102,8 +102,8 @@ struct CubicTrackingGeometry {
 
       double halfX = 0.5_m;
       double halfY = 0.5_m;
-      size_t nbinsx = 100;
-      size_t nbinsy = 200;
+      size_t nbinsx = 200;
+      size_t nbinsy = 1;
       double hThickness = 75_um;
       int readDirection = 1;
       double lAngle = 0.;
