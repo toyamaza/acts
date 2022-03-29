@@ -25,8 +25,8 @@ namespace Acts {
 /// @class SpacePointBuilder
 ///
 /// After the particle interaction with surfaces are recorded and digitized
-/// measurements on the pixel or strip detectors need further treatment. This class takes
-/// the measurements and provides the corresponding space points.
+/// measurements on the pixel or strip detectors need further treatment. This
+/// class takes the measurements and provides the corresponding space points.
 ///
 template <typename spacepoint_t>
 class SpacePointBuilder {
@@ -58,9 +58,9 @@ class SpacePointBuilder {
   /// @brief Getter method for the global coordinates of a measurement
   ///
   /// @param gctx The current geometry context object, e.g. alignment
-  /// @param measurement measurement that holds the necessary
+  /// @param meas measurement that holds the necessary
   /// information
-  /// @return vector of the global coordinates and covariance of the measurement
+  /// @return vectors of the global coordinates and covariance of the measurement
   std::pair<Vector3, Vector2> globalCoords(const GeometryContext& gctx,
                                            const Measurement& meas) const;
 
@@ -82,8 +82,6 @@ class SpacePointBuilder {
   /// @param measurementsFront vector of measurements on a surface
   /// @param measurementsBack vector of measurements on another surface
   /// @param measurementPairs storage of the measurement pairs
-  /// @note The structure of @p measurementsFront and @p measurementsBack is
-  /// meant to be measurements[Independent measurements on a single surface]
   void makeMeasurementPairs(
       const GeometryContext& gctx,
       const std::vector<const Measurement*>& measurementsFront,
@@ -91,27 +89,54 @@ class SpacePointBuilder {
       std::vector<std::pair<const Measurement*, const Measurement*>>&
           measurementPairs) const;
 
+  /// @brief Searches possible combinations of two measurements on different
+  /// surfaces that may come from the same particles
+  /// @param measurementPairs pairs of measurements that are space point candidates
+  /// @param spacePoints storage of the results
+  /// @note If no configuration is set, the default values will be used
   void calculateDoubleHitSpacePoints(
       const Acts::GeometryContext& gctx,
       const std::vector<std::pair<const Measurement*, const Measurement*>>&
           measurementPairs,
       std::vector<spacepoint_t>& spacePoints) const;
 
+  /// @brief Calculates the top and bottom ends of a strip detector element
+  /// that corresponds to a given hit
+  /// @param gctx The geometry context to use
+  /// @param measurement object that stores the information about the hit
+  /// @return vectors to the top and bottom end of the SDE
   std::pair<Acts::Vector3, Acts::Vector3> endsOfStrip(
       const Acts::GeometryContext& gctx, const Measurement& measurement) const;
 
+  /// @brief Get global covariance from the local position and covariance
+  /// @param gctx The current geometry context object, e.g. alignment
+  /// @param geoId The geometry ID
+  /// @param local Pos The local position
+  /// @param the local covariance matrix
+  /// @return (rho, z) components of the global covariance
   Acts::Vector2 globalCov(const Acts::GeometryContext& gctx,
                           const Acts::GeometryIdentifier& geoId,
                           const Acts::Vector2& localPos,
                           const Acts::SymMatrix2& localCov) const;
 
-  double getLocVar(const Measurement& meas) const;
+  /// @brief Get the first component of the local covariance.
+  /// @param meas The measurement
+  /// @return the (0, 0) component of the local covariance
+  double getLoc0Var(const Measurement& meas) const;
 
-  Acts::Vector2 getGlobalVars(const Acts::GeometryContext& gctx,
-                              const Measurement& meas_front,
-                              const Measurement& meas_back,
-                              const double theta) const;
+  /// @brief Calculate the global covariance from the front and back measurement in the strip SP formation
+  /// @param gctx The current geometry context object, e.g. alignment
+  /// @param measurementsFront The measurement on the front layer
+  /// @param measurementsBack The measurement on the back layer
+  /// @param theta The angle between the two strips
+  /// @return (rho, z) components of the global covariance
+  Acts::Vector2 calcGlobalVars(const Acts::GeometryContext& gctx,
+                               const Measurement& meas_front,
+                               const Measurement& meas_back,
+                               const double theta) const;
 
+  /// @brief Get source link from the measurement
+  /// @param meas The measurement
   const Acts::SourceLink* getSourceLink(const Measurement meas) const;
 
   // configuration of the single hit space point builder
