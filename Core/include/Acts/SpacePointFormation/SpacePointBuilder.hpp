@@ -91,6 +91,7 @@ class SpacePointBuilder {
 
   /// @brief Searches possible combinations of two measurements on different
   /// surfaces that may come from the same particles
+  /// @param gctx The geometry context to use
   /// @param measurementPairs pairs of measurements that are space point candidates
   /// @param spacePoints storage of the results
   /// @note If no configuration is set, the default values will be used
