@@ -77,14 +77,14 @@ const auto geometry = geometryStore();
 // detector resolutions
 const MeasurementResolution resPixel = {MeasurementType::eLoc01,
                                         {25_um, 50_um}};
-const MeasurementResolution resStrip0 = {MeasurementType::eLoc0, {100_um}};
-const MeasurementResolution resStrip1 = {MeasurementType::eLoc0, {100_um}};
+const MeasurementResolution resStrip = {MeasurementType::eLoc01,
+                                        {100_um, 100_um}};
 const MeasurementResolutionMap resolutions = {
     {GeometryIdentifier().setVolume(2), resPixel},
-    {GeometryIdentifier().setVolume(3).setLayer(2), resStrip0},
-    {GeometryIdentifier().setVolume(3).setLayer(4), resStrip1},
-    {GeometryIdentifier().setVolume(3).setLayer(6), resStrip0},
-    {GeometryIdentifier().setVolume(3).setLayer(8), resStrip1},
+    {GeometryIdentifier().setVolume(3).setLayer(2), resStrip},
+    {GeometryIdentifier().setVolume(3).setLayer(4), resStrip},
+    {GeometryIdentifier().setVolume(3).setLayer(6), resStrip},
+    {GeometryIdentifier().setVolume(3).setLayer(8), resStrip},
 };
 
 // Construct a straight-line propagator.
@@ -109,7 +109,7 @@ BOOST_DATA_TEST_CASE(SpacePointBuilder_basic, bdata::xrange(1), index) {
 
   double phi = 5._degree;
   double theta = 95._degree;
-  double p = 20._GeV;
+  double p = 50._GeV;
   double q = 1;
 
   Acts::Navigator navigator({
@@ -141,27 +141,32 @@ BOOST_DATA_TEST_CASE(SpacePointBuilder_basic, bdata::xrange(1), index) {
           sl, sl.parameters, sl.covariance, sl.indices[0], sl.indices[1]));
       singleHitMeasurements.emplace_back(meas);
     } else if (volumeId == 3) {  // strip type detector
-
       const auto layerId = geoId.layer();
-      const TestMeasurement* meas = new TestMeasurement(
-          makeMeasurement(sl, sl.parameters.head<1>(),
-                          sl.covariance.topLeftCorner<1, 1>(), sl.indices[0]));
+      // Use the center of the strip as the second coordinate
+      Acts::Vector2 param_digi = Acts::Vector2(sl.parameters[0], 0.);
+      const TestMeasurement* meas = new TestMeasurement(makeMeasurement(
+          sl, param_digi, sl.covariance, sl.indices[0], sl.indices[1]));
+
       if (layerId == 2 || layerId == 6) {
         frontMeasurements.emplace_back(meas);
       } else if (layerId == 4 || layerId == 8) {
         backMeasurements.emplace_back(meas);
       }
-
     }  // volume 3 (strip detector)
   }
+
+  BOOST_CHECK_EQUAL(frontMeasurements.size(), 2);
+  BOOST_CHECK_EQUAL(backMeasurements.size(), 2);
+
+  Acts::Vector3 vertex = Vector3(-3_m, 0., 0.);
   auto spBuilderConfig = SpacePointBuilderConfig();
   spBuilderConfig.trackingGeometry = geometry;
+  spBuilderConfig.vertex = vertex;
 
   auto spBuilder = Acts::SpacePointBuilder<TestSpacePoint>(spBuilderConfig);
 
   TestSpacePointContainer spacePoints;
-  std::cout << "number of front/back measurements " << frontMeasurements.size()
-            << " / " << backMeasurements.size() << std::endl;
+
   // pixel SP building
   spBuilder.calculateSpacePoints(tgContext, spacePoints,
                                  &singleHitMeasurements);
@@ -170,14 +175,33 @@ BOOST_DATA_TEST_CASE(SpacePointBuilder_basic, bdata::xrange(1), index) {
   spBuilder.calculateSpacePoints(tgContext, spacePoints, &frontMeasurements,
                                  &backMeasurements);
 
-  std::cout << "Number of space points " << spacePoints.size() << std::endl;
-
   for (auto& sp : spacePoints) {
     std::cout << "space point (" << sp.x() << " " << sp.y() << " " << sp.z()
-              << ") var: " << sp.varianceR() << " " << sp.varianceZ()
+              << ") var (r,z): " << sp.varianceR() << " " << sp.varianceZ()
               << std::endl;
   }
-  std::cout << "Space point calculated" << std::endl;
+  BOOST_CHECK_EQUAL(spacePoints.size(), 4);
+
+  // usePerpProj = true for cosmic  without vertex constraint
+
+  auto spBuilderConfig_perp = SpacePointBuilderConfig();
+  spBuilderConfig_perp.trackingGeometry = geometry;
+  spBuilderConfig_perp.usePerpProj = true;
+
+  TestSpacePointContainer spacePoints_perp;
+  auto spBuilder_perp =
+      Acts::SpacePointBuilder<TestSpacePoint>(spBuilderConfig_perp);
+  // strip SP building
+  spBuilder_perp.calculateSpacePoints(tgContext, spacePoints_perp,
+                                      &frontMeasurements, &backMeasurements);
+
+  for (auto& sp : spacePoints_perp) {
+    std::cout << "space point (usePerpProj) (" << sp.x() << " " << sp.y() << " "
+              << sp.z() << ") var (r,z): " << sp.varianceR() << " "
+              << sp.varianceZ() << std::endl;
+  }
+
+  BOOST_CHECK_EQUAL(spacePoints_perp.size(), 2);
 }
 
 }  // end of namespace Test
