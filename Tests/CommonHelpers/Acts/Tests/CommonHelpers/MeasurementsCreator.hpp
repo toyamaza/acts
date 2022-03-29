@@ -101,12 +101,6 @@ struct MeasurementsCreator {
             .globalToLocal(state.geoContext, stepper.position(state.stepping),
                            stepper.direction(state.stepping))
             .value();
-
-    std::cout << " " << std::endl;
-    std::cout << "measurement global pos" << std::endl
-              << stepper.position(state.stepping) << std::endl;
-    std::cout << "measurement local pos" << std::endl << loc << std::endl;
-    std::cout << " " << std::endl;
     // The truth info
     BoundVector parameters = BoundVector::Zero();
     parameters[eBoundLoc0] = loc[eBoundLoc0];
