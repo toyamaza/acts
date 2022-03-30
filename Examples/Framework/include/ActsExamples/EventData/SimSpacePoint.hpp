@@ -17,6 +17,8 @@
 #include <cmath>
 #include <vector>
 
+#include <boost/container/static_vector.hpp>
+
 namespace ActsExamples {
 
 /// Space point representation of a measurement suitable for track seeding.
@@ -30,8 +32,9 @@ class SimSpacePoint {
   /// @param varZ Measurement variance of the global longitudinal position
   /// @param measurementIndex Index of the underlying measurement
   template <typename position_t>
-  SimSpacePoint(const Eigen::MatrixBase<position_t>& pos, float varRho,
-                float varZ, std::vector<const Acts::SourceLink*> sourceLinks)
+  SimSpacePoint(
+      const Eigen::MatrixBase<position_t>& pos, float varRho, float varZ,
+      boost::container::static_vector<const Acts::SourceLink*, 2> sourceLinks)
       : m_x(pos[Acts::ePos0]),
         m_y(pos[Acts::ePos1]),
         m_z(pos[Acts::ePos2]),
@@ -49,10 +52,8 @@ class SimSpacePoint {
   constexpr float varianceR() const { return m_varianceRho; }
   constexpr float varianceZ() const { return m_varianceZ; }
 
-  //  const std::vector<Index>& measurementIndices() const {
-  //    return m_measurementIndices;
-  //  }
-  const std::vector<const Acts::SourceLink*> sourceLinks() const {
+  const boost::container::static_vector<const Acts::SourceLink*, 2>
+  sourceLinks() const {
     return m_sourceLinks;
   }
 
@@ -65,19 +66,19 @@ class SimSpacePoint {
   // Variance in rho/z of the global coordinates
   float m_varianceRho;
   float m_varianceZ;
-  // Indices of the corresponding measurements
-  // std::vector<Index> m_measurementIndices;
-  std::vector<const Acts::SourceLink*> m_sourceLinks;
+  // SourceLinks of the corresponding measurements. A Pixel (strip) SP has one (two) sourceLink(s).
+  boost::container::static_vector<const Acts::SourceLink*, 2> m_sourceLinks;
 };
 
 inline bool operator==(const SimSpacePoint& lhs, const SimSpacePoint& rhs) {
   // TODO would it be sufficient to check just the index under the assumption
   //   that the same measurement index always produces the same space point?
   // no need to check r since it is fully defined by x/y
-  // return (lhs.measurementIndices() == rhs.measurementIndices()) and
-  return (lhs.x() == rhs.x()) and (lhs.y() == rhs.y()) and
-         (lhs.z() == rhs.z()) and (lhs.varianceR() == rhs.varianceR()) and
-         (lhs.varianceZ() == rhs.varianceZ());
+
+  return ((lhs.sourceLinks() == rhs.sourceLinks()) and (lhs.x() == rhs.x()) and
+          (lhs.y() == rhs.y()) and (lhs.z() == rhs.z()) and
+          (lhs.varianceR() == rhs.varianceR()) and
+          (lhs.varianceZ() == rhs.varianceZ()));
 }
 
 /// Container of space points.

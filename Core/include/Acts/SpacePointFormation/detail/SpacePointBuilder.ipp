@@ -371,7 +371,7 @@ void Acts::SpacePointBuilder<spacepoint_t>::calculateSingleHitSpacePoints(
     const auto& slink =
         std::visit([](const auto& x) { return &x.sourceLink(); }, *meas);
 
-    std::vector<const SourceLink*> slinks;
+    boost::container::static_vector<const SourceLink*, 2> slinks;
     slinks.emplace_back(slink);
     auto sp = spacepoint_t(gPos, gCov[0], gCov[1], slinks);
 
@@ -480,7 +480,7 @@ void Acts::SpacePointBuilder<spacepoint_t>::calculateDoubleHitSpacePoints(
     const auto& slink_front = getSourceLink(*(mp.first));
     const auto& slink_back = getSourceLink(*(mp.second));
 
-    std::vector<const SourceLink*> slinks;
+    boost::container::static_vector<const SourceLink*, 2> slinks;
     slinks.emplace_back(slink_front);
     slinks.emplace_back(slink_back);
 

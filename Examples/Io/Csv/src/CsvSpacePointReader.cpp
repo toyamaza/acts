@@ -19,6 +19,7 @@
 #include <string>
 #include <vector>
 
+#include <boost/container/static_vector.hpp>
 #include <dfe/dfe_io_dsv.hpp>
 
 #include "CsvOutputData.hpp"
@@ -65,7 +66,7 @@ ActsExamples::ProcessCode ActsExamples::CsvSpacePointReader::read(
 
     if (m_cfg.inputCollection == "pixel" || m_cfg.inputCollection == "strip" ||
         m_cfg.inputCollection == "overlap") {
-      std::vector<const Acts::SourceLink*> sLinks;
+      boost::container::static_vector<const Acts::SourceLink*, 2> sLinks;
       auto sp = SimSpacePoint(globalPos, data.sp_covr, data.sp_covz, sLinks);
       spacePoints.emplace_back(sp);
 

@@ -20,6 +20,8 @@
 #include "Acts/Surfaces/Surface.hpp"
 #include "Acts/Utilities/Logger.hpp"
 
+#include <boost/container/static_vector.hpp>
+
 namespace Acts {
 
 /// @class SpacePointBuilder

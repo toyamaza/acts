@@ -13,6 +13,8 @@
 
 #include <cmath>
 #include <vector>
+
+#include <boost/container/static_vector.hpp>
 namespace Acts {
 namespace Test {
 
@@ -27,8 +29,9 @@ class TestSpacePoint {
   /// @param varZ Measurement variance of the global longitudinal position
   /// @param measurementIndices Indices of the underlying measurement
   template <typename position_t>
-  TestSpacePoint(const Eigen::MatrixBase<position_t>& pos, float varRho,
-                 float varZ, std::vector<const Acts::SourceLink*> sourceLinks)
+  TestSpacePoint(
+      const Eigen::MatrixBase<position_t>& pos, float varRho, float varZ,
+      boost::container::static_vector<const Acts::SourceLink*, 2> sourceLinks)
       : m_x(pos[Acts::ePos0]),
         m_y(pos[Acts::ePos1]),
         m_z(pos[Acts::ePos2]),
@@ -46,7 +49,8 @@ class TestSpacePoint {
   constexpr float varianceR() const { return m_varianceRho; }
   constexpr float varianceZ() const { return m_varianceZ; }
 
-  const std::vector<const Acts::SourceLink*> sourceLinks() const {
+  const boost::container::static_vector<const Acts::SourceLink*, 2>
+  sourceLinks() const {
     return m_sourceLinks;
   }
 
@@ -59,7 +63,8 @@ class TestSpacePoint {
   // Variance in rho/z of the global coordinates
   float m_varianceRho;
   float m_varianceZ;
-  std::vector<const Acts::SourceLink*> m_sourceLinks;
+  // source links. A Pixel (strip) SP has one (two) sourceLink(s).
+  boost::container::static_vector<const Acts::SourceLink*, 2> m_sourceLinks;
 };
 
 inline bool operator==(const TestSpacePoint& lhs, const TestSpacePoint& rhs) {
@@ -67,8 +72,9 @@ inline bool operator==(const TestSpacePoint& lhs, const TestSpacePoint& rhs) {
   //   that the same measurement index always produces the same space point?
   // no need to check r since it is fully defined by x/y
   // return (lhs.measurementIndices() == rhs.measurementIndices()) and
-  return (lhs.x() == rhs.x()) and (lhs.y() == rhs.y()) and
-         (lhs.z() == rhs.z()) and (lhs.varianceR() == rhs.varianceR()) and
+  return ((lhs.sourceLinks() == rhs.sourceLinks()) and lhs.x() == rhs.x()) and
+         (lhs.y() == rhs.y()) and (lhs.z() == rhs.z()) and
+         (lhs.varianceR() == rhs.varianceR()) and
          (lhs.varianceZ() == rhs.varianceZ());
 }
 
