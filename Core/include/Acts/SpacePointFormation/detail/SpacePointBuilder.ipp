@@ -117,16 +117,16 @@ inline std::pair<Vector2, Vector2> findLocalTopAndBottomEnd(
   return topBottomLocal;
 }
 
-// /// @brief Calculates a space point whithout using the vertex
-// /// @note This is mostly to resolve space points from cosmic data
-// /// @param a vector to the top end of the first SDE
-// /// @param c vector to the top end of the second SDE
-// /// @param q vector from the bottom to the top end of the first SDE
-// /// @param r vector from the bottom to the top end of the second SDE
-// /// @return parameter that indicates the location of the space point; returns
-// /// 1. if it failed
-// /// @note The meaning of the parameter is explained in more detail in the
-// /// function body
+/// @brief Calculates a space point whithout using the vertex
+/// @note This is mostly to resolve space points from cosmic data
+/// @param a vector to the top end of the first SDE
+/// @param c vector to the top end of the second SDE
+/// @param q vector from the bottom to the top end of the first SDE
+/// @param r vector from the bottom to the top end of the second SDE
+/// @return parameter that indicates the location of the space point; returns
+/// 1. if it failed
+/// @note The meaning of the parameter is explained in more detail in the
+/// function body
 inline double calcPerpendicularProjection(const Vector3& a, const Vector3& c,
                                           const Vector3& q, const Vector3& r) {
   /// This approach assumes that no vertex is available. This option aims to

@@ -106,7 +106,6 @@ ActsExamples::ProcessCode ActsExamples::SpacePointMaker::execute(
     auto groupedByModule = makeGroupBy(range, detail::GeometryIdGetter());
 
     for (auto [moduleGeoId, moduleSourceLinks] : groupedByModule) {
-      // find corresponding surface
       for (auto& sourceLink : moduleSourceLinks) {
         const auto& meas = measurements[sourceLink.get().index()];
         selectedMeasurements.emplace_back(&meas);
