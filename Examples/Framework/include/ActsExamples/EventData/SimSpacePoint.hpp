@@ -66,7 +66,8 @@ class SimSpacePoint {
   // Variance in rho/z of the global coordinates
   float m_varianceRho;
   float m_varianceZ;
-  // SourceLinks of the corresponding measurements. A Pixel (strip) SP has one (two) sourceLink(s).
+  // SourceLinks of the corresponding measurements. A Pixel (strip) SP has one
+  // (two) sourceLink(s).
   boost::container::static_vector<const Acts::SourceLink*, 2> m_sourceLinks;
 };
 
