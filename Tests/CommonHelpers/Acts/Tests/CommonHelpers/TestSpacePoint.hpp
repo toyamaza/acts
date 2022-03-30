@@ -68,10 +68,6 @@ class TestSpacePoint {
 };
 
 inline bool operator==(const TestSpacePoint& lhs, const TestSpacePoint& rhs) {
-  // TODO would it be sufficient to check just the index under the assumption
-  //   that the same measurement index always produces the same space point?
-  // no need to check r since it is fully defined by x/y
-  // return (lhs.measurementIndices() == rhs.measurementIndices()) and
   return ((lhs.sourceLinks() == rhs.sourceLinks()) and lhs.x() == rhs.x()) and
          (lhs.y() == rhs.y()) and (lhs.z() == rhs.z()) and
          (lhs.varianceR() == rhs.varianceR()) and
