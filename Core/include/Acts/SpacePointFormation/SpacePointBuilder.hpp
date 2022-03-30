@@ -50,7 +50,7 @@ class SpacePointBuilder {
   /// @param gctx The current geometry context object, e.g. alignment
   /// @param spacePointIt Output iterator for the space points
   /// @param frontMeasurements measurements on the front surfaces for the strip SP formation, or all measurements for the pixel SP.
-  /// @param backMeasurements measurements on the back surfaces for the strip SP
+  /// @param backMeasurements measurements on the back surfaces for the strip SP. nullptr for pixel SP formation
   template <template <typename...> typename container_t>
   void calculateSpacePoints(
       const GeometryContext& gctx,
