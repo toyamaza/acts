@@ -35,6 +35,8 @@ class SpacePointBuilder {
  public:
   using Measurement = Acts::BoundVariantMeasurement;
   // Constructor
+  /// @param cfg the configuration for the space point builder
+  /// @param logger The logging instance
   SpacePointBuilder(SpacePointBuilderConfig cfg,
                     std::unique_ptr<const Logger> logger =
                         getDefaultLogger("SpacePointBuilder", Logging::INFO));
@@ -42,8 +44,17 @@ class SpacePointBuilder {
   // Default constructor
   SpacePointBuilder() = default;
 
+  /// @brief Calculates the space points out of a given collection of measurements
+  /// and stores the results
+  ///
+  /// @param gctx The current geometry context object, e.g. alignment
+  /// @param spacePointIt Output iterator for the space points
+  /// @param frontMeasurements measurements on the front surfaces for the strip SP formation, or all measurements for the pixel SP.
+  /// @param backMeasurements measurements on the back surfaces for the strip SP
+  template <template <typename...> typename container_t>
   void calculateSpacePoints(
-      const GeometryContext& gctx, std::vector<spacepoint_t>& spacePointStorage,
+      const GeometryContext& gctx,
+      std::back_insert_iterator<container_t<spacepoint_t>> spacePointIt,
       const std::vector<const Measurement*>* frontMeasurements,
       const std::vector<const Measurement*>* backMeasurements = nullptr) const;
 
@@ -71,11 +82,12 @@ class SpacePointBuilder {
   ///
   /// @param gctx The current geometry context object, e.g. alignment
   /// @param measurements vector of measurements
-  /// @param spacePointStorage storage of the results
+  /// @param spacePointIt Output iterator for the space points
+  template <template <typename...> typename container_t>
   void calculateSingleHitSpacePoints(
       const GeometryContext& gctx,
       const std::vector<const Measurement*>& measurements,
-      std::vector<spacepoint_t>& spacePointStorage) const;
+      std::back_insert_iterator<container_t<spacepoint_t>> spacePointIt) const;
 
   /// @brief Searches possible combinations of two measurements on different
   /// surfaces that may come from the same particles
@@ -95,13 +107,14 @@ class SpacePointBuilder {
   /// surfaces that may come from the same particles
   /// @param gctx The geometry context to use
   /// @param measurementPairs pairs of measurements that are space point candidates
-  /// @param spacePoints storage of the results
+  /// @param spacePointIt storage of the results
   /// @note If no configuration is set, the default values will be used
+  template <template <typename...> typename container_t>
   void calculateDoubleHitSpacePoints(
       const Acts::GeometryContext& gctx,
       const std::vector<std::pair<const Measurement*, const Measurement*>>&
           measurementPairs,
-      std::vector<spacepoint_t>& spacePoints) const;
+      std::back_insert_iterator<container_t<spacepoint_t>> spacePointIt) const;
 
   /// @brief Calculates the top and bottom ends of a strip detector element
   /// that corresponds to a given hit

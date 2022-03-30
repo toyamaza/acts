@@ -298,15 +298,13 @@ inline bool calculateDoubleHitSpacePoint(
 }
 }  // namespace detail
 
-
 template <typename spacepoint_t>
 SpacePointBuilder<spacepoint_t>::SpacePointBuilder(
     SpacePointBuilderConfig cfg, std::unique_ptr<const Logger> logger)
     : m_config(cfg), m_logger(std::move(logger)) {}
 
 template <typename spacepoint_t>
-std::pair<Vector3, Vector2>
-SpacePointBuilder<spacepoint_t>::globalCoords(
+std::pair<Vector3, Vector2> SpacePointBuilder<spacepoint_t>::globalCoords(
     const GeometryContext& gctx, const Measurement& meas) const {
   const auto& slink =
       std::visit([](const auto& x) { return &x.sourceLink(); }, meas);
@@ -322,13 +320,11 @@ SpacePointBuilder<spacepoint_t>::globalCoords(
         // extract local position
         Vector2 lpar(par[eBoundLoc0], par[eBoundLoc1]);
         // extract local position covariance.
-        SymMatrix2 lcov =
-            cov.block<2, 2>(eBoundLoc0, eBoundLoc0);
+        SymMatrix2 lcov = cov.block<2, 2>(eBoundLoc0, eBoundLoc0);
         return std::make_pair(lpar, lcov);
       },
       meas);
-  Vector3 globalPos =
-      surface->localToGlobal(gctx, localPos, Vector3());
+  Vector3 globalPos = surface->localToGlobal(gctx, localPos, Vector3());
   RotationMatrix3 rotLocalToGlobal =
       surface->referenceFrame(gctx, globalPos, Vector3());
 
@@ -361,10 +357,11 @@ SpacePointBuilder<spacepoint_t>::globalCoords(
 }
 
 template <typename spacepoint_t>
+template <template <typename...> typename container_t>
 void SpacePointBuilder<spacepoint_t>::calculateSingleHitSpacePoints(
     const GeometryContext& gctx,
     const std::vector<const Measurement*>& measurements,
-    std::vector<spacepoint_t>& spacePointStorage) const {
+    std::back_insert_iterator<container_t<spacepoint_t>> spacePointIt) const {
   for (const auto& meas : measurements) {
     auto [gPos, gCov] = globalCoords(gctx, *meas);
 
@@ -375,13 +372,14 @@ void SpacePointBuilder<spacepoint_t>::calculateSingleHitSpacePoints(
     slinks.emplace_back(slink);
     auto sp = spacepoint_t(gPos, gCov[0], gCov[1], slinks);
 
-    spacePointStorage.emplace_back(sp);
+    spacePointIt = sp;
   }
 }
-
 template <typename spacepoint_t>
+template <template <typename...> typename container_t>
 void SpacePointBuilder<spacepoint_t>::calculateSpacePoints(
-    const GeometryContext& gctx, std::vector<spacepoint_t>& spacePointStorage,
+    const GeometryContext& gctx,
+    std::back_insert_iterator<container_t<spacepoint_t>> spacePointIt,
     const std::vector<const Measurement*>* FrontMeasurements,
     const std::vector<const Measurement*>* BackMeasurements) const {
   if (FrontMeasurements == nullptr) {
@@ -390,7 +388,7 @@ void SpacePointBuilder<spacepoint_t>::calculateSpacePoints(
   }
 
   if (BackMeasurements == nullptr) {  // pixel SP building
-    calculateSingleHitSpacePoints(gctx, *FrontMeasurements, spacePointStorage);
+    calculateSingleHitSpacePoints(gctx, *FrontMeasurements, spacePointIt);
 
   } else {  // strip SP building
 
@@ -399,7 +397,7 @@ void SpacePointBuilder<spacepoint_t>::calculateSpacePoints(
     makeMeasurementPairs(gctx, *FrontMeasurements, *BackMeasurements,
                          measurementPairs);
 
-    calculateDoubleHitSpacePoints(gctx, measurementPairs, spacePointStorage);
+    calculateDoubleHitSpacePoints(gctx, measurementPairs, spacePointIt);
   }
 }
 
@@ -457,11 +455,12 @@ void SpacePointBuilder<spacepoint_t>::makeMeasurementPairs(
 }
 
 template <typename spacepoint_t>
+template <template <typename...> typename container_t>
 void SpacePointBuilder<spacepoint_t>::calculateDoubleHitSpacePoints(
     const GeometryContext& gctx,
     const std::vector<std::pair<const Measurement*, const Measurement*>>&
         measurementPairs,
-    std::vector<spacepoint_t>& spacePoints) const {
+    std::back_insert_iterator<container_t<spacepoint_t>> spacePointIt) const {
   // Source of algorithm: Athena, SiSpacePointMakerTool::makeSCT_SpacePoint()
 
   detail::SpacePointParameters spaPoPa;
@@ -499,7 +498,7 @@ void SpacePointBuilder<spacepoint_t>::calculateDoubleHitSpacePoints(
         const double varZ = gcov[1];
 
         auto sp = spacepoint_t(pos, varRho, varZ, std::move(slinks));
-        spacePoints.push_back(std::move(sp));
+        spacePointIt = std::move(sp);
         continue;
       }
     }
@@ -520,14 +519,13 @@ void SpacePointBuilder<spacepoint_t>::calculateDoubleHitSpacePoints(
       const double varRho = gcov[0];
       const double varZ = gcov[1];
       auto sp = spacepoint_t(pos, varRho, varZ, std::move(slinks));
-      spacePoints.push_back(std::move(sp));
+      spacePointIt = std::move(sp);
     }
   }
 }
 
 template <typename spacepoint_t>
-std::pair<Vector3, Vector3>
-SpacePointBuilder<spacepoint_t>::endsOfStrip(
+std::pair<Vector3, Vector3> SpacePointBuilder<spacepoint_t>::endsOfStrip(
     const GeometryContext& gctx, const Measurement& measurement) const {
   // Calculate the local coordinates of the Cluster
 
@@ -602,10 +600,8 @@ double SpacePointBuilder<spacepoint_t>::getLoc0Var(
   auto cov = std::visit(
       [](const auto& x) {
         auto expander = x.expander();
-        BoundSymMatrix bcov =
-            expander * x.covariance() * expander.transpose();
-        SymMatrix2 lcov =
-            bcov.block<2, 2>(eBoundLoc0, eBoundLoc0);
+        BoundSymMatrix bcov = expander * x.covariance() * expander.transpose();
+        SymMatrix2 lcov = bcov.block<2, 2>(eBoundLoc0, eBoundLoc0);
         return lcov;
       },
       meas);
@@ -620,7 +616,7 @@ Vector2 SpacePointBuilder<spacepoint_t>::getLocalPos(
         auto expander = x.expander();
         BoundVector par = expander * x.parameters();
         Vector2 local(par[BoundIndices::eBoundLoc0],
-                            par[BoundIndices::eBoundLoc1]);
+                      par[BoundIndices::eBoundLoc1]);
         return local;
       },
       meas);
@@ -628,19 +624,16 @@ Vector2 SpacePointBuilder<spacepoint_t>::getLocalPos(
 }
 
 template <typename spacepoint_t>
-std::pair<Vector2, SymMatrix2>
-SpacePointBuilder<spacepoint_t>::getLocalPosCov(
+std::pair<Vector2, SymMatrix2> SpacePointBuilder<spacepoint_t>::getLocalPosCov(
     const Measurement& meas) const {
   return std::visit(
       [](const auto& x) {
         auto expander = x.expander();
         BoundVector par = expander * x.parameters();
-        BoundSymMatrix cov =
-            expander * x.covariance() * expander.transpose();
+        BoundSymMatrix cov = expander * x.covariance() * expander.transpose();
         Vector2 lpar(par[BoundIndices::eBoundLoc0],
-                           par[BoundIndices::eBoundLoc1]);
-        SymMatrix2 lcov =
-            cov.block<2, 2>(eBoundLoc0, eBoundLoc0);
+                     par[BoundIndices::eBoundLoc1]);
+        SymMatrix2 lcov = cov.block<2, 2>(eBoundLoc0, eBoundLoc0);
         return std::make_pair(lpar, lcov);
       },
       meas);
@@ -654,8 +647,7 @@ Vector2 SpacePointBuilder<spacepoint_t>::globalCov(
 
   const Surface* surface = m_config.trackingGeometry->findSurface(geoId);
 
-  Vector3 globalPos =
-      surface->localToGlobal(gctx, localPos, globalFakeMom);
+  Vector3 globalPos = surface->localToGlobal(gctx, localPos, globalFakeMom);
   RotationMatrix3 rotLocalToGlobal =
       surface->referenceFrame(gctx, globalPos, globalFakeMom);
 

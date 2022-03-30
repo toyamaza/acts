@@ -168,12 +168,12 @@ BOOST_DATA_TEST_CASE(SpacePointBuilder_basic, bdata::xrange(1), index) {
   TestSpacePointContainer spacePoints;
 
   // pixel SP building
-  spBuilder.calculateSpacePoints(tgContext, spacePoints,
+  spBuilder.calculateSpacePoints(tgContext, std::back_inserter(spacePoints),
                                  &singleHitMeasurements);
 
   // strip SP building
-  spBuilder.calculateSpacePoints(tgContext, spacePoints, &frontMeasurements,
-                                 &backMeasurements);
+  spBuilder.calculateSpacePoints(tgContext, std::back_inserter(spacePoints),
+                                 &frontMeasurements, &backMeasurements);
 
   for (auto& sp : spacePoints) {
     std::cout << "space point (" << sp.x() << " " << sp.y() << " " << sp.z()
@@ -192,7 +192,8 @@ BOOST_DATA_TEST_CASE(SpacePointBuilder_basic, bdata::xrange(1), index) {
   auto spBuilder_perp =
       Acts::SpacePointBuilder<TestSpacePoint>(spBuilderConfig_perp);
   // strip SP building
-  spBuilder_perp.calculateSpacePoints(tgContext, spacePoints_perp,
+  spBuilder_perp.calculateSpacePoints(tgContext,
+                                      std::back_inserter(spacePoints_perp),
                                       &frontMeasurements, &backMeasurements);
 
   for (auto& sp : spacePoints_perp) {
