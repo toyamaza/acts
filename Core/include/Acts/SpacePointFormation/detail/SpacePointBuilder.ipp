@@ -32,13 +32,13 @@ void SpacePointBuilder<spacepoint_t>::buildSpacePoint(
   Acts::Vector2 gCov = Acts::Vector2::Zero();
 
   if (num_meas == 1) {  // pixel SP formation
-
+    ACTS_VERBOSE("One measurement found. Perform pixel SP formation");
     auto gPosCov = m_spUtility->globalCoords(gctx, *(measurements[0]));
     gPos = gPosCov.first;
     gCov = gPosCov.second;
 
   } else if (num_meas == 2) {  // strip SP formation
-
+    ACTS_VERBOSE("Two measurement found. Perform strip SP formation");
     const auto& ends1 = opt.stripEndsPair.first;
     const auto& ends2 = opt.stripEndsPair.second;
 
@@ -49,6 +49,8 @@ void SpacePointBuilder<spacepoint_t>::buildSpacePoint(
       auto spFound = m_spUtility->calculateStripSPPosition(
           ends1, ends2, m_config.vertex, spParams,
           m_config.stripLengthTolerance);
+
+
 
       if (!spFound.ok()) {
         spFound = m_spUtility->recoverSpacePoint(
