@@ -33,14 +33,19 @@ void SpacePointBuilder<spacepoint_t>::buildSpacePoint(
 
   if (num_meas == 1) {  // pixel SP formation
     ACTS_VERBOSE("One measurement found. Perform pixel SP formation");
+    std::cout << "one measurement. Pixel sp building" << std::endl;
     auto gPosCov = m_spUtility->globalCoords(gctx, *(measurements[0]));
     gPos = gPosCov.first;
     gCov = gPosCov.second;
 
   } else if (num_meas == 2) {  // strip SP formation
     ACTS_VERBOSE("Two measurement found. Perform strip SP formation");
+    std::cout << "one measurement. Strip SP building" << std::endl;    
     const auto& ends1 = opt.stripEndsPair.first;
     const auto& ends2 = opt.stripEndsPair.second;
+
+    std::cout << "ends1 " << std::endl << ends1 << std::endl;
+    std::cout << "ends2 " << std::endl << ends2 << std::endl;    
 
     Acts::SpacePointParameters spParams;
 
@@ -50,7 +55,7 @@ void SpacePointBuilder<spacepoint_t>::buildSpacePoint(
           ends1, ends2, m_config.vertex, spParams,
           m_config.stripLengthTolerance);
 
-
+      std::cout << "spFound :" << spFound << std::endl;
 
       if (!spFound.ok()) {
         spFound = m_spUtility->recoverSpacePoint(
@@ -62,6 +67,8 @@ void SpacePointBuilder<spacepoint_t>::buildSpacePoint(
 
       gPos = 0.5 *
              (ends1.first + ends1.second + spParams.m * spParams.firstBtmToTop);
+
+      std::cout << "gPos " << std::endl << gPos << std::endl;
 
     } else {  // for cosmic without vertex constraint
 
@@ -76,9 +83,11 @@ void SpacePointBuilder<spacepoint_t>::buildSpacePoint(
     double theta =
         acos(spParams.firstBtmToTop.dot(spParams.secondBtmToTop) /
              (spParams.firstBtmToTop.norm() * spParams.secondBtmToTop.norm()));
+    std::cout << "theta " << theta << std::endl;
 
     gCov = m_spUtility->calcRhoZVars(gctx, *(measurements.at(0)),
                                      *(measurements.at(1)), gPos, theta);
+    std::cout << "gCov " << std::endl << gCov << std::endl;    
 
   } else {
     ACTS_ERROR("More than 2 measurements are given for a space point.");
@@ -90,7 +99,8 @@ void SpacePointBuilder<spacepoint_t>::buildSpacePoint(
         std::visit([](const auto& x) { return &x.sourceLink(); }, *meas);
     slinks.emplace_back(slink);
   }
-
+  std::cout << "slink added " << std::endl;
+  
   spacePointIt = m_spConstructor(gPos, gCov, std::move(slinks));
 }
 
