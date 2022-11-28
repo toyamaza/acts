@@ -44,8 +44,11 @@ void SpacePointBuilder<spacepoint_t>::buildSpacePoint(
     const auto& ends1 = opt.stripEndsPair.first;
     const auto& ends2 = opt.stripEndsPair.second;
 
-    std::cout << "ends1 " << std::endl << ends1 << std::endl;
-    std::cout << "ends2 " << std::endl << ends2 << std::endl;    
+    std::cout << "ends1.1 " << std::endl << ends1.first << std::endl;
+    std::cout << "ends1.2 " << std::endl << ends1.second << std::endl;    
+    std::cout << "ends2.1 " << std::endl << ends2.first << std::endl;
+    std::cout << "ends2.2 " << std::endl << ends2.second << std::endl;    
+
 
     Acts::SpacePointParameters spParams;
 
