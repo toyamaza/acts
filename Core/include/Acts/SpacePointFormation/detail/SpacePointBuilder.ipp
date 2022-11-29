@@ -58,7 +58,7 @@ void SpacePointBuilder<spacepoint_t>::buildSpacePoint(
           ends1, ends2, m_config.vertex, spParams,
           m_config.stripLengthTolerance);
 
-      std::cout << "spFound :" << spFound << std::endl;
+      std::cout << "spFound :" << spFound.ok() << std::endl;
 
       if (!spFound.ok()) {
         spFound = m_spUtility->recoverSpacePoint(
