@@ -94,7 +94,14 @@ void SpacePointBuilder<spacepoint_t>::buildSpacePoint(
     const Measurement& meas00 =  *(measurements.at(0));
     std::cout << "check1 " << std::endl;    
     std::cout << "check2 " << std::endl;        
-    auto meas1 = measurements.at(1);    
+    auto meas1 = measurements.at(1);
+  const auto& slink_meas1 =
+      std::visit([](const auto& x) { return &x.sourceLink(); }, measFront);
+  std::cout << "getting geoID " << std::endl;
+  const auto geoId = slink_meas1->geometryId();
+  std::cout << "getting surface " << std::endl;
+  const Surface* surface = m_config.trackingGeometry->findSurface(geoId);
+    
     std::cout << "calcRhoZVars" << std::endl;
     gCov = m_spUtility->calcRhoZVars(gctx, *(measurements.at(0)),
                                      *(measurements.at(1)), gPos, theta);
