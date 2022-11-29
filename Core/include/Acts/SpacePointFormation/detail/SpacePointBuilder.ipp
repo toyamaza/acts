@@ -87,7 +87,12 @@ void SpacePointBuilder<spacepoint_t>::buildSpacePoint(
         acos(spParams.firstBtmToTop.dot(spParams.secondBtmToTop) /
              (spParams.firstBtmToTop.norm() * spParams.secondBtmToTop.norm()));
     std::cout << "theta " << theta << std::endl;
+    std::cout << "check0 " << theta << std::endl;    
 
+    auto meas0 = measurements.at(0);
+    std::cout << "check2 " << theta << std::endl;        
+    auto meas1 = measurements.at(1);    
+    std::cout << "calcRhoZVars" << std::endl;
     gCov = m_spUtility->calcRhoZVars(gctx, *(measurements.at(0)),
                                      *(measurements.at(1)), gPos, theta);
     std::cout << "gCov " << std::endl << gCov << std::endl;    
