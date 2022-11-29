@@ -97,7 +97,9 @@ Vector2 SpacePointUtility::calcRhoZVars(const GeometryContext& gctx,
                                         const Measurement& measBack,
                                         const Vector3& globalPos,
                                         const double theta) const {
+  std::cout << "getloc0var1" << std::endl;
   const auto var1 = getLoc0Var(measFront);
+  std::cout << "getloc0var2" << std::endl;  
   const auto var2 = getLoc0Var(measBack);
   // strip1 and strip2 are tilted at +/- theta/2
 
@@ -109,12 +111,12 @@ Vector2 SpacePointUtility::calcRhoZVars(const GeometryContext& gctx,
   double sig_y1 = sigma_y * cos(0.5 * theta) + sigma_x * sin(0.5 * theta);
   SymMatrix2 lcov;
   lcov << sig_x1, 0, 0, sig_y1;
-
+  std::cout << "getting slink " << std::endl;
   const auto& slink_meas1 =
       std::visit([](const auto& x) { return &x.sourceLink(); }, measFront);
-
+  std::cout << "getting geoID " << std::endl;
   const auto geoId = slink_meas1->geometryId();
-
+  std::cout << "getting gcov " << std::endl;
   auto gcov = rhoZCovariance(gctx, geoId, globalPos, lcov);
 
   return gcov;
