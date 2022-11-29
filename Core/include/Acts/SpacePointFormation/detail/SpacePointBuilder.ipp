@@ -96,7 +96,7 @@ void SpacePointBuilder<spacepoint_t>::buildSpacePoint(
     std::cout << "check2 " << std::endl;        
     auto meas1 = measurements.at(1);
   const auto& slink_meas1 =
-      std::visit([](const auto& x) { return &x.sourceLink(); }, measFront);
+      std::visit([](const auto& x) { return &x.sourceLink(); }, meas00);
   std::cout << "getting geoID " << std::endl;
   const auto geoId = slink_meas1->geometryId();
   std::cout << "getting surface " << std::endl;
