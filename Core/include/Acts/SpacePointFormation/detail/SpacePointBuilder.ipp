@@ -7,6 +7,10 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 namespace Acts {
+  
+  template< typename T>
+  [[deprecated]] void typecheck(T&&){}
+
 template <typename spacepoint_t>
 SpacePointBuilder<spacepoint_t>::SpacePointBuilder(
     SpacePointBuilderConfig cfg,
@@ -103,6 +107,8 @@ SpacePointBuilder<spacepoint_t>::SpacePointBuilder(
       const Surface* surface = m_config.trackingGeometry->findSurface(geoId);
       std::cout << "testcov " << std::endl;
       std::cout << std::hex << &m_config << std::endl;
+      std::cout << typeid(*(measurements[0])).name() << std::endl;
+      typecheck(*(measurements[0]));
       auto tmpCov = m_spUtility->globalCoords(gctx, *(measurements[0]));
 
       std::cout << "calcRhoZVars" << std::endl;
