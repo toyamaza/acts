@@ -101,7 +101,8 @@ SpacePointBuilder<spacepoint_t>::SpacePointBuilder(
       const auto geoId = slink_meas1->geometryId();
       std::cout << "getting surface " << std::endl;
       const Surface* surface = m_config.trackingGeometry->findSurface(geoId);
-      std::cout << "testcov " << std::endl;      
+      std::cout << "testcov " << std::endl;
+      std::cout << std::hex << &m_config << std::endl;
       auto tmpCov = m_spUtility->globalCoords(gctx, *(measurements[0]));
 
       std::cout << "calcRhoZVars" << std::endl;
