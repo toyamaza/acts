@@ -108,13 +108,17 @@ SpacePointBuilder<spacepoint_t>::SpacePointBuilder(
       std::cout << "testcov " << std::endl;
       std::cout << std::hex << &m_config << std::endl;
       std::cout << typeid(*(measurements[0])).name() << std::endl;
-      typecheck(*(measurements[0]));
+
       std::cout << "is null " <<  (m_spUtility.get() == nullptr) << std::endl;
       auto ttt  = m_spUtility->recoverSpacePoint( spParams, m_config.stripLengthGapTolerance);
       std::cout << "check2.1" << std::endl;
 
       const GeometryContext& geoctx = gctx;
       std::cout << "check3" << std::endl;
+      typecheck(gctx);
+      typecheck(m_spUtility);
+      typecheck(*(measurements[0]));
+      typecheck( m_spUtility->globalCoords_tmp(gctx, *(measurements[0])) );
       auto tmpCov = m_spUtility->globalCoords_tmp(gctx, *(measurements[0]));
 
       std::cout << "calcRhoZVars" << std::endl;
