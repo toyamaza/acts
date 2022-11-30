@@ -44,7 +44,7 @@ class SpacePointBuilder {
                         Acts::Vector3, Acts::Vector2,
                         boost::container::static_vector<const SourceLink*, 2>)>
                         func,
-                    std::unique_ptr<const Logger> logger =
+                    std::shared_ptr<const Logger> logger =
                         getDefaultLogger("SpamcePointBuilder", Logging::INFO));
 
   // Default constructor
@@ -91,9 +91,9 @@ class SpacePointBuilder {
       m_spConstructor;
 
   /// the logging instance
-  std::unique_ptr<const Acts::Logger> m_logger;
+  std::shared_ptr<const Acts::Logger> m_logger;
 
-  std::unique_ptr<const SpacePointUtility> m_spUtility;
+  std::shared_ptr<const SpacePointUtility> m_spUtility;
 
   const Logger& logger() const { return *m_logger; }
 };

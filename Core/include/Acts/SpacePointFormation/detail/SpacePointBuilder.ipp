@@ -18,10 +18,9 @@ SpacePointBuilder<spacepoint_t>::SpacePointBuilder(
         spacepoint_t(Acts::Vector3, Acts::Vector2,
                      boost::container::static_vector<const SourceLink*, 2>)>
         func,
-    std::unique_ptr<const Logger> logger)
+    std::shared_ptr<const Logger> logger)
     : m_config(cfg), m_spConstructor(func), m_logger(std::move(logger)) {
-  // m_spUtility = std::make_shared<SpacePointUtility>(cfg);
-  m_spUtility = std::make_unique<SpacePointUtility>(cfg);  
+  m_spUtility = std::make_shared<SpacePointUtility>(cfg);
 }
 
   template <typename spacepoint_t>
