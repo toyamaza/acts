@@ -109,7 +109,10 @@ SpacePointBuilder<spacepoint_t>::SpacePointBuilder(
       std::cout << std::hex << &m_config << std::endl;
       std::cout << typeid(*(measurements[0])).name() << std::endl;
       typecheck(*(measurements[0]));
-      std::cout << "is null " <<  (m_spUtility.get() == nullptr) << std::endl;      
+      std::cout << "is null " <<  (m_spUtility.get() == nullptr) << std::endl;
+
+      const GeometryContext& geoctx = gctx;
+      std::cout << "check3" << std::endl;
       auto tmpCov = m_spUtility->globalCoords(gctx, *(measurements[0]));
 
       std::cout << "calcRhoZVars" << std::endl;
