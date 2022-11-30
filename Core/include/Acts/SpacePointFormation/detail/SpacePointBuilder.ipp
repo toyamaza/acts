@@ -20,7 +20,8 @@ SpacePointBuilder<spacepoint_t>::SpacePointBuilder(
         func,
     std::unique_ptr<const Logger> logger)
     : m_config(cfg), m_spConstructor(func), m_logger(std::move(logger)) {
-  m_spUtility = std::make_shared<SpacePointUtility>(cfg);
+  // m_spUtility = std::make_shared<SpacePointUtility>(cfg);
+  m_spUtility = std::make_unique<SpacePointUtility>(cfg);  
 }
 
   template <typename spacepoint_t>

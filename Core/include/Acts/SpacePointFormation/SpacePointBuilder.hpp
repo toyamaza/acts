@@ -93,7 +93,7 @@ class SpacePointBuilder {
   /// the logging instance
   std::unique_ptr<const Acts::Logger> m_logger;
 
-  std::shared_ptr<const SpacePointUtility> m_spUtility;
+  std::unique_ptr<const SpacePointUtility> m_spUtility;
 
   const Logger& logger() const { return *m_logger; }
 };
