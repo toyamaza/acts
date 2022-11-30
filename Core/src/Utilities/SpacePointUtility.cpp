@@ -92,6 +92,62 @@ std::pair<Vector3, Vector2> SpacePointUtility::globalCoords(
   return std::make_pair(globalPos, gcov);
 }
 
+std::pair<Vector3, Vector2> SpacePointUtility::globalCoords_tmp(
+    const GeometryContext& gctx, const Measurement& meas) const {
+  std::cout << "------ globalCoords_tmp" << std::endl;
+  // const auto& slink =
+  //     std::visit([](const auto& x) { return &x.sourceLink(); }, meas);
+
+  // const auto geoId = slink->geometryId();
+
+  // const Surface* surface = m_config.trackingGeometry->findSurface(geoId);
+  // auto [localPos, localCov] = std::visit(
+  //     [](const auto& measurement) {
+  //       auto expander = measurement.expander();
+  //       BoundVector par = expander * measurement.parameters();
+  //       BoundSymMatrix cov =
+  //           expander * measurement.covariance() * expander.transpose();
+  //       // extract local position
+  //       Vector2 lpar(par[eBoundLoc0], par[eBoundLoc1]);
+  //       // extract local position covariance.
+  //       SymMatrix2 lcov = cov.block<2, 2>(eBoundLoc0, eBoundLoc0);
+  //       return std::make_pair(lpar, lcov);
+  //     },
+  //     meas);
+  // Vector3 globalPos = surface->localToGlobal(gctx, localPos, Vector3());
+  // RotationMatrix3 rotLocalToGlobal =
+  //     surface->referenceFrame(gctx, globalPos, Vector3());
+
+  // // the space point requires only the variance of the transverse and
+  // // longitudinal position. reduce computations by transforming the
+  // // covariance directly from local to rho/z.
+  // //
+  // // compute Jacobian from global coordinates to rho/z
+  // //
+  // //         rho = sqrt(x² + y²)
+  // // drho/d{x,y} = (1 / sqrt(x² + y²)) * 2 * {x,y}
+  // //             = 2 * {x,y} / r
+  // //       dz/dz = 1
+  // //
+  // auto x = globalPos[ePos0];
+  // auto y = globalPos[ePos1];
+  // auto scale = 2 / std::hypot(x, y);
+  // ActsMatrix<2, 3> jacXyzToRhoZ = ActsMatrix<2, 3>::Zero();
+  // jacXyzToRhoZ(0, ePos0) = scale * x;
+  // jacXyzToRhoZ(0, ePos1) = scale * y;
+  // jacXyzToRhoZ(1, ePos2) = 1;
+  // // compute Jacobian from local coordinates to rho/z
+  // ActsMatrix<2, 2> jac =
+  //     jacXyzToRhoZ * rotLocalToGlobal.block<3, 2>(ePos0, ePos0);
+  // // compute rho/z variance
+  // ActsVector<2> var = (jac * localCov * jac.transpose()).diagonal();
+
+  // auto gcov = Vector2(var[0], var[1]);
+  auto globalPos = Vector3(0,0,0);
+  auto gcov = Vector2(0,0);
+  return std::make_pair(globalPos, gcov);
+}
+  
 Vector2 SpacePointUtility::calcRhoZVars(const GeometryContext& gctx,
                                         const Measurement& measFront,
                                         const Measurement& measBack,

@@ -70,6 +70,9 @@ class SpacePointUtility {
   std::pair<Vector3, Vector2> globalCoords(const GeometryContext& gctx,
                                            const Measurement& meas) const;
 
+  std::pair<Vector3, Vector2> globalCoords_tmp(const GeometryContext& gctx,
+                                           const Measurement& meas) const;
+
   /// @brief Get rho and z covariance from the local position and covariance
   /// @param gctx The current geometry context object, e.g. alignment
   /// @param geoId The geometry ID
