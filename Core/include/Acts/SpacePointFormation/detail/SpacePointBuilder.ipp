@@ -119,6 +119,13 @@ SpacePointBuilder<spacepoint_t>::SpacePointBuilder(
       typecheck(m_spUtility);
       typecheck(*(measurements[0]));
       typecheck( m_spUtility->globalCoords_tmp(gctx, *(measurements[0])) );
+      std::cout << "check4" << std::endl;
+      m_spUtility->test_meas(*(measurements[0]));
+      std::cout << "check5" << std::endl;
+      m_spUtility->test_gctx(gctx);
+      std::cout << "check6" << std::endl;      
+      m_spUtility->test_gctx_meas(gctx, *(measurements[0]));
+      std::cout << "check7" << std::endl;            
       auto tmpCov = m_spUtility->globalCoords_tmp(gctx, *(measurements[0]));
 
       std::cout << "calcRhoZVars" << std::endl;
