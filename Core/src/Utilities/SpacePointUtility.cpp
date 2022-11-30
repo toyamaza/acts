@@ -114,6 +114,10 @@ void SpacePointUtility::test_meas(
   std::cout << "------ test_tctx" << std::endl;
 }
   
+  void SpacePointUtility::test_empty() const {
+  std::cout << "------ test_empty" << std::endl;
+}
+  
   
 Vector2 SpacePointUtility::calcRhoZVars(const GeometryContext& gctx,
                                         const Measurement& measFront,

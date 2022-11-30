@@ -79,6 +79,7 @@ void test_gctx_meas(
   void test_meas( const Measurement& meas) const ;
 
   void test_gctx( const GeometryContext& gctx) const ;
+  void test_empty() const ;  
 
   /// @brief Get rho and z covariance from the local position and covariance
   /// @param gctx The current geometry context object, e.g. alignment
