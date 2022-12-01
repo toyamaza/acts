@@ -44,7 +44,7 @@ SpacePointBuilder<spacepoint_t>::SpacePointBuilder(
 
     } else if (num_meas == 2) {  // strip SP formation
       ACTS_VERBOSE("Two measurement found. Perform strip SP formation");
-      std::cout << "one measurement. Strip SP building" << std::endl;    
+      std::cout << "two measurement. Strip SP building" << std::endl;    
       const auto& ends1 = opt.stripEndsPair.first;
       const auto& ends2 = opt.stripEndsPair.second;
 
@@ -57,17 +57,19 @@ SpacePointBuilder<spacepoint_t>::SpacePointBuilder(
       Acts::SpacePointParameters spParams;
 
       if (!m_config.usePerpProj) {  // default strip SP building
+	std::cout << "default strip sp building" << std::endl;
 
 	auto spFound = m_spUtility->calculateStripSPPosition(
 							     ends1, ends2, m_config.vertex, spParams,
 							     m_config.stripLengthTolerance);
 
-	// std::cout << "spFound :" << spFound.ok() << std::endl;
+	std::cout << "spFound check 1 :" << spFound.ok() << std::endl;
 
 	if (!spFound.ok()) {
 	  spFound = m_spUtility->recoverSpacePoint(
 						   spParams, m_config.stripLengthGapTolerance);
 	}
+	std::cout << "spFound check 2 :" << spFound.ok() << std::endl;
 
 	if (!spFound.ok())
 	  return;
@@ -75,7 +77,7 @@ SpacePointBuilder<spacepoint_t>::SpacePointBuilder(
 	gPos = 0.5 *
 	  (ends1.first + ends1.second + spParams.m * spParams.firstBtmToTop);
 
-	// std::cout << "gPos " << std::endl << gPos << std::endl;
+	std::cout << "gPos " << std::endl << gPos << std::endl;
 
       } else {  // for cosmic without vertex constraint
 
