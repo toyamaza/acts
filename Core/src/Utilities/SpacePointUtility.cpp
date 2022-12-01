@@ -214,7 +214,7 @@ Vector2 SpacePointUtility::rhoZCovariance(const GeometryContext& gctx,
     /// algorithm and therefore to the calculation of x.
     /// The same calculation can be repeated for y. Its corresponding
     /// parameter will be named n.
-
+    std::cout << "calc strip sp position " << std::endl;
     spParams.firstBtmToTop = stripEnds1.first - stripEnds1.second;
     spParams.secondBtmToTop = stripEnds2.first - stripEnds2.second;
     spParams.vtxToFirstMid2 =
