@@ -119,7 +119,7 @@ SpacePointBuilder<spacepoint_t>::SpacePointBuilder(
       // typecheck(m_spUtility);
       // typecheck(*(measurements[0]));
       // typecheck( m_spUtility->globalCoords_tmp(gctx, *(measurements[0])) );
-      std::cout << "check4.1" << std::endl;
+      std::cout << "check4.11" << std::endl;
       m_spUtility->test_empty();
       std::cout << "check4" << std::endl;
       m_spUtility->test_meas(*(measurements[0]));

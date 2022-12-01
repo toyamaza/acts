@@ -73,12 +73,12 @@ class SpacePointUtility {
   std::pair<Vector3, Vector2> globalCoords_tmp(const GeometryContext& gctx,
                                            const Measurement& meas) const;
 
-void test_gctx_meas(
-				       const GeometryContext& gctx, const Measurement& meas) const;
+  void test_gctx_meas( const GeometryContext& gctx, const Measurement& meas) const;
   
   void test_meas( const Measurement& meas) const ;
 
   void test_gctx( const GeometryContext& gctx) const ;
+  
   void test_empty() const ;  
 
   /// @brief Get rho and z covariance from the local position and covariance
