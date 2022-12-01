@@ -48,10 +48,10 @@ SpacePointBuilder<spacepoint_t>::SpacePointBuilder(
       const auto& ends1 = opt.stripEndsPair.first;
       const auto& ends2 = opt.stripEndsPair.second;
 
-      std::cout << "ends1.1 " << std::endl << ends1.first << std::endl;
-      std::cout << "ends1.2 " << std::endl << ends1.second << std::endl;    
-      std::cout << "ends2.1 " << std::endl << ends2.first << std::endl;
-      std::cout << "ends2.2 " << std::endl << ends2.second << std::endl;    
+      // std::cout << "ends1.1 " << std::endl << ends1.first << std::endl;
+      // std::cout << "ends1.2 " << std::endl << ends1.second << std::endl;    
+      // std::cout << "ends2.1 " << std::endl << ends2.first << std::endl;
+      // std::cout << "ends2.2 " << std::endl << ends2.second << std::endl;    
 
 
       Acts::SpacePointParameters spParams;
@@ -62,7 +62,7 @@ SpacePointBuilder<spacepoint_t>::SpacePointBuilder(
 							     ends1, ends2, m_config.vertex, spParams,
 							     m_config.stripLengthTolerance);
 
-	std::cout << "spFound :" << spFound.ok() << std::endl;
+	// std::cout << "spFound :" << spFound.ok() << std::endl;
 
 	if (!spFound.ok()) {
 	  spFound = m_spUtility->recoverSpacePoint(
@@ -75,7 +75,7 @@ SpacePointBuilder<spacepoint_t>::SpacePointBuilder(
 	gPos = 0.5 *
 	  (ends1.first + ends1.second + spParams.m * spParams.firstBtmToTop);
 
-	std::cout << "gPos " << std::endl << gPos << std::endl;
+	// std::cout << "gPos " << std::endl << gPos << std::endl;
 
       } else {  // for cosmic without vertex constraint
 
@@ -90,8 +90,8 @@ SpacePointBuilder<spacepoint_t>::SpacePointBuilder(
       double theta =
         acos(spParams.firstBtmToTop.dot(spParams.secondBtmToTop) /
              (spParams.firstBtmToTop.norm() * spParams.secondBtmToTop.norm()));
-      std::cout << "theta " << theta << std::endl;
-      std::cout << "check0 " << std::endl;    
+      // std::cout << "theta " << theta << std::endl;
+      // std::cout << "check0 " << std::endl;    
 
       // auto meas0 = measurements.at(0);
 
@@ -109,9 +109,9 @@ SpacePointBuilder<spacepoint_t>::SpacePointBuilder(
       // std::cout << std::hex << &m_config << std::endl;
       // std::cout << typeid(*(measurements[0])).name() << std::endl;
 
-      std::cout << "is null " <<  (m_spUtility.get() == nullptr) << std::endl;
+      // std::cout << "is null " <<  (m_spUtility.get() == nullptr) << std::endl;
       //      auto ttt  = m_spUtility->recoverSpacePoint( spParams, m_config.stripLengthGapTolerance);
-      std::cout << "check2.1" << std::endl;
+      // std::cout << "check2.1" << std::endl;
 
       // const GeometryContext& geoctx = gctx;
       // std::cout << "check3" << std::endl;
