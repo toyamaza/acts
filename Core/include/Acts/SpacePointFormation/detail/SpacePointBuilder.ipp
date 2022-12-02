@@ -95,18 +95,18 @@ SpacePointBuilder<spacepoint_t>::SpacePointBuilder(
       // std::cout << "theta " << theta << std::endl;
       // std::cout << "check0 " << std::endl;    
 
-      // auto meas0 = measurements.at(0);
+      auto meas0 = measurements.at(0);
 
-      // const Measurement& meas00 =  *(measurements.at(0));
+      const Measurement& meas00 =  *(measurements.at(0));
       // std::cout << "check1 " << std::endl;    
       // std::cout << "check2 " << std::endl;        
-      // auto meas1 = measurements.at(1);
-      // const auto& slink_meas1 =
-      // 	std::visit([](const auto& x) { return &x.sourceLink(); }, meas00);
-      // std::cout << "getting geoID " << std::endl;
-      // const auto geoId = slink_meas1->geometryId();
+      auto meas1 = measurements.at(1);
+      const auto& slink_meas1 =
+	std::visit([](const auto& x) { return &x.sourceLink(); }, meas00);
+      std::cout << "getting geoID " << std::endl;
+      const auto geoId = slink_meas1->geometryId();
       // std::cout << "getting surface " << std::endl;
-      // const Surface* surface = m_config.trackingGeometry->findSurface(geoId);
+      
       // std::cout << "testcov " << std::endl;
       // std::cout << std::hex << &m_config << std::endl;
       // std::cout << typeid(*(measurements[0])).name() << std::endl;
@@ -122,6 +122,12 @@ SpacePointBuilder<spacepoint_t>::SpacePointBuilder(
       // typecheck(*(measurements[0]));
       // typecheck( m_spUtility->globalCoords_tmp(gctx, *(measurements[0])) );
       std::cout << "check4.11" << std::endl;
+      const Surface* surface = m_config.trackingGeometry->findSurface(geoId);
+  Vector3 globalFakeMom(1, 1, 1);
+      
+      RotationMatrix3 rotLocalToGlobal =
+	surface->referenceFrame(gctx, gPos, globalFakeMom);
+      
       // m_spUtility->test_empty();
       // std::cout << "check4" << std::endl;
       // m_spUtility->test_meas(*(measurements[0]));
