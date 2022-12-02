@@ -122,7 +122,7 @@ SpacePointBuilder<spacepoint_t>::SpacePointBuilder(
       // typecheck(*(measurements[0]));
       // typecheck( m_spUtility->globalCoords_tmp(gctx, *(measurements[0])) );
       std::cout << "check4.11" << std::endl;
-      m_spUtility->test_empty();
+      // m_spUtility->test_empty();
       // std::cout << "check4" << std::endl;
       // m_spUtility->test_meas(*(measurements[0]));
       // std::cout << "check5" << std::endl;
@@ -130,8 +130,37 @@ SpacePointBuilder<spacepoint_t>::SpacePointBuilder(
       // std::cout << "check6" << std::endl;      
       // m_spUtility->test_gctx_meas(gctx, *(measurements[0]));
       std::cout << "check7" << std::endl;            
-      // auto tmpCov = m_spUtility->globalCoords_tmp(gctx, *(measurements[0]));
+    //   // auto tmpCov = m_spUtility->globalCoords_tmp(gctx, *(measurements[0]));
+    //   const Measurement& measFront = *(measurements.at(0));
+    //   const Measurement& measBack = *(measurements.at(1));
+    //   const Vector3& globalPos = gPos;
+    // std::cout << "getloc0var1" << std::endl;
+    // const auto var1 = getLoc0Var(measFront);
+    // std::cout << "getloc0var2" << std::endl;  
+    // const auto var2 = getLoc0Var(measBack);
+    // // strip1 and strip2 are tilted at +/- theta/2
 
+    // double sigma_x = std::hypot(var1, var2) / (2 * sin(theta * 0.5));
+    // double sigma_y = std::hypot(var1, var2) / (2 * cos(theta * 0.5));
+
+    // // projection to the surface with strip1.
+    // double sig_x1 = sigma_x * cos(0.5 * theta) + sigma_y * sin(0.5 * theta);
+    // double sig_y1 = sigma_y * cos(0.5 * theta) + sigma_x * sin(0.5 * theta);
+    // SymMatrix2 lcov;
+    // lcov << sig_x1, 0, 0, sig_y1;
+    // std::cout << "getting slink " << std::endl;
+    // const auto& slink_meas1 =
+    //   std::visit([](const auto& x) { return &x.sourceLink(); }, measFront);
+    // std::cout << "getting geoID " << std::endl;
+    // const auto geoId = slink_meas1->geometryId();
+    // std::cout << "getting gcov " << std::endl;
+    // auto gcov = rhoZCovariance(gctx, geoId, globalPos, lcov);
+
+
+
+
+
+      
       std::cout << "calcRhoZVars" << std::endl;
       gCov = m_spUtility->calcRhoZVars(gctx, *(measurements.at(0)),
 				       *(measurements.at(1)), gPos, theta);
