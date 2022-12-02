@@ -123,10 +123,12 @@ SpacePointBuilder<spacepoint_t>::SpacePointBuilder(
       // typecheck( m_spUtility->globalCoords_tmp(gctx, *(measurements[0])) );
       std::cout << "check4.11" << std::endl;
       const Surface* surface = m_config.trackingGeometry->findSurface(geoId);
-  Vector3 globalFakeMom(1, 1, 1);
-      
+      std::cout << "check4.12" << std::endl;      
+      Vector3 globalFakeMom(1, 1, 1);
+      std::cout << "check4.13" << std::endl;      
       RotationMatrix3 rotLocalToGlobal =
 	surface->referenceFrame(gctx, gPos, globalFakeMom);
+      std::cout << "check4.14" << std::endl;      
       
       // m_spUtility->test_empty();
       // std::cout << "check4" << std::endl;
