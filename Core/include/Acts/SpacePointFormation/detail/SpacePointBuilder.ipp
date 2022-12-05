@@ -105,7 +105,8 @@ SpacePointBuilder<spacepoint_t>::SpacePointBuilder(
 	std::visit([](const auto& x) { return &x.sourceLink(); }, meas00);
 
       const auto geoId = slink_meas1->geometryId();
-      std::cout << "getting geoID " << geoId << std::endl;      
+      // std::cout << "getting geoID " << geoId << std::endl;
+      std::cout << "getting geoID " << geoId.value() << " " << geoId << std::endl;            
       // std::cout << "getting surface " << std::endl;
       
       // std::cout << "testcov " << std::endl;
@@ -130,7 +131,7 @@ SpacePointBuilder<spacepoint_t>::SpacePointBuilder(
       Vector3 globalFakeMom(1, 1, 1);
       std::cout << "check4.13" << std::endl;
       if (not surface){
-	std::cout << "no surface found in sp builder. geo ID is " << geoId << std::endl;
+	std::cout << "no surface found in sp builder. geo ID is " << geoId.value() << " " << geoId << std::endl;
 	return;
       }else{
 	std::cout << "surface is not null " << std::endl;
