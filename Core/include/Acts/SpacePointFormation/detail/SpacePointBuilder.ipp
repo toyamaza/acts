@@ -123,6 +123,8 @@ SpacePointBuilder<spacepoint_t>::SpacePointBuilder(
       // typecheck(*(measurements[0]));
       // typecheck( m_spUtility->globalCoords_tmp(gctx, *(measurements[0])) );
       std::cout << "check4.11" << std::endl;
+      std::cout << "geometry address " << std::hex <<  m_config.trackingGeometry.get() << std::endl;
+      
       const Surface* surface = m_config.trackingGeometry->findSurface(geoId);
       std::cout << "check4.12" << std::endl;      
       Vector3 globalFakeMom(1, 1, 1);
