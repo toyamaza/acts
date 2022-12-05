@@ -36,15 +36,15 @@ SpacePointBuilder<spacepoint_t>::SpacePointBuilder(
     Acts::Vector2 gCov = Acts::Vector2::Zero();
 
     if (num_meas == 1) {  // pixel SP formation
-      ACTS_VERBOSE("One measurement found. Perform pixel SP formation");
-      std::cout << "one measurement. Pixel sp building" << std::endl;
+      ACTS_VERBOSE("One measurement found. Performing pixel SP formation");
+      // std::cout << "one measurement. Pixel sp building" << std::endl;
       auto gPosCov = m_spUtility->globalCoords(gctx, *(measurements[0]));
       gPos = gPosCov.first;
       gCov = gPosCov.second;
 
     } else if (num_meas == 2) {  // strip SP formation
-      ACTS_VERBOSE("Two measurement found. Perform strip SP formation");
-      std::cout << "two measurement. Strip SP building" << std::endl;    
+      ACTS_VERBOSE("Two measurement found. Performing strip SP formation");
+      // std::cout << "two measurement. Strip SP building" << std::endl;    
       const auto& ends1 = opt.stripEndsPair.first;
       const auto& ends2 = opt.stripEndsPair.second;
 
@@ -57,19 +57,19 @@ SpacePointBuilder<spacepoint_t>::SpacePointBuilder(
       Acts::SpacePointParameters spParams;
 
       if (!m_config.usePerpProj) {  // default strip SP building
-	std::cout << "default strip sp building" << std::endl;
+	// std::cout << "default strip sp building" << std::endl;
 
 	auto spFound = m_spUtility->calculateStripSPPosition(
 							     ends1, ends2, m_config.vertex, spParams,
 							     m_config.stripLengthTolerance);
 
-	std::cout << "spFound check 1 :" << spFound.ok() << std::endl;
+	// std::cout << "spFound check 1 :" << spFound.ok() << std::endl;
 
 	if (!spFound.ok()) {
 	  spFound = m_spUtility->recoverSpacePoint(
 						   spParams, m_config.stripLengthGapTolerance);
 	}
-	std::cout << "spFound check 2 :" << spFound.ok() << std::endl;
+	// std::cout << "spFound check 2 :" << spFound.ok() << std::endl;
 
 	if (!spFound.ok())
 	  return;
@@ -77,7 +77,7 @@ SpacePointBuilder<spacepoint_t>::SpacePointBuilder(
 	gPos = 0.5 *
 	  (ends1.first + ends1.second + spParams.m * spParams.firstBtmToTop);
 
-	std::cout << "gPos " << std::endl << gPos << std::endl;
+	// std::cout << "gPos " << std::endl << gPos << std::endl;
 
       } else {  // for cosmic without vertex constraint
 
@@ -106,7 +106,7 @@ SpacePointBuilder<spacepoint_t>::SpacePointBuilder(
 
       const auto geoId = slink_meas1->geometryId();
       // std::cout << "getting geoID " << geoId << std::endl;
-      std::cout << "getting geoID " << geoId.value() << " " << geoId << std::endl;            
+      // std::cout << "getting geoID " << geoId.value() << " " << geoId << std::endl;            
       // std::cout << "getting surface " << std::endl;
       
       // std::cout << "testcov " << std::endl;
@@ -123,22 +123,18 @@ SpacePointBuilder<spacepoint_t>::SpacePointBuilder(
       // typecheck(m_spUtility);
       // typecheck(*(measurements[0]));
       // typecheck( m_spUtility->globalCoords_tmp(gctx, *(measurements[0])) );
-      std::cout << "check4.11" << std::endl;
-      std::cout << "geometry address " << std::hex <<  m_config.trackingGeometry.get() << std::endl;
+      // std::cout << "check4.11" << std::endl;
+      // std::cout << "geometry address " << std::hex <<  m_config.trackingGeometry.get() << std::endl;
       
       const Surface* surface = m_config.trackingGeometry->findSurface(geoId);
-      std::cout << "check4.12" << std::endl;      
-      Vector3 globalFakeMom(1, 1, 1);
-      std::cout << "check4.13" << std::endl;
+      // // std::cout << "check4.12" << std::endl;      
+      // Vector3 globalFakeMom(1, 1, 1);
       if (not surface){
 	std::cout << "no surface found in sp builder. geo ID is " << geoId.value() << " " << geoId << std::endl;
 	return;
-      }else{
-	std::cout << "surface is not null " << std::endl;
       }
-      RotationMatrix3 rotLocalToGlobal =
-	surface->referenceFrame(gctx, gPos, globalFakeMom);
-      std::cout << "check4.14" << std::endl;      
+      // RotationMatrix3 rotLocalToGlobal =
+      // 	surface->referenceFrame(gctx, gPos, globalFakeMom);
       
       // m_spUtility->test_empty();
       // std::cout << "check4" << std::endl;
@@ -147,7 +143,6 @@ SpacePointBuilder<spacepoint_t>::SpacePointBuilder(
       // m_spUtility->test_gctx(gctx);
       // std::cout << "check6" << std::endl;      
       // m_spUtility->test_gctx_meas(gctx, *(measurements[0]));
-      std::cout << "check7" << std::endl;            
     //   // auto tmpCov = m_spUtility->globalCoords_tmp(gctx, *(measurements[0]));
     //   const Measurement& measFront = *(measurements.at(0));
     //   const Measurement& measBack = *(measurements.at(1));
@@ -179,10 +174,10 @@ SpacePointBuilder<spacepoint_t>::SpacePointBuilder(
 
 
       
-      std::cout << "calcRhoZVars" << std::endl;
+      // std::cout << "calcRhoZVars" << std::endl;
       gCov = m_spUtility->calcRhoZVars(gctx, *(measurements.at(0)),
 				       *(measurements.at(1)), gPos, theta);
-      std::cout << "gCov " << std::endl << gCov << std::endl;    
+      // std::cout << "gCov " << std::endl << gCov << std::endl;    
 
     } else {
       ACTS_ERROR("More than 2 measurements are given for a space point.");
@@ -194,7 +189,7 @@ SpacePointBuilder<spacepoint_t>::SpacePointBuilder(
         std::visit([](const auto& x) { return &x.sourceLink(); }, *meas);
       slinks.emplace_back(slink);
     }
-    std::cout << "slink added " << std::endl;
+    // std::cout << "slink added " << std::endl;
   
     spacePointIt = m_spConstructor(gPos, gCov, std::move(slinks));
   }
