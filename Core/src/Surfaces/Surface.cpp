@@ -228,8 +228,10 @@ Acts::Vector3 Acts::Surface::normal(const GeometryContext& gctx,
 const Acts::Transform3& Acts::Surface::transform(
     const GeometryContext& gctx) const {
   if (m_associatedDetElement != nullptr) {
+    std::cout << "associated det element is NOT nullptr" << std::endl;
     return m_associatedDetElement->transform(gctx);
   }
+  std::cout << "associated det element is nullptr" << std::endl;  
   return m_transform;
 }
 
