@@ -125,7 +125,10 @@ SpacePointBuilder<spacepoint_t>::SpacePointBuilder(
       const Surface* surface = m_config.trackingGeometry->findSurface(geoId);
       std::cout << "check4.12" << std::endl;      
       Vector3 globalFakeMom(1, 1, 1);
-      std::cout << "check4.13" << std::endl;      
+      std::cout << "check4.13" << std::endl;
+      if (not surface){
+	std::cout << "no surface found in sp builder" << std::endl;
+	return;}
       RotationMatrix3 rotLocalToGlobal =
 	surface->referenceFrame(gctx, gPos, globalFakeMom);
       std::cout << "check4.14" << std::endl;      
