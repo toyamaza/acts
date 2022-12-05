@@ -128,7 +128,9 @@ SpacePointBuilder<spacepoint_t>::SpacePointBuilder(
       std::cout << "check4.13" << std::endl;
       if (not surface){
 	std::cout << "no surface found in sp builder" << std::endl;
-	return;}
+	return;}else{
+	std::cout << "surface is not null " << std::endl;
+      }
       RotationMatrix3 rotLocalToGlobal =
 	surface->referenceFrame(gctx, gPos, globalFakeMom);
       std::cout << "check4.14" << std::endl;      
