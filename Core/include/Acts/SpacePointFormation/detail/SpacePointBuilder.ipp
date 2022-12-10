@@ -47,12 +47,11 @@ void SpacePointBuilder<spacepoint_t>::buildSpacePoint(
     if (!m_config.usePerpProj) {  // default strip SP building
 
       auto spFound = m_spUtility->calculateStripSPPosition(
-          ends1, ends2, m_config.vertex, spParams,
-          m_config.stripLengthTolerance);
+          ends1, ends2, opt.vertex, spParams, opt.stripLengthTolerance);
 
       if (!spFound.ok()) {
-        spFound = m_spUtility->recoverSpacePoint(
-            spParams, m_config.stripLengthGapTolerance);
+        spFound = m_spUtility->recoverSpacePoint(spParams,
+                                                 opt.stripLengthGapTolerance);
       }
 
       if (!spFound.ok())
@@ -94,7 +93,7 @@ void SpacePointBuilder<spacepoint_t>::buildSpacePoint(
 
 template <typename spacepoint_t>
 void SpacePointBuilder<spacepoint_t>::makeMeasurementPairs(
-    const GeometryContext& gctx,
+    const GeometryContext& gctx, const StripPairOptions& pairOpt,
     const std::vector<const Measurement*>& measurementsFront,
     const std::vector<const Measurement*>& measurementsBack,
     std::vector<std::pair<const Measurement*, const Measurement*>>&
@@ -123,8 +122,8 @@ void SpacePointBuilder<spacepoint_t>::makeMeasurementPairs(
           gctx, *(measurementsBack[iMeasurementsBack]));
 
       auto res = m_spUtility->differenceOfMeasurementsChecked(
-          gposFront, gposBack, m_config.vertex, m_config.diffDist,
-          m_config.diffPhi2, m_config.diffTheta2);
+          gposFront, gposBack, pairOpt.vertex, pairOpt.diffDist,
+          pairOpt.diffPhi2, pairOpt.diffTheta2);
       if (!res.ok())
         continue;
 

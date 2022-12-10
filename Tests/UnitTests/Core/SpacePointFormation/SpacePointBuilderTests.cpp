@@ -212,7 +212,6 @@ BOOST_DATA_TEST_CASE(SpacePointBuilder_basic, bdata::xrange(1), index) {
 
   auto spBuilderConfig = SpacePointBuilderConfig();
   spBuilderConfig.trackingGeometry = geometry;
-  spBuilderConfig.vertex = vertex;
 
   auto spBuilder =
       Acts::SpacePointBuilder<TestSpacePoint>(spBuilderConfig, spConstructor);
@@ -220,7 +219,7 @@ BOOST_DATA_TEST_CASE(SpacePointBuilder_basic, bdata::xrange(1), index) {
   // for cosmic  without vertex constraint, usePerpProj = true
   auto spBuilderConfig_perp = SpacePointBuilderConfig();
   spBuilderConfig_perp.trackingGeometry = geometry;
-  spBuilderConfig_perp.vertex = vertex;
+
   spBuilderConfig_perp.usePerpProj = true;
 
   auto spBuilder_perp = Acts::SpacePointBuilder<TestSpacePoint>(
@@ -234,6 +233,8 @@ BOOST_DATA_TEST_CASE(SpacePointBuilder_basic, bdata::xrange(1), index) {
     measVect.emplace_back(meas);
 
     SpacePointBuilderOptions spOpt;
+    spOpt.vertex = vertex;
+
     spBuilder.buildSpacePoint(geoCtx, measVect, spOpt,
                               std::back_inserter(spacePoints));
   }
@@ -242,9 +243,10 @@ BOOST_DATA_TEST_CASE(SpacePointBuilder_basic, bdata::xrange(1), index) {
       measPairs;
 
   // strip SP building
+  StripPairOptions pairOpt;
 
-  spBuilder.makeMeasurementPairs(tgContext, frontMeasurements, backMeasurements,
-                                 measPairs);
+  spBuilder.makeMeasurementPairs(tgContext, pairOpt, frontMeasurements,
+                                 backMeasurements, measPairs);
 
   BOOST_CHECK_EQUAL(measPairs.size(), 2);
 
@@ -255,14 +257,11 @@ BOOST_DATA_TEST_CASE(SpacePointBuilder_basic, bdata::xrange(1), index) {
     const std::pair<Vector3, Vector3> end1 = stripEnds(geometry, geoCtx, meas1);
     const std::pair<Vector3, Vector3> end2 = stripEnds(geometry, geoCtx, meas2);
     std::shared_ptr<const TestSpacePoint> spacePoint = nullptr;
-    std::pair<const std::pair<Vector3, Vector3>,
-              const std::pair<Vector3, Vector3>>
-        strippair = std::make_pair(end1, end2);
     std::vector<const TestMeasurement*> measVect;
     measVect.emplace_back(meas1);
     measVect.emplace_back(meas2);
 
-    SpacePointBuilderOptions spOpt{strippair};
+    SpacePointBuilderOptions spOpt{std::make_pair(end1, end2)};
     // nominal strip sp building
     spBuilder.buildSpacePoint(geoCtx, measVect, spOpt,
                               std::back_inserter(spacePoints));
@@ -285,17 +284,21 @@ BOOST_DATA_TEST_CASE(SpacePointBuilder_basic, bdata::xrange(1), index) {
     auto spBuilderConfig_badStrips = SpacePointBuilderConfig();
 
     spBuilderConfig_badStrips.trackingGeometry = geometry;
-    spBuilderConfig_badStrips.vertex = vertex;
-    spBuilderConfig_badStrips.stripLengthTolerance = 0.0001;
-    spBuilderConfig_badStrips.stripLengthGapTolerance = 50.;
     auto spBuilder_badStrips = Acts::SpacePointBuilder<TestSpacePoint>(
         spBuilderConfig_badStrips, spConstructor);
     // sp building with the recovery method
     SpacePointBuilderOptions spOpt_badStrips1{std::make_pair(end3, end4)};
+    spOpt_badStrips1.vertex = vertex;
+    spOpt_badStrips1.stripLengthTolerance = 0.0001;
+    spOpt_badStrips1.stripLengthGapTolerance = 50.;
+
     spBuilder_badStrips.buildSpacePoint(geoCtx, measVect, spOpt_badStrips1,
                                         std::back_inserter(spacePoints_extra));
 
     SpacePointBuilderOptions spOpt_badStrips2{std::make_pair(end5, end6)};
+    spOpt_badStrips2.vertex = vertex;
+    spOpt_badStrips2.stripLengthTolerance = 0.0001;
+    spOpt_badStrips2.stripLengthGapTolerance = 50.;
     spBuilder_badStrips.buildSpacePoint(geoCtx, measVect, spOpt_badStrips2,
                                         std::back_inserter(spacePoints_extra));
   }

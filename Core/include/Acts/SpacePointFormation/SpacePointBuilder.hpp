@@ -72,7 +72,7 @@ class SpacePointBuilder {
   /// @param measurementsBack vector of measurements on another surface
   /// @param measurementPairs storage of the measurement pairs
   void makeMeasurementPairs(
-      const GeometryContext& gctx,
+      const GeometryContext& gctx, const StripPairOptions& pairOpt,
       const std::vector<const Measurement*>& measurementsFront,
       const std::vector<const Measurement*>& measurementsBack,
       std::vector<std::pair<const Measurement*, const Measurement*>>&
