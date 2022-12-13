@@ -50,12 +50,17 @@ void SpacePointBuilder<spacepoint_t>::buildSpacePoint(
           ends1, ends2, opt.vertex, spParams, opt.stripLengthTolerance);
 
       if (!spFound.ok()) {
+        ACTS_VERBOSE(
+            "SP formation: First attempt failed. Trying to recover SP");
+
         spFound = m_spUtility->recoverSpacePoint(spParams,
                                                  opt.stripLengthGapTolerance);
       }
 
-      if (!spFound.ok())
+      if (!spFound.ok()) {
+        ACTS_VERBOSE("SP formation: no SP created for these pair")
         return;
+      }
 
       gPos = 0.5 *
              (ends1.first + ends1.second + spParams.m * spParams.firstBtmToTop);
