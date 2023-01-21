@@ -52,7 +52,7 @@ void SpacePointBuilder<spacepoint_t>::buildSpacePoint(
       if (!spFound.ok()) {
         ACTS_VERBOSE(
             "SP formation: First attempt failed. Trying to recover SP");
-	std::cout <<  "m, n, limit" << fabs(spParams.m) << " " <<    fabs(spParams.n)  << " " << spParams.limit << std::endl;
+	std::cout <<  "m, n, limit " << fabs(spParams.m) << " " <<    fabs(spParams.n)  << " " << spParams.limit << std::endl;
 	
 
         spFound = m_spUtility->recoverSpacePoint(spParams,
