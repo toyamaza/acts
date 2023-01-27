@@ -26,10 +26,10 @@ Result<void> SpacePointBuilder<spacepoint_t>::testRecoverSpacePoint(
   // outside the SDE
   spParams.limitExtended =
       spParams.limit + stripLengthGapTolerance / spParams.mag_firstBtmToTop;
-  std::cout << "limExtended " << spParams.limitExtended << std::endl;
+  std::cout << "limExtended =  (lim + tolerance)/ mag  = " << spParams.limitExtended << " =  "  << spParams.limit << " + " << stripLengthGapTolerance << " / " << spParams.mag_firstBtmToTop << std::endl;
   // Check if m is just slightly outside
   if (fabs(spParams.m) > spParams.limitExtended) {
-    std::cout << "failure 2" << std::endl;    
+    std::cout << "failure 2 ( m > limExt ) " <<  std::endl;    
     return Result<void>::failure(m_error);
   }
   // Calculate n if not performed previously
@@ -41,7 +41,7 @@ Result<void> SpacePointBuilder<spacepoint_t>::testRecoverSpacePoint(
 
   // Check if n is just slightly outside
   if (fabs(spParams.n) > spParams.limitExtended) {
-    std::cout << "failure 3 (n < limExt )" << std::endl;    
+    std::cout << "failure 3 (n > limExt )" << std::endl;    
     return Result<void>::failure(m_error);
   }
   
