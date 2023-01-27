@@ -220,6 +220,8 @@ Result<void> SpacePointUtility::recoverSpacePoint(
     SpacePointParameters& spParams, double stripLengthGapTolerance) const {
   // Consider some cases that would allow an easy exit
   // Check if the limits are allowed to be increased
+  std::cout << "recovering space point " << std::endl;
+
   if (stripLengthGapTolerance <= 0.) {
     return Result<void>::failure(m_error);
   }
