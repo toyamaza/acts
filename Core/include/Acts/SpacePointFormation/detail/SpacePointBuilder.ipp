@@ -7,9 +7,9 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 namespace Acts {
 
-
-Result<void> testRecoverSpacePoint(
-    SpacePointParameters& spParams, double stripLengthGapTolerance)  {
+template <typename spacepoint_t>
+Result<void> SpacePointBuilder<spacepoint_t>::testRecoverSpacePoint(
+    SpacePointParameters& spParams, double stripLengthGapTolerance) const  {
   std::error_code m_error;
   
   // Consider some cases that would allow an easy exit

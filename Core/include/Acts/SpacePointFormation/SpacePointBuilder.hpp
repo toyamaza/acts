@@ -81,6 +81,8 @@ class SpacePointBuilder {
  protected:
   // configuration of the single hit space point builder
   SpacePointBuilderConfig m_config;
+  Result<void> testRecoverSpacePoint(
+				     SpacePointParameters& spParams, double stripLengthGapTolerance) const;
 
   /// @brief Function to create external space point
   /// The constructor of spacepoint_t with Vector3 global pos, Vector2 global
