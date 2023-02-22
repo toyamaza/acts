@@ -94,6 +94,82 @@ void SpacePointBuilder<spacepoint_t>::buildSpacePoint(
 }
 
 template <typename spacepoint_t>
+template <template <typename...> typename container_t>
+void SpacePointBuilder<spacepoint_t>::buildSpacePoint(
+    const GeometryContext& gctx, const std::vector<SourceLink>& sourceLinks,
+    const SpacePointBuilderOptions& opt,
+    std::back_insert_iterator<container_t<spacepoint_t>> spacePointIt) const {
+  const unsigned int num_meas = sourceLinks.size();
+
+  Acts::Vector3 gPos = Acts::Vector3::Zero();
+  Acts::Vector2 gCov = Acts::Vector2::Zero();
+
+  if (num_meas == 1) {  // pixel SP formation
+    auto slink = sourceLinks.at(0);
+    auto [param, cov] = opt.paramCovAccessor(sourceLinks.at(0));
+    auto gPosCov = m_spUtility->globalCoords(gctx, slink, param, cov);
+    gPos = gPosCov.first;
+    gCov = gPosCov.second;
+  } else if (num_meas == 2) {  // strip SP formation
+
+    //   const auto& ends1 = opt.stripEndsPair.first;
+    //   const auto& ends2 = opt.stripEndsPair.second;
+
+    //   Acts::SpacePointParameters spParams;
+
+    //   if (!m_config.usePerpProj) {  // default strip SP building
+
+    //     auto spFound = m_spUtility->calculateStripSPPosition(
+    //         ends1, ends2, m_config.vertex, spParams,
+    //         m_config.stripLengthTolerance);
+
+    //     if (!spFound.ok()) {
+    //       spFound = m_spUtility->recoverSpacePoint(
+    //           spParams, m_config.stripLengthGapTolerance);
+    //     }
+
+    //     if (!spFound.ok()) {
+    //       return;
+    //     }
+
+    //     gPos = 0.5 *
+    //            (ends1.first + ends1.second + spParams.m *
+    //            spParams.firstBtmToTop);
+
+    //   } else {  // for cosmic without vertex constraint
+
+    //     auto resultPerpProj =
+    //         m_spUtility->calcPerpendicularProjection(ends1, ends2, spParams);
+
+    //     if (!resultPerpProj.ok()) {
+    //       return;
+    //     }
+    //     gPos = ends1.first + resultPerpProj.value() * spParams.firstBtmToTop;
+    //   }
+
+    //   double theta =
+    //       acos(spParams.firstBtmToTop.dot(spParams.secondBtmToTop) /
+    //            (spParams.firstBtmToTop.norm() *
+    //            spParams.secondBtmToTop.norm()));
+
+    //   gCov = m_spUtility->calcRhoZVars(gctx, *(measurements.at(0)),
+    //                                    *(measurements.at(1)), gPos, theta);
+
+  } else {
+    ACTS_ERROR("More than 2 measurements are given for a space point.");
+  }
+
+  // boost::container::static_vector<SourceLink, 2> slinks;
+  // for (const auto& meas : measurements) {
+  //   const auto& slink =
+  //       std::visit([](const auto& x) { return x.sourceLink(); }, *meas);
+  //   slinks.emplace_back(slink);
+  // }
+
+  // spacePointIt = m_spConstructor(gPos, gCov, std::move(slinks));
+}
+
+template <typename spacepoint_t>
 void SpacePointBuilder<spacepoint_t>::makeMeasurementPairs(
     const GeometryContext& gctx,
     const std::vector<const Measurement*>& measurementsFront,
