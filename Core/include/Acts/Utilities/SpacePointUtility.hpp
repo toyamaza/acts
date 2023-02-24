@@ -112,9 +112,13 @@ class SpacePointUtility {
   /// @param globalPos global position
   /// @param theta The angle between the two strips
   /// @return (rho, z) components of the global covariance
-  Vector2 calcRhoZVars(const GeometryContext& gctx, const SourceLink slinkFront,
-                       const SourceLink slinkBack, const Vector3& globalPos,
-                       const double theta) const;
+  Vector2 calcRhoZVars(
+      const GeometryContext& gctx, const SourceLink slinkFront,
+      const SourceLink slinkBack,
+      std::function<
+          std::pair<const BoundVector, const BoundSymMatrix>(const SourceLink)>
+          paramCovAccessor,
+      const Vector3& globalPos, const double theta) const;
 
   /// @brief This function performs a straight forward calculation of a space
   /// point and returns whether it was succesful or not.

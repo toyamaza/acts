@@ -112,61 +112,54 @@ void SpacePointBuilder<spacepoint_t>::buildSpacePoint(
     gCov = gPosCov.second;
   } else if (num_meas == 2) {  // strip SP formation
 
-    //   const auto& ends1 = opt.stripEndsPair.first;
-    //   const auto& ends2 = opt.stripEndsPair.second;
+    const auto& ends1 = opt.stripEndsPair.first;
+    const auto& ends2 = opt.stripEndsPair.second;
 
-    //   Acts::SpacePointParameters spParams;
+    Acts::SpacePointParameters spParams;
 
-    //   if (!m_config.usePerpProj) {  // default strip SP building
+    if (!m_config.usePerpProj) {  // default strip SP building
 
-    //     auto spFound = m_spUtility->calculateStripSPPosition(
-    //         ends1, ends2, m_config.vertex, spParams,
-    //         m_config.stripLengthTolerance);
+      auto spFound = m_spUtility->calculateStripSPPosition(
+          ends1, ends2, m_config.vertex, spParams,
+          m_config.stripLengthTolerance);
 
-    //     if (!spFound.ok()) {
-    //       spFound = m_spUtility->recoverSpacePoint(
-    //           spParams, m_config.stripLengthGapTolerance);
-    //     }
+      if (!spFound.ok()) {
+        spFound = m_spUtility->recoverSpacePoint(
+            spParams, m_config.stripLengthGapTolerance);
+      }
 
-    //     if (!spFound.ok()) {
-    //       return;
-    //     }
+      if (!spFound.ok()) {
+        return;
+      }
 
-    //     gPos = 0.5 *
-    //            (ends1.first + ends1.second + spParams.m *
-    //            spParams.firstBtmToTop);
+      gPos = 0.5 *
+             (ends1.first + ends1.second + spParams.m * spParams.firstBtmToTop);
 
-    //   } else {  // for cosmic without vertex constraint
+    } else {  // for cosmic without vertex constraint
 
-    //     auto resultPerpProj =
-    //         m_spUtility->calcPerpendicularProjection(ends1, ends2, spParams);
+      auto resultPerpProj =
+          m_spUtility->calcPerpendicularProjection(ends1, ends2, spParams);
 
-    //     if (!resultPerpProj.ok()) {
-    //       return;
-    //     }
-    //     gPos = ends1.first + resultPerpProj.value() * spParams.firstBtmToTop;
-    //   }
+      if (!resultPerpProj.ok()) {
+        return;
+      }
+      gPos = ends1.first + resultPerpProj.value() * spParams.firstBtmToTop;
+    }
 
-    //   double theta =
-    //       acos(spParams.firstBtmToTop.dot(spParams.secondBtmToTop) /
-    //            (spParams.firstBtmToTop.norm() *
-    //            spParams.secondBtmToTop.norm()));
+    double theta =
+        acos(spParams.firstBtmToTop.dot(spParams.secondBtmToTop) /
+             (spParams.firstBtmToTop.norm() * spParams.secondBtmToTop.norm()));
 
-    //   gCov = m_spUtility->calcRhoZVars(gctx, *(measurements.at(0)),
-    //                                    *(measurements.at(1)), gPos, theta);
+    gCov = m_spUtility->calcRhoZVars(gctx, sourceLinks.at(0), sourceLinks.at(1),
+                                     opt.paramCovAccessor, gPos, theta);
 
   } else {
     ACTS_ERROR("More than 2 measurements are given for a space point.");
   }
+  boost::container::static_vector<SourceLink, 2> slinks(sourceLinks.begin(),
+                                                        sourceLinks.end());
 
-  // boost::container::static_vector<SourceLink, 2> slinks;
-  // for (const auto& meas : measurements) {
-  //   const auto& slink =
-  //       std::visit([](const auto& x) { return x.sourceLink(); }, *meas);
-  //   slinks.emplace_back(slink);
-  // }
-
-  // spacePointIt = m_spConstructor(gPos, gCov, std::move(slinks));
+  spacePointIt = m_spConstructor(gPos, gCov, std::move(slinks));
 }
 
 template <typename spacepoint_t>
