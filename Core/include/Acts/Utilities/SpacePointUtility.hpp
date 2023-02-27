@@ -64,7 +64,8 @@ class SpacePointUtility {
   /// @param gctx The current geometry context object, e.g. alignment
   /// @param slink SourceLink that holds the necessary
   /// information
-  /// @param par local parameters
+  /// @param par local position
+  /// @param cov local covariance
   /// @return vectors of the global coordinates and covariance of the SourceLink
   std::pair<Vector3, Vector2> globalCoords(const GeometryContext& gctx,
                                            const SourceLink slink,
