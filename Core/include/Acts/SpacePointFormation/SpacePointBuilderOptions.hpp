@@ -8,6 +8,8 @@
 
 #pragma once
 
+#include "Acts/EventData/SourceLink.hpp"
+
 namespace Acts {
 
 struct SpacePointBuilderOptions {

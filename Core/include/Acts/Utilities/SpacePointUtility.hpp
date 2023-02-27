@@ -9,7 +9,7 @@
 #pragma once
 
 #include "Acts/Definitions/Algebra.hpp"
-#include "Acts/EventData/Measurement.hpp"
+#include "Acts/EventData/SourceLink.hpp"
 #include "Acts/Geometry/GeometryContext.hpp"
 #include "Acts/Geometry/TrackingGeometry.hpp"
 #include "Acts/SpacePointFormation/SpacePointBuilderConfig.hpp"
@@ -56,19 +56,8 @@ struct SpacePointParameters {
 ///
 class SpacePointUtility {
  public:
-  using Measurement = BoundVariantMeasurement;
-
   /// Constructor
   SpacePointUtility(SpacePointBuilderConfig cfg) : m_config(std::move(cfg)) {}
-
-  /// @brief Getter method for the global coordinates of a measurement
-  ///
-  /// @param gctx The current geometry context object, e.g. alignment
-  /// @param meas measurement that holds the necessary
-  /// information
-  /// @return vectors of the global coordinates and covariance of the measurement
-  std::pair<Vector3, Vector2> globalCoords(const GeometryContext& gctx,
-                                           const Measurement& meas) const;
 
   /// @brief Getter method for the global coordinates of a measurement
   ///
@@ -92,18 +81,6 @@ class SpacePointUtility {
                          const GeometryIdentifier& geoId,
                          const Vector3& globalPos,
                          const SymMatrix2& localCov) const;
-
-  /// @brief Calculate the rho and z covariance from the front and back measurement in the strip SP formation
-  /// @param gctx The current geometry context object, e.g. alignment
-  /// @param measFront The measurement on the front layer
-  /// @param measBack The measurement on the back layer
-  /// @param globalPos global position
-  /// @param theta The angle between the two strips
-  /// @return (rho, z) components of the global covariance
-  Vector2 calcRhoZVars(const GeometryContext& gctx,
-                       const Measurement& measFront,
-                       const Measurement& measBack, const Vector3& globalPos,
-                       const double theta) const;
 
   /// @brief Calculate the rho and z covariance from the front and back measurement in the strip SP formation
   /// @param gctx The current geometry context object, e.g. alignment
@@ -182,11 +159,6 @@ class SpacePointUtility {
  private:
   SpacePointBuilderConfig m_config;
   std::error_code m_error;
-
-  /// @brief Get the first component of the local covariance.
-  /// @param meas The measurement
-  /// @return the (0, 0) component of the local covariance
-  double getLoc0Var(const Measurement& meas) const;
 };
 
 }  // namespace Acts

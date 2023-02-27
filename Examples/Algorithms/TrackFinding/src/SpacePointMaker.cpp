@@ -138,13 +138,9 @@ ActsExamples::ProcessCode ActsExamples::SpacePointMaker::execute(
 
     for (auto [moduleGeoId, moduleSourceLinks] : groupedByModule) {
       for (auto& sourceLink : moduleSourceLinks) {
-        const auto& meas = measurements[sourceLink.index()];
-
-        m_spacePointBuilder.buildSpacePoint(ctx.geoContext, {&meas}, spOpt,
-                                            std::back_inserter(spacePoints));
-        auto sl = Acts::SourceLink{sourceLink};
-        m_spacePointBuilder.buildSpacePoint(ctx.geoContext, {sl}, spOpt,
-                                            std::back_inserter(spacePoints));
+        m_spacePointBuilder.buildSpacePoint(
+            ctx.geoContext, {Acts::SourceLink{sourceLink}}, spOpt,
+            std::back_inserter(spacePoints));
       }
     }
   }
