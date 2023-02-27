@@ -28,12 +28,11 @@ namespace Acts {
 ///
 /// After the particle interaction with surfaces are recorded and digitized
 /// measurements on the pixel or strip detectors need further treatment. This
-/// class takes the measurements and provides the corresponding space points.
+/// class takes the SouceLinks and provides the corresponding space points.
 ///
 template <typename spacepoint_t>
 class SpacePointBuilder {
  public:
-  // using Measurement = Acts::BoundVariantMeasurement;
   // Constructor
   /// @param cfg The configuration for the space point builder
   /// @param func The function that provides user's SP constructor with global pos, global cov, and sourceLinks.
@@ -49,11 +48,11 @@ class SpacePointBuilder {
   // Default constructor
   SpacePointBuilder() = default;
 
-  /// @brief Calculates the space points out of a given collection of measurements
+  /// @brief Calculates the space points out of a given collection of SourceLinks
   /// and stores the results
   ///
   /// @param gctx The current geometry context object, e.g. alignment
-  /// @param measurements vector of measurements
+  /// @param sourceLinks vector of Sourcelink
   /// @param opt option for the space point bulding. It contains the ends of the strips for strip SP building
   /// @param spacePointIt Output iterator for the space point
   template <template <typename...> typename container_t>
@@ -62,13 +61,13 @@ class SpacePointBuilder {
       const SpacePointBuilderOptions& opt,
       std::back_insert_iterator<container_t<spacepoint_t>> spacePointIt) const;
 
-  /// @brief Searches possible combinations of two measurements on different
+  /// @brief Searches possible combinations of two SourceLinks on different
   /// surfaces that may come from the same particles
   ///
   /// @param gctx The current geometry context object, e.g. alignment
-  /// @param measurementsFront vector of measurements on a surface
-  /// @param measurementsBack vector of measurements on another surface
-  /// @param measurementPairs storage of the measurement pairs
+  /// @param slinksFront vector of Sourcelinks on a surface
+  /// @param slinksBack vector of SoruceLinks on another surface
+  /// @param slinkPairs storage of the SouceLink pairs
   void makeSlinkPairs(
       const GeometryContext& gctx, const std::vector<SourceLink>& slinksFront,
       const std::vector<SourceLink>& slinksBack,

@@ -59,14 +59,14 @@ class SpacePointUtility {
   /// Constructor
   SpacePointUtility(SpacePointBuilderConfig cfg) : m_config(std::move(cfg)) {}
 
-  /// @brief Getter method for the global coordinates of a measurement
+  /// @brief Getter method for the global coordinates of a SourceLink
   ///
   /// @param gctx The current geometry context object, e.g. alignment
-  /// @param meas measurement that holds the necessary
+  /// @param slink SourceLink that holds the necessary
   /// information
-  /// @return vectors of the global coordinates and covariance of the measurement
+  /// @return vectors of the global coordinates and covariance of the SourceLink
   std::pair<Vector3, Vector2> globalCoords(const GeometryContext& gctx,
-                                           const SourceLink,
+                                           const SourceLink slink,
                                            const BoundVector& par,
                                            const BoundSymMatrix& cov) const;
 
@@ -82,10 +82,10 @@ class SpacePointUtility {
                          const Vector3& globalPos,
                          const SymMatrix2& localCov) const;
 
-  /// @brief Calculate the rho and z covariance from the front and back measurement in the strip SP formation
+  /// @brief Calculate the rho and z covariance from the front and back SourceLink in the strip SP formation
   /// @param gctx The current geometry context object, e.g. alignment
-  /// @param measFront The measurement on the front layer
-  /// @param measBack The measurement on the back layer
+  /// @param slinkFront The SourceLink on the front layer
+  /// @param slinkBack The SourceLink on the back layer
   /// @param globalPos global position
   /// @param theta The angle between the two strips
   /// @return (rho, z) components of the global covariance
@@ -126,15 +126,15 @@ class SpacePointUtility {
   Result<void> recoverSpacePoint(SpacePointParameters& spParams,
                                  double stripLengthGapTolerance) const;
 
-  /// @brief Calculates (Delta theta)^2 + (Delta phi)^2 between two measurements
+  /// @brief Calculates (Delta theta)^2 + (Delta phi)^2 between two SourceLinks
   ///
-  /// @param [in] pos1 position of the first measurement
-  /// @param [in] pos2 position the second measurement
+  /// @param [in] pos1 position of the first SourceLink
+  /// @param [in] pos2 position the second SourceLink
   /// @param [in] posVertex Position of the vertex
-  /// @param [in] maxDistance Maximum distance between two measurements
+  /// @param [in] maxDistance Maximum distance between two SourceLinks
   /// @param [in] maxAngleTheta2 Maximum squared theta angle between two
-  /// measurements
-  /// @param [in] maxAnglePhi2 Maximum squared phi angle between two measurements
+  /// SourceLinks
+  /// @param [in] maxAnglePhi2 Maximum squared phi angle between two SourceLinks
   ///
   /// @return Result with the squared sum within configuration parameters.
   Result<double> differenceOfMeasurementsChecked(

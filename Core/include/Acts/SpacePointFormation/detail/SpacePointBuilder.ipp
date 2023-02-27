@@ -24,18 +24,18 @@ void SpacePointBuilder<spacepoint_t>::buildSpacePoint(
     const GeometryContext& gctx, const std::vector<SourceLink>& sourceLinks,
     const SpacePointBuilderOptions& opt,
     std::back_insert_iterator<container_t<spacepoint_t>> spacePointIt) const {
-  const unsigned int num_meas = sourceLinks.size();
+  const unsigned int num_slinks = sourceLinks.size();
 
   Acts::Vector3 gPos = Acts::Vector3::Zero();
   Acts::Vector2 gCov = Acts::Vector2::Zero();
 
-  if (num_meas == 1) {  // pixel SP formation
+  if (num_slinks == 1) {  // pixel SP formation
     auto slink = sourceLinks.at(0);
     auto [param, cov] = opt.paramCovAccessor(sourceLinks.at(0));
     auto gPosCov = m_spUtility->globalCoords(gctx, slink, param, cov);
     gPos = gPosCov.first;
     gCov = gPosCov.second;
-  } else if (num_meas == 2) {  // strip SP formation
+  } else if (num_slinks == 2) {  // strip SP formation
 
     const auto& ends1 = opt.stripEndsPair.first;
     const auto& ends2 = opt.stripEndsPair.second;
@@ -79,7 +79,7 @@ void SpacePointBuilder<spacepoint_t>::buildSpacePoint(
                                      opt.paramCovAccessor, gPos, theta);
 
   } else {
-    ACTS_ERROR("More than 2 measurements are given for a space point.");
+    ACTS_ERROR("More than 2 sourceLinks are given for a space point.");
   }
   boost::container::static_vector<SourceLink, 2> slinks(sourceLinks.begin(),
                                                         sourceLinks.end());
