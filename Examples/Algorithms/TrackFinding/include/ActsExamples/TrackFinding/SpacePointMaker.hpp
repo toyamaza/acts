@@ -83,9 +83,5 @@ class SpacePointMaker final : public BareAlgorithm {
   static std::pair<const Acts::BoundVector, const Acts::BoundSymMatrix>
   paramCovFromMeasurements(ActsExamples::MeasurementContainer measurements,
                            const Acts::SourceLink slink);
-  //  };
-  // std::pair<Acts::BoundVector, Acts::BoundSymMatrix>
-  // paramFromMeasurements(ActsExamples::MeasurementContainer measurements,
-  // const Acts::SourceLink slink);
 };
 }  // namespace ActsExamples
