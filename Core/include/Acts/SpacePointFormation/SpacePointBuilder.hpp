@@ -91,6 +91,19 @@ class SpacePointBuilder {
       std::vector<std::pair<const Measurement*, const Measurement*>>&
           measurementPairs) const;
 
+  /// @brief Searches possible combinations of two measurements on different
+  /// surfaces that may come from the same particles
+  ///
+  /// @param gctx The current geometry context object, e.g. alignment
+  /// @param measurementsFront vector of measurements on a surface
+  /// @param measurementsBack vector of measurements on another surface
+  /// @param measurementPairs storage of the measurement pairs
+  void makeSlinkPairs(
+      const GeometryContext& gctx, const std::vector<SourceLink>& slinksFront,
+      const std::vector<SourceLink>& slinksBack,
+      std::vector<std::pair<SourceLink, SourceLink>>& slinkPairs,
+      const SpacePointBuilderOptions& opt) const;
+
  protected:
   // configuration of the single hit space point builder
   SpacePointBuilderConfig m_config;

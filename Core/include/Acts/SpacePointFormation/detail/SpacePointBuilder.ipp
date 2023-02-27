@@ -218,4 +218,49 @@ void SpacePointBuilder<spacepoint_t>::makeMeasurementPairs(
   }
 }
 
+template <typename spacepoint_t>
+void SpacePointBuilder<spacepoint_t>::makeSlinkPairs(
+    const GeometryContext& gctx, const std::vector<SourceLink>& slinksFront,
+    const std::vector<SourceLink>& slinksBack,
+    std::vector<std::pair<SourceLink, SourceLink>>& slinkPairs,
+    const SpacePointBuilderOptions& opt) const {
+  if (slinksFront.empty() || slinksBack.empty()) {
+    return;
+  }
+  double minDistance = 0;
+  unsigned int closestIndex = 0;
+
+  for (unsigned int i = 0; i < slinksFront.size(); i++) {
+    const auto& slinkFront = slinksFront[i];
+    minDistance = std::numeric_limits<double>::max();
+    closestIndex = slinksBack.size();
+    for (unsigned int j = 0; j < slinksBack.size(); j++) {
+      const auto& slinkBack = slinksBack[j];
+
+      const auto [paramFront, covFront] = opt.paramCovAccessor(slinkFront);
+      const auto [gposFront, gcovFront] =
+          m_spUtility->globalCoords(gctx, slinkFront, paramFront, covFront);
+
+      const auto [paramBack, covBack] = opt.paramCovAccessor(slinkBack);
+      const auto [gposBack, gcovBack] =
+          m_spUtility->globalCoords(gctx, slinkBack, paramBack, covBack);
+
+      auto res = m_spUtility->differenceOfMeasurementsChecked(
+          gposFront, gposBack, m_config.vertex, m_config.diffDist,
+          m_config.diffPhi2, m_config.diffTheta2);
+      if (!res.ok()) {
+        continue;
+      }
+      const auto distance = res.value();
+      if (distance >= 0. && distance < minDistance) {
+        minDistance = distance;
+        closestIndex = j;
+      }
+    }
+    if (closestIndex < slinksBack.size()) {
+      slinkPairs.emplace_back(slinksFront[i], slinksBack[closestIndex]);
+    }
+  }
+}
+
 }  // namespace Acts
