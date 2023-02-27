@@ -215,8 +215,9 @@ BOOST_DATA_TEST_CASE(SpacePointBuilder_basic, bdata::xrange(1), index) {
     Acts::BoundVector param;
     param << testslink.parameters[eBoundLoc0], testslink.parameters[eBoundLoc1];
 
-    Acts::BoundSymMatrix cov;
+    Acts::BoundSymMatrix cov = Acts::BoundSymMatrix::Zero();
     cov << testslink.covariance.topLeftCorner<2, 2>();
+
     return std::make_pair(param, cov);
   };
 
