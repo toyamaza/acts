@@ -88,6 +88,7 @@ class SpacePointUtility {
   /// @param gctx The current geometry context object, e.g. alignment
   /// @param slinkFront The SourceLink on the front layer
   /// @param slinkBack The SourceLink on the back layer
+  /// @param paramCovAccessor function to extract local position and covariance from SourceLink
   /// @param globalPos global position
   /// @param theta The angle between the two strips
   /// @return (rho, z) components of the global covariance
