@@ -213,7 +213,9 @@ BOOST_DATA_TEST_CASE(SpacePointBuilder_basic, bdata::xrange(1), index) {
   auto accessor = [&](const Acts::SourceLink& slink) {
     auto testslink = slink.get<TestSourceLink>();
     Acts::BoundVector param;
-    param << testslink.parameters[eBoundLoc0], testslink.parameters[eBoundLoc1];
+    param.setZero();
+    param[eBoundLoc0] = testslink.parameters[eBoundLoc0];
+    param[eBoundLoc1] = testslink.parameters[eBoundLoc1];
 
     Acts::BoundSymMatrix cov = Acts::BoundSymMatrix::Zero();
     cov.topLeftCorner<2, 2>() = testslink.covariance;
