@@ -8,12 +8,17 @@
 
 #pragma once
 
+#include "Acts/EventData/SourceLink.hpp"
+
 namespace Acts {
 
 struct SpacePointBuilderOptions {
   std::pair<const std::pair<Vector3, Vector3>,
             const std::pair<Vector3, Vector3>>
       stripEndsPair;
+  std::function<std::pair<const BoundVector, const BoundSymMatrix>(
+      const SourceLink)>
+      paramCovAccessor;
 };
 
 }  // namespace Acts
