@@ -68,7 +68,6 @@ class SpacePointUtility {
   /// @param cov local covariance
   /// @return vectors of the global coordinates and covariance of the SourceLink
   std::pair<Vector3, Vector2> globalCoords(const GeometryContext& gctx,
-
                                            const SourceLink slink,
                                            const BoundVector& par,
                                            const BoundSymMatrix& cov) const;
@@ -166,4 +165,3 @@ class SpacePointUtility {
 };
 
 }  // namespace Acts
-#include "Acts/Utilities/SpacePointUtility.cpp"
