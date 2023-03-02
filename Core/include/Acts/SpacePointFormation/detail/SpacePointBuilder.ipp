@@ -78,6 +78,14 @@ void SpacePointBuilder<spacepoint_t>::buildSpacePoint(
         acos(spParams.firstBtmToTop.dot(spParams.secondBtmToTop) /
              (spParams.firstBtmToTop.norm() * spParams.secondBtmToTop.norm()));
     std::cout << "tomohirio build space point 10" << std::endl;
+    auto tmp1 = sourceLinks.at(0);
+    auto tmp2 = sourceLinks.at(1);
+    std::cout << "tomohirio build space point 10.1" << std::endl;
+    auto tmp3 = opt.paramCovAccessor;
+    std::cout << "tomohirio build space point 10.2" << std::endl;
+    auto tmp4 = gPos;
+    auto tmp5 = theta;
+    std::cout << "tomohirio build space point 10.3" << std::endl;
     gCov = m_spUtility->calcRhoZVars(gctx, sourceLinks.at(0), sourceLinks.at(1),
                                      opt.paramCovAccessor, gPos, theta);
     std::cout << "tomohirio build space point 11" << std::endl;
