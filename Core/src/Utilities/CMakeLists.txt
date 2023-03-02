@@ -4,6 +4,5 @@ target_sources(
     AnnealingUtility.cpp
     BinUtility.cpp
     Logger.cpp
-    SpacePointUtility.cpp
     FpeMonitor.cpp
 )
