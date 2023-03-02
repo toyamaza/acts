@@ -24,39 +24,42 @@ void SpacePointBuilder<spacepoint_t>::buildSpacePoint(
     const GeometryContext& gctx, const std::vector<SourceLink>& sourceLinks,
     const SpacePointBuilderOptions& opt,
     std::back_insert_iterator<container_t<spacepoint_t>> spacePointIt) const {
+  std::cout << "tomohirio build space point" << std::endl;
   const unsigned int num_slinks = sourceLinks.size();
 
   Acts::Vector3 gPos = Acts::Vector3::Zero();
   Acts::Vector2 gCov = Acts::Vector2::Zero();
-
+  std::cout << "tomohirio build space point 1" << std::endl;
   if (num_slinks == 1) {  // pixel SP formation
+    std::cout << "tomohirio build space point 2" << std::endl;
     auto slink = sourceLinks.at(0);
     auto [param, cov] = opt.paramCovAccessor(sourceLinks.at(0));
     auto gPosCov = m_spUtility->globalCoords(gctx, slink, param, cov);
     gPos = gPosCov.first;
     gCov = gPosCov.second;
-  } else if (num_slinks == 2) {  // strip SP formation
 
+  } else if (num_slinks == 2) {  // strip SP formation
+    std::cout << "tomohirio build space point 3" << std::endl;
     const auto& ends1 = opt.stripEndsPair.first;
     const auto& ends2 = opt.stripEndsPair.second;
-
+    std::cout << "tomohirio build space point 4" << std::endl;
     Acts::SpacePointParameters spParams;
 
     if (!m_config.usePerpProj) {  // default strip SP building
-
+      std::cout << "tomohirio build space point 5" << std::endl;
       auto spFound = m_spUtility->calculateStripSPPosition(
           ends1, ends2, m_config.vertex, spParams,
           m_config.stripLengthTolerance);
-
+      std::cout << "tomohirio build space point 6" << std::endl;
       if (!spFound.ok()) {
         spFound = m_spUtility->recoverSpacePoint(
             spParams, m_config.stripLengthGapTolerance);
       }
-
+      std::cout << "tomohirio build space point 7" << std::endl;
       if (!spFound.ok()) {
         return;
       }
-
+      std::cout << "tomohirio build space point 8" << std::endl;
       gPos = 0.5 *
              (ends1.first + ends1.second + spParams.m * spParams.firstBtmToTop);
 
@@ -70,21 +73,23 @@ void SpacePointBuilder<spacepoint_t>::buildSpacePoint(
       }
       gPos = ends1.first + resultPerpProj.value() * spParams.firstBtmToTop;
     }
-
+    std::cout << "tomohirio build space point 9" << std::endl;
     double theta =
         acos(spParams.firstBtmToTop.dot(spParams.secondBtmToTop) /
              (spParams.firstBtmToTop.norm() * spParams.secondBtmToTop.norm()));
-
+    std::cout << "tomohirio build space point 10" << std::endl;
     gCov = m_spUtility->calcRhoZVars(gctx, sourceLinks.at(0), sourceLinks.at(1),
                                      opt.paramCovAccessor, gPos, theta);
-
+    std::cout << "tomohirio build space point 11" << std::endl;
   } else {
     ACTS_ERROR("More than 2 sourceLinks are given for a space point.");
   }
+  std::cout << "tomohirio build space point 12" << std::endl;
   boost::container::static_vector<SourceLink, 2> slinks(sourceLinks.begin(),
                                                         sourceLinks.end());
-
+  std::cout << "tomohirio build space point 13" << std::endl;
   spacePointIt = m_spConstructor(gPos, gCov, std::move(slinks));
+  std::cout << "tomohirio build space point 14" << std::endl;
 }
 
 template <typename spacepoint_t>
