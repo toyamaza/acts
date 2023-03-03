@@ -12,18 +12,28 @@
 #include "Acts/Seeding/BinnedSPGroup.hpp"
 #include "Acts/Seeding/Seed.hpp"
 #include "Acts/Seeding/SeedFilter.hpp"
-#include "Acts/Seeding/Seedfinder.hpp"
 #include "Acts/Surfaces/Surface.hpp"
+#include "Acts/Utilities/FpeMonitor.hpp"
+#include "ActsExamples/EventData/IndexSourceLink.hpp"
 #include "ActsExamples/EventData/ProtoTrack.hpp"
 #include "ActsExamples/EventData/SimSeed.hpp"
 #include "ActsExamples/Framework/WhiteBoard.hpp"
 
+#include <csignal>
+#include <limits>
 #include <stdexcept>
 
 ActsExamples::SeedingAlgorithm::SeedingAlgorithm(
     ActsExamples::SeedingAlgorithm::Config cfg, Acts::Logging::Level lvl)
     : ActsExamples::BareAlgorithm("SeedingAlgorithm", lvl),
       m_cfg(std::move(cfg)) {
+  m_cfg.seedFinderConfig =
+      m_cfg.seedFinderConfig.toInternalUnits().calculateDerivedQuantities();
+  m_cfg.seedFinderOptions =
+      m_cfg.seedFinderOptions.toInternalUnits().calculateDerivedQuantities(
+          m_cfg.seedFinderConfig);
+  m_cfg.seedFilterConfig = m_cfg.seedFilterConfig.toInternalUnits();
+  m_cfg.gridConfig = m_cfg.gridConfig.toInternalUnits();
   if (m_cfg.inputSpacePoints.empty()) {
     throw std::invalid_argument("Missing space point input collections");
   }
@@ -108,7 +118,7 @@ ActsExamples::SeedingAlgorithm::SeedingAlgorithm(
     throw std::invalid_argument("Inconsistent config minPt");
   }
 
-  if (m_cfg.gridConfig.bFieldInZ != m_cfg.seedFinderConfig.bFieldInZ) {
+  if (m_cfg.gridConfig.bFieldInZ != m_cfg.seedFinderOptions.bFieldInZ) {
     throw std::invalid_argument("Inconsistent config bFieldInZ");
   }
 
@@ -171,6 +181,7 @@ ActsExamples::SeedingAlgorithm::SeedingAlgorithm(
 
   m_cfg.seedFinderConfig.seedFilter =
       std::make_unique<Acts::SeedFilter<SimSpacePoint>>(m_cfg.seedFilterConfig);
+  m_seedFinder = Acts::SeedFinder<SimSpacePoint>(m_cfg.seedFinderConfig);
 }
 
 ActsExamples::ProcessCode ActsExamples::SeedingAlgorithm::execute(
@@ -183,9 +194,6 @@ ActsExamples::ProcessCode ActsExamples::SeedingAlgorithm::execute(
     nSpacePoints += ctx.eventStore.get<SimSpacePointContainer>(isp).size();
   }
 
-  // extent used to store r range for middle spacepoint
-  Acts::Extent rRangeSPExtent;
-
   std::vector<const SimSpacePoint*> spacePointPtrs;
   spacePointPtrs.reserve(nSpacePoints);
   for (const auto& isp : m_cfg.inputSpacePoints) {
@@ -194,8 +202,6 @@ ActsExamples::ProcessCode ActsExamples::SeedingAlgorithm::execute(
       // since the event store owns the space points, their pointers should be
       // stable and we do not need to create local copies.
       spacePointPtrs.push_back(&spacePoint);
-      // store x,y,z values in extent
-      rRangeSPExtent.extend({spacePoint.x(), spacePoint.y(), spacePoint.z()});
     }
   }
 
@@ -209,6 +215,9 @@ ActsExamples::ProcessCode ActsExamples::SeedingAlgorithm::execute(
     return std::make_pair(position, covariance);
   };
 
+  // extent used to store r range for middle spacepoint
+  Acts::Extent rRangeSPExtent;
+
   auto bottomBinFinder = std::make_shared<Acts::BinFinder<SimSpacePoint>>(
       Acts::BinFinder<SimSpacePoint>(m_cfg.zBinNeighborsBottom,
                                      m_cfg.numPhiNeighbors));
@@ -219,19 +228,30 @@ ActsExamples::ProcessCode ActsExamples::SeedingAlgorithm::execute(
       Acts::SpacePointGridCreator::createGrid<SimSpacePoint>(m_cfg.gridConfig);
   auto spacePointsGrouping = Acts::BinnedSPGroup<SimSpacePoint>(
       spacePointPtrs.begin(), spacePointPtrs.end(), extractGlobalQuantities,
-      bottomBinFinder, topBinFinder, std::move(grid), m_cfg.seedFinderConfig);
-  auto finder = Acts::Seedfinder<SimSpacePoint>(m_cfg.seedFinderConfig);
+      bottomBinFinder, topBinFinder, std::move(grid), rRangeSPExtent,
+      m_cfg.seedFinderConfig, m_cfg.seedFinderOptions);
+
+  // safely clamp double to float
+  float up = Acts::clampValue<float>(
+      std::floor(rRangeSPExtent.max(Acts::binR) / 2) * 2);
+
+  /// variable middle SP radial region of interest
+  const Acts::Range1D<float> rMiddleSPRange(
+      std::floor(rRangeSPExtent.min(Acts::binR) / 2) * 2 +
+          m_cfg.seedFinderConfig.deltaRMiddleMinSPRange,
+      up);
 
   // run the seeding
   static thread_local SimSeedContainer seeds;
   seeds.clear();
-  static thread_local decltype(finder)::State state;
+  static thread_local decltype(m_seedFinder)::SeedingState state;
 
   auto group = spacePointsGrouping.begin();
   auto groupEnd = spacePointsGrouping.end();
   for (; !(group == groupEnd); ++group) {
-    finder.createSeedsForGroup(state, std::back_inserter(seeds), group.bottom(),
-                               group.middle(), group.top(), rRangeSPExtent);
+    m_seedFinder.createSeedsForGroup(
+        m_cfg.seedFinderOptions, state, std::back_inserter(seeds),
+        group.bottom(), group.middle(), group.top(), rMiddleSPRange);
   }
 
   // extract proto tracks, i.e. groups of measurement indices, from tracks seeds
@@ -244,8 +264,8 @@ ActsExamples::ProcessCode ActsExamples::SeedingAlgorithm::execute(
     ProtoTrack& protoTrack = protoTracks.emplace_back();
     protoTrack.reserve(seed.sp().size());
     for (auto spacePointPtr : seed.sp()) {
-      for (const auto slink : spacePointPtr->sourceLinks()) {
-        const auto islink = static_cast<const IndexSourceLink&>(*slink);
+      for (const auto& slink : spacePointPtr->sourceLinks()) {
+        const IndexSourceLink& islink = slink.get<IndexSourceLink>();
         protoTrack.emplace_back(islink.index());
       }
     }

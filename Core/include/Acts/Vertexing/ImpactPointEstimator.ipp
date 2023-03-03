@@ -35,7 +35,7 @@ Acts::ImpactPointEstimator<input_track_t, propagator_t, propagator_options_t>::
 
 template <typename input_track_t, typename propagator_t,
           typename propagator_options_t>
-Acts::Result<std::unique_ptr<const Acts::BoundTrackParameters>>
+Acts::Result<Acts::BoundTrackParameters>
 Acts::ImpactPointEstimator<input_track_t, propagator_t, propagator_options_t>::
     estimate3DImpactParameters(const GeometryContext& gctx,
                                const Acts::MagneticFieldContext& mctx,
@@ -72,14 +72,13 @@ Acts::ImpactPointEstimator<input_track_t, propagator_t, propagator_options_t>::
       Surface::makeShared<PlaneSurface>(thePlane);
 
   // Create propagator options
-  auto logger = getDefaultLogger("IPEstProp", Logging::INFO);
-  propagator_options_t pOptions(gctx, mctx, LoggerWrapper{*logger});
+  propagator_options_t pOptions(gctx, mctx);
   pOptions.direction = NavigationDirection::Backward;
 
   // Do the propagation to linPointPos
   auto result = m_cfg.propagator->propagate(trkParams, *planeSurface, pOptions);
   if (result.ok()) {
-    return std::move((*result).endParameters);
+    return *result->endParameters;
   } else {
     return result.error();
   }
@@ -214,7 +213,7 @@ Acts::ImpactPointEstimator<input_track_t, propagator_t, propagator_options_t>::
   double bZ = (*fieldRes)[eZ];
 
   // The radius
-  double r;
+  double r = 0;
   // Curvature is infinite w/o b field
   if (bZ == 0. || std::abs(qOvP) < m_cfg.minQoP) {
     r = m_cfg.maxRho;
@@ -267,8 +266,7 @@ Acts::ImpactPointEstimator<input_track_t, propagator_t, propagator_options_t>::
       Surface::makeShared<PerigeeSurface>(vtx.position());
 
   // Create propagator options
-  auto logger = getDefaultLogger("IPEstProp", Logging::INFO);
-  propagator_options_t pOptions(gctx, mctx, LoggerWrapper{*logger});
+  propagator_options_t pOptions(gctx, mctx);
   pOptions.direction = NavigationDirection::Backward;
 
   // Do the propagation to linPoint

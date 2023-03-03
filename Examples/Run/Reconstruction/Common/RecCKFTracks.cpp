@@ -10,29 +10,29 @@
 #ifdef ACTS_PLUGIN_ONNX
 #include "Acts/Plugins/Onnx/MLTrackClassifier.hpp"
 #endif
-#include "ActsExamples/Digitization/DigitizationOptions.hpp"
 #include "ActsExamples/Framework/Sequencer.hpp"
 #include "ActsExamples/Framework/WhiteBoard.hpp"
 #include "ActsExamples/Geometry/CommonGeometry.hpp"
 #include "ActsExamples/Io/Csv/CsvMultiTrajectoryWriter.hpp"
-#include "ActsExamples/Io/Csv/CsvOptionsReader.hpp"
-#include "ActsExamples/Io/Csv/CsvOptionsWriter.hpp"
 #include "ActsExamples/Io/Csv/CsvParticleReader.hpp"
 #include "ActsExamples/Io/Csv/CsvSimHitReader.hpp"
 #include "ActsExamples/Io/Performance/CKFPerformanceWriter.hpp"
 #include "ActsExamples/Io/Performance/TrackFinderPerformanceWriter.hpp"
 #include "ActsExamples/Io/Root/RootTrajectoryStatesWriter.hpp"
 #include "ActsExamples/Io/Root/RootTrajectorySummaryWriter.hpp"
-#include "ActsExamples/MagneticField/MagneticFieldOptions.hpp"
 #include "ActsExamples/Options/CommonOptions.hpp"
+#include "ActsExamples/Options/CsvOptionsReader.hpp"
+#include "ActsExamples/Options/CsvOptionsWriter.hpp"
+#include "ActsExamples/Options/DigitizationOptions.hpp"
+#include "ActsExamples/Options/MagneticFieldOptions.hpp"
+#include "ActsExamples/Options/SpacePointMakerOptions.hpp"
+#include "ActsExamples/Options/TrackFindingOptions.hpp"
+#include "ActsExamples/Options/TrackFittingOptions.hpp"
 #include "ActsExamples/Reconstruction/ReconstructionBase.hpp"
 #include "ActsExamples/TrackFinding/SeedingAlgorithm.hpp"
 #include "ActsExamples/TrackFinding/SpacePointMaker.hpp"
-#include "ActsExamples/TrackFinding/SpacePointMakerOptions.hpp"
 #include "ActsExamples/TrackFinding/TrackFindingAlgorithm.hpp"
-#include "ActsExamples/TrackFinding/TrackFindingOptions.hpp"
 #include "ActsExamples/TrackFinding/TrackParamsEstimationAlgorithm.hpp"
-#include "ActsExamples/TrackFitting/TrackFittingOptions.hpp"
 #include "ActsExamples/TruthTracking/TruthSeedSelector.hpp"
 #include "ActsExamples/TruthTracking/TruthTrackFinder.hpp"
 #include "ActsExamples/Utilities/Options.hpp"
@@ -58,8 +58,9 @@ void addRecCKFOptions(ActsExamples::Options::Description& desc) {
       "Use track parameters estimated from truth tracks for steering CKF");
 }
 
-int runRecCKFTracks(int argc, char* argv[],
-                    std::shared_ptr<ActsExamples::IBaseDetector> detector) {
+int runRecCKFTracks(
+    int argc, char* argv[],
+    const std::shared_ptr<ActsExamples::IBaseDetector>& detector) {
   // setup and parse options
   auto desc = ActsExamples::Options::makeDefaultOptions();
   Options::addSequencerOptions(desc);
@@ -100,7 +101,7 @@ int runRecCKFTracks(int argc, char* argv[],
   auto geometry = Geometry::build(vm, *detector);
   auto trackingGeometry = geometry.first;
   // Add context decorators
-  for (auto cdr : geometry.second) {
+  for (const auto& cdr : geometry.second) {
     sequencer.addContextDecorator(cdr);
   }
   // Setup the magnetic field
@@ -205,9 +206,9 @@ int runRecCKFTracks(int argc, char* argv[],
       seedingCfg.seedFinderConfig.minPt = seedingCfg.gridConfig.minPt;
 
       seedingCfg.gridConfig.bFieldInZ = 1.99724_T;
-      seedingCfg.seedFinderConfig.bFieldInZ = seedingCfg.gridConfig.bFieldInZ;
 
-      seedingCfg.seedFinderConfig.beamPos = {0_mm, 0_mm};
+      seedingCfg.seedFinderOptions.bFieldInZ = seedingCfg.gridConfig.bFieldInZ;
+      seedingCfg.seedFinderOptions.beamPos = {0_mm, 0_mm};
 
       seedingCfg.seedFinderConfig.impactMax = 3._mm;
 

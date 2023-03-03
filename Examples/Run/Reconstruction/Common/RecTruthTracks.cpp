@@ -8,23 +8,25 @@
 
 #include "Acts/Definitions/Units.hpp"
 #include "ActsExamples/Detector/IBaseDetector.hpp"
-#include "ActsExamples/Digitization/DigitizationOptions.hpp"
 #include "ActsExamples/Framework/Sequencer.hpp"
 #include "ActsExamples/Framework/WhiteBoard.hpp"
 #include "ActsExamples/Geometry/CommonGeometry.hpp"
-#include "ActsExamples/Io/Csv/CsvOptionsReader.hpp"
 #include "ActsExamples/Io/Csv/CsvParticleReader.hpp"
 #include "ActsExamples/Io/Csv/CsvSimHitReader.hpp"
 #include "ActsExamples/Io/Performance/TrackFinderPerformanceWriter.hpp"
 #include "ActsExamples/Io/Performance/TrackFitterPerformanceWriter.hpp"
 #include "ActsExamples/Io/Root/RootTrajectoryStatesWriter.hpp"
 #include "ActsExamples/Io/Root/RootTrajectorySummaryWriter.hpp"
-#include "ActsExamples/MagneticField/MagneticFieldOptions.hpp"
 #include "ActsExamples/Options/CommonOptions.hpp"
+#include "ActsExamples/Options/CsvOptionsReader.hpp"
+#include "ActsExamples/Options/DigitizationOptions.hpp"
+#include "ActsExamples/Options/MagneticFieldOptions.hpp"
+#include "ActsExamples/Options/TrackFittingOptions.hpp"
+#include "ActsExamples/Options/TruthSeedSelectorOptions.hpp"
 #include "ActsExamples/Reconstruction/ReconstructionBase.hpp"
+#include "ActsExamples/TrackFitting/KalmanFitterFunction.hpp"
 #include "ActsExamples/TrackFitting/SurfaceSortingAlgorithm.hpp"
 #include "ActsExamples/TrackFitting/TrackFittingAlgorithm.hpp"
-#include "ActsExamples/TrackFitting/TrackFittingOptions.hpp"
 #include "ActsExamples/TruthTracking/TruthSeedSelector.hpp"
 #include "ActsExamples/TruthTracking/TruthTrackFinder.hpp"
 #include "ActsExamples/Utilities/Options.hpp"
@@ -35,8 +37,9 @@
 using namespace Acts::UnitLiterals;
 using namespace ActsExamples;
 
-int runRecTruthTracks(int argc, char* argv[],
-                      std::shared_ptr<ActsExamples::IBaseDetector> detector) {
+int runRecTruthTracks(
+    int argc, char* argv[],
+    const std::shared_ptr<ActsExamples::IBaseDetector>& detector) {
   using boost::program_options::value;
 
   // setup and parse options
@@ -52,7 +55,7 @@ int runRecTruthTracks(int argc, char* argv[],
   Options::addFittingOptions(desc);
   Options::addDigitizationOptions(desc);
   Options::addParticleSmearingOptions(desc);
-  TruthSeedSelector::addOptions(desc);
+  Options::addTruthSeedSelectorOptions(desc);
 
   auto vm = Options::parse(desc, argc, argv);
   if (vm.empty()) {
@@ -72,7 +75,7 @@ int runRecTruthTracks(int argc, char* argv[],
   auto geometry = Geometry::build(vm, *detector);
   auto trackingGeometry = geometry.first;
   // Add context decorators
-  for (auto cdr : geometry.second) {
+  for (const auto& cdr : geometry.second) {
     sequencer.addContextDecorator(cdr);
   }
   // Setup the magnetic field
@@ -91,7 +94,7 @@ int runRecTruthTracks(int argc, char* argv[],
   // from all particles read in by particle reader for further processing. It
   // has no impact on the truth hits read-in by the cluster reader.
   TruthSeedSelector::Config particleSelectorCfg =
-      TruthSeedSelector::readConfig(vm);
+      Options::readTruthSeedSelectorConfig(vm);
   particleSelectorCfg.inputParticles = particleReader.outputParticles;
   particleSelectorCfg.inputMeasurementParticlesMap =
       digiCfg.outputMeasurementParticlesMap;
@@ -146,12 +149,7 @@ int runRecTruthTracks(int argc, char* argv[],
   fitter.directNavigation = dirNav;
   fitter.pickTrack = vm["fit-pick-track"].as<int>();
   fitter.trackingGeometry = trackingGeometry;
-  fitter.dFit = TrackFittingAlgorithm::makeKalmanFitterFunction(
-      magneticField, vm["fit-multiple-scattering-correction"].as<bool>(),
-      vm["fit-energy-loss-correction"].as<bool>(), reverseFilteringMomThreshold,
-      Acts::FreeToBoundCorrection(
-          vm["fit-ftob-nonlinear-correction"].as<bool>()));
-  fitter.fit = TrackFittingAlgorithm::makeKalmanFitterFunction(
+  fitter.fit = makeKalmanFitterFunction(
       trackingGeometry, magneticField,
       vm["fit-multiple-scattering-correction"].as<bool>(),
       vm["fit-energy-loss-correction"].as<bool>(), reverseFilteringMomThreshold,

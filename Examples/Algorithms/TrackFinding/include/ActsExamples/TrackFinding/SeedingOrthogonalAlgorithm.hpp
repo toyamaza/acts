@@ -10,6 +10,7 @@
 
 #include "Acts/Seeding/InternalSeed.hpp"
 #include "Acts/Seeding/SeedFilterConfig.hpp"
+#include "Acts/Seeding/SeedFinderConfig.hpp"
 #include "Acts/Seeding/SeedFinderOrthogonalConfig.hpp"
 #include "Acts/Seeding/SpacePointGrid.hpp"
 #include "Acts/Utilities/KDTree.hpp"
@@ -41,25 +42,7 @@ class SeedingOrthogonalAlgorithm final : public BareAlgorithm {
 
     Acts::SeedFilterConfig seedFilterConfig;
     Acts::SeedFinderOrthogonalConfig<SimSpacePoint> seedFinderConfig;
-
-    float rMax = 200.;
-    float deltaRMinTopSP = 1.;
-    float deltaRMaxTopSP = 60.;
-    float deltaRMinBottomSP = 1.;
-    float deltaRMaxBottomSP = 60.;
-    float collisionRegionMin = -250;
-    float collisionRegionMax = 250.;
-    float zMin = -2000.;
-    float zMax = 2000.;
-    float maxSeedsPerSpM = 1;
-    float cotThetaMax = 7.40627;  // 2.7 eta
-    float sigmaScattering = 5;
-    float radLengthPerSeed = 0.1;
-    float minPt = 500.;
-    float bFieldInZ = 0.00199724;
-    float beamPosX = 0;
-    float beamPosY = 0;
-    float impactMax = 3.;
+    Acts::SeedFinderOptions seedFinderOptions;
   };
 
   /// Construct the seeding algorithm.
@@ -72,7 +55,7 @@ class SeedingOrthogonalAlgorithm final : public BareAlgorithm {
   ///
   /// @param txt is the algorithm context with event information
   /// @return a process code indication success or failure
-  ProcessCode execute(const AlgorithmContext &ctx) const final override;
+  ProcessCode execute(const AlgorithmContext &ctx) const override;
 
   /// Const access to the config
   const Config &config() const { return m_cfg; }

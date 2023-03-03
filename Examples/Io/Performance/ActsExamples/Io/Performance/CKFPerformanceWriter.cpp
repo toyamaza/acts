@@ -145,22 +145,14 @@ ActsExamples::ProcessCode ActsExamples::CKFPerformanceWriter::writeT(
   std::vector<float> inputFeatures(3);
 
   // Loop over all trajectories
-  for (size_t itraj = 0; itraj < trajectories.size(); ++itraj) {
-    const auto& traj = trajectories[itraj];
-
-    if (traj.empty()) {
-      ACTS_WARNING("Empty trajectories object " << itraj);
-      continue;
-    }
-
+  for (std::size_t iTraj = 0; iTraj < trajectories.size(); ++iTraj) {
+    const auto& traj = trajectories[iTraj];
     const auto& mj = traj.multiTrajectory();
-    const auto& trackTips = traj.tips();
-
-    // Loop over all trajectories in a multiTrajectory
-    for (auto trackTip : trackTips) {
-      // Collect the trajectory summary info
+    for (auto trackTip : traj.tips()) {
+      // @TODO: Switch to using this directly from the track
       auto trajState =
           Acts::MultiTrajectoryHelpers::trajectoryState(mj, trackTip);
+
       // Reco track selection
       //@TODO: add interface for applying others cuts on reco tracks:
       // -> pT, d0, z0, detector-specific hits/holes number cut
@@ -237,8 +229,8 @@ ActsExamples::ProcessCode ActsExamples::CKFPerformanceWriter::writeT(
       }
       // Counting number of total trajectories
       m_nTotalTracks++;
-    }  // end all trajectories in a multiTrajectory
-  }    // end all multiTrajectories
+    }
+  }
 
   // Use truth-based classification for duplication rate plots
   if (!m_cfg.duplicatedPredictor) {

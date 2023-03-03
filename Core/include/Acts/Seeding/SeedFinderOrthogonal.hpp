@@ -10,6 +10,7 @@
 
 #include "Acts/Seeding/InternalSeed.hpp"
 #include "Acts/Seeding/InternalSpacePoint.hpp"
+#include "Acts/Seeding/SeedFinderConfig.hpp"
 #include "Acts/Seeding/SeedFinderOrthogonalConfig.hpp"
 
 #include <array>
@@ -54,9 +55,11 @@ class SeedFinderOrthogonal {
    * @brief Construct a new orthogonal seed finder.
    *
    * @param config The configuration parameters for this seed finder.
+   * @param options frequently changing configuration (like beam position)
    */
   SeedFinderOrthogonal(
-      Acts::SeedFinderOrthogonalConfig<external_spacepoint_t> config);
+      const Acts::SeedFinderOrthogonalConfig<external_spacepoint_t> &config,
+      const Acts::SeedFinderOptions &options);
 
   /**
    * @brief Destroy the orthogonal seed finder object.
@@ -195,13 +198,14 @@ class SeedFinderOrthogonal {
    * @param middle The (singular) middle spacepoint.
    * @param bottom The (vector of) candidate bottom spacepoints.
    * @param top The (vector of) candidate top spacepoints.
-   * @param numQualitySeeds number of high quality seeds in seed confirmation.
+   * @param seedFilterState  holds quantities used in seed filter
    * @param cont The container to write the resulting seeds to.
    */
   template <typename output_container_t>
   void filterCandidates(internal_sp_t &middle,
                         std::vector<internal_sp_t *> &bottom,
-                        std::vector<internal_sp_t *> &top, int numQualitySeeds,
+                        std::vector<internal_sp_t *> &top,
+                        SeedFilterState seedFilterState,
                         output_container_t &cont) const;
 
   /**
@@ -222,6 +226,7 @@ class SeedFinderOrthogonal {
    * @brief The configuration for the seeding algorithm.
    */
   Acts::SeedFinderOrthogonalConfig<external_spacepoint_t> m_config;
+  Acts::SeedFinderOptions m_options;
 };
 }  // namespace Acts
 

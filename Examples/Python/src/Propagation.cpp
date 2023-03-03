@@ -12,6 +12,7 @@
 #include "Acts/Propagator/Navigator.hpp"
 #include "Acts/Propagator/Propagator.hpp"
 #include "Acts/Propagator/StraightLineStepper.hpp"
+#include "Acts/Utilities/Logger.hpp"
 #include "ActsExamples/Propagation/PropagationAlgorithm.hpp"
 #include "ActsExamples/Propagation/PropagatorInterface.hpp"
 
@@ -35,7 +36,15 @@ void addStepper(const std::string& prefix, py::module_& m, py::module_& prop) {
 
   using propagator_t = Acts::Propagator<stepper_t, Acts::Navigator>;
   py::class_<propagator_t>(prop, (prefix + "Propagator").c_str())
-      .def(py::init<stepper_t, Acts::Navigator>());
+      .def(py::init<>(
+               [=](stepper_t _stepper, Acts::Navigator navigator,
+                   Acts::Logging::Level level = Acts::Logging::Level::INFO) {
+                 return propagator_t{
+                     std::move(_stepper), std::move(navigator),
+                     Acts::getDefaultLogger(prefix + "Propagator", level)};
+               }),
+           py::arg("stepper"), py::arg("navigator"),
+           py::arg("level") = Acts::Logging::INFO);
 
   using prop_if_t = ActsExamples::ConcretePropagator<propagator_t>;
   py::class_<prop_if_t, ActsExamples::PropagatorInterface,
@@ -52,9 +61,14 @@ void addPropagation(Context& ctx) {
 
   {
     using Config = Acts::Navigator::Config;
-    auto nav = py::class_<Acts::Navigator, std::shared_ptr<Acts::Navigator>>(
-                   m, "Navigator")
-                   .def(py::init<Config>());
+    auto nav =
+        py::class_<Acts::Navigator, std::shared_ptr<Acts::Navigator>>(
+            m, "Navigator")
+            .def(py::init<>([](Config cfg,
+                               Logging::Level level = Logging::INFO) {
+                   return Navigator{cfg, getDefaultLogger("Navigator", level)};
+                 }),
+                 py::arg("cfg"), py::arg("level") = Logging::INFO);
 
     auto c = py::class_<Config>(nav, "Config").def(py::init<>());
 
@@ -66,45 +80,14 @@ void addPropagation(Context& ctx) {
     ACTS_PYTHON_STRUCT_END();
   }
 
-  {
-    using Algorithm = ActsExamples::PropagationAlgorithm;
-    using Config = Algorithm::Config;
-    auto alg =
-        py::class_<Algorithm, ActsExamples::BareAlgorithm,
-                   std::shared_ptr<Algorithm>>(mex, "PropagationAlgorithm")
-            .def(py::init<const Config&, Acts::Logging::Level>(),
-                 py::arg("config"), py::arg("level"))
-            .def_property_readonly("config", &Algorithm::config);
-
-    auto c = py::class_<Config>(alg, "Config").def(py::init<>());
-    ACTS_PYTHON_STRUCT_BEGIN(c, Config);
-    ACTS_PYTHON_MEMBER(propagatorImpl);
-    ACTS_PYTHON_MEMBER(randomNumberSvc);
-    ACTS_PYTHON_MEMBER(mode);
-    ACTS_PYTHON_MEMBER(sterileLogger);
-    ACTS_PYTHON_MEMBER(debugOutput);
-    ACTS_PYTHON_MEMBER(energyLoss);
-    ACTS_PYTHON_MEMBER(multipleScattering);
-    ACTS_PYTHON_MEMBER(recordMaterialInteractions);
-    ACTS_PYTHON_MEMBER(ntests);
-    ACTS_PYTHON_MEMBER(d0Sigma);
-    ACTS_PYTHON_MEMBER(z0Sigma);
-    ACTS_PYTHON_MEMBER(phiSigma);
-    ACTS_PYTHON_MEMBER(thetaSigma);
-    ACTS_PYTHON_MEMBER(qpSigma);
-    ACTS_PYTHON_MEMBER(tSigma);
-    ACTS_PYTHON_MEMBER(phiRange);
-    ACTS_PYTHON_MEMBER(etaRange);
-    ACTS_PYTHON_MEMBER(ptRange);
-    ACTS_PYTHON_MEMBER(ptLoopers);
-    ACTS_PYTHON_MEMBER(maxStepSize);
-    ACTS_PYTHON_MEMBER(propagationStepCollection);
-    ACTS_PYTHON_MEMBER(propagationMaterialCollection);
-    ACTS_PYTHON_MEMBER(covarianceTransport);
-    ACTS_PYTHON_MEMBER(covariances);
-    ACTS_PYTHON_MEMBER(correlations);
-    ACTS_PYTHON_STRUCT_END();
-  }
+  ACTS_PYTHON_DECLARE_ALGORITHM(
+      ActsExamples::PropagationAlgorithm, mex, "PropagationAlgorithm",
+      propagatorImpl, randomNumberSvc, mode, sterileLogger, debugOutput,
+      energyLoss, multipleScattering, recordMaterialInteractions, ntests,
+      d0Sigma, z0Sigma, phiSigma, thetaSigma, qpSigma, tSigma, phiRange,
+      etaRange, ptRange, ptLoopers, maxStepSize, propagationStepCollection,
+      propagationMaterialCollection, covarianceTransport, covariances,
+      correlations);
 
   py::class_<ActsExamples::PropagatorInterface,
              std::shared_ptr<ActsExamples::PropagatorInterface>>(

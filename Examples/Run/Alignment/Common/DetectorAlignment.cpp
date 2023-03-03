@@ -6,14 +6,14 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+#include "DetectorAlignment.hpp"
+
 #include "Acts/Definitions/Units.hpp"
 #include "ActsExamples/Alignment/AlignmentAlgorithm.hpp"
 #include "ActsExamples/Detector/IBaseDetector.hpp"
-#include "ActsExamples/Digitization/DigitizationOptions.hpp"
 #include "ActsExamples/Framework/Sequencer.hpp"
 #include "ActsExamples/Framework/WhiteBoard.hpp"
 #include "ActsExamples/Geometry/CommonGeometry.hpp"
-#include "ActsExamples/Io/Csv/CsvOptionsReader.hpp"
 #include "ActsExamples/Io/Csv/CsvParticleReader.hpp"
 #include "ActsExamples/Io/Csv/CsvSimHitReader.hpp"
 #include "ActsExamples/Io/Json/JsonGeometryList.hpp"
@@ -21,12 +21,16 @@
 #include "ActsExamples/Io/Performance/TrackFitterPerformanceWriter.hpp"
 #include "ActsExamples/Io/Root/RootTrajectoryStatesWriter.hpp"
 #include "ActsExamples/Io/Root/RootTrajectorySummaryWriter.hpp"
-#include "ActsExamples/MagneticField/MagneticFieldOptions.hpp"
 #include "ActsExamples/Options/CommonOptions.hpp"
+#include "ActsExamples/Options/CsvOptionsReader.hpp"
+#include "ActsExamples/Options/DigitizationOptions.hpp"
+#include "ActsExamples/Options/MagneticFieldOptions.hpp"
+#include "ActsExamples/Options/TrackFittingOptions.hpp"
+#include "ActsExamples/Options/TruthSeedSelectorOptions.hpp"
 #include "ActsExamples/Reconstruction/ReconstructionBase.hpp"
+#include "ActsExamples/TrackFitting/KalmanFitterFunction.hpp"
 #include "ActsExamples/TrackFitting/SurfaceSortingAlgorithm.hpp"
 #include "ActsExamples/TrackFitting/TrackFittingAlgorithm.hpp"
-#include "ActsExamples/TrackFitting/TrackFittingOptions.hpp"
 #include "ActsExamples/TruthTracking/TruthSeedSelector.hpp"
 #include "ActsExamples/TruthTracking/TruthTrackFinder.hpp"
 #include "ActsExamples/Utilities/Options.hpp"
@@ -50,12 +54,9 @@ void addAlignmentOptions(ActsExamples::Options::Description& desc) {
 
 int runDetectorAlignment(
     int argc, char* argv[],
-    std::shared_ptr<ActsExamples::IBaseDetector> detector,
+    const std::shared_ptr<ActsExamples::IBaseDetector>& detector,
     ActsAlignment::AlignedTransformUpdater alignedTransformUpdater,
-    std::function<std::vector<Acts::DetectorElementBase*>(
-        const std::shared_ptr<ActsExamples::IBaseDetector>&,
-        const std::vector<Acts::GeometryIdentifier>&)>
-        alignedDetElementsGetter) {
+    const AlignedDetElementGetter& alignedDetElementsGetter) {
   // using boost::program_options::value;
 
   // setup and parse options
@@ -70,7 +71,7 @@ int runDetectorAlignment(
   Options::addMagneticFieldOptions(desc);
   Options::addFittingOptions(desc);
   Options::addDigitizationOptions(desc);
-  TruthSeedSelector::addOptions(desc);
+  Options::addTruthSeedSelectorOptions(desc);
   addAlignmentOptions(desc);
 
   auto vm = Options::parse(desc, argc, argv);
@@ -91,7 +92,7 @@ int runDetectorAlignment(
   auto geometry = Geometry::build(vm, *detector);
   auto trackingGeometry = geometry.first;
   // Add context decorators
-  for (auto cdr : geometry.second) {
+  for (const auto& cdr : geometry.second) {
     sequencer.addContextDecorator(cdr);
   }
   // Setup the magnetic field
@@ -110,7 +111,7 @@ int runDetectorAlignment(
   // from all particles read in by particle reader for further processing. It
   // has no impact on the truth hits read-in by the cluster reader.
   TruthSeedSelector::Config particleSelectorCfg =
-      TruthSeedSelector::readConfig(vm);
+      Options::readTruthSeedSelectorConfig(vm);
   particleSelectorCfg.inputParticles = particleReader.outputParticles;
   particleSelectorCfg.inputMeasurementParticlesMap =
       digiCfg.outputMeasurementParticlesMap;
@@ -160,7 +161,7 @@ int runDetectorAlignment(
     alignment.inputInitialTrackParameters =
         particleSmearingCfg.outputTrackParameters;
     alignment.outputAlignmentParameters = "alignment-parameters";
-    alignment.alignedTransformUpdater = alignedTransformUpdater;
+    alignment.alignedTransformUpdater = std::move(alignedTransformUpdater);
     std::string path = vm["alignment-geo-config-file"].as<std::string>();
     if (not path.empty()) {
       alignment.alignedDetElements = alignedDetElementsGetter(
@@ -191,10 +192,7 @@ int runDetectorAlignment(
   fitter.directNavigation = dirNav;
   fitter.pickTrack = vm["fit-pick-track"].as<int>();
   fitter.trackingGeometry = trackingGeometry;
-  fitter.dFit = TrackFittingAlgorithm::makeKalmanFitterFunction(
-      magneticField, vm["fit-multiple-scattering-correction"].as<bool>(),
-      vm["fit-energy-loss-correction"].as<bool>());
-  fitter.fit = TrackFittingAlgorithm::makeKalmanFitterFunction(
+  fitter.fit = ActsExamples::makeKalmanFitterFunction(
       trackingGeometry, magneticField,
       vm["fit-multiple-scattering-correction"].as<bool>(),
       vm["fit-energy-loss-correction"].as<bool>());

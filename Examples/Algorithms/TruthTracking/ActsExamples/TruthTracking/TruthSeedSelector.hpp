@@ -9,7 +9,6 @@
 #pragma once
 
 #include "ActsExamples/Framework/BareAlgorithm.hpp"
-#include "ActsExamples/Utilities/OptionsFwd.hpp"
 
 namespace ActsExamples {
 
@@ -60,13 +59,7 @@ class TruthSeedSelector final : public BareAlgorithm {
 
   TruthSeedSelector(const Config& config, Acts::Logging::Level level);
 
-  ProcessCode execute(const AlgorithmContext& ctx) const override final;
-
-  /// Add options for the particle selector.
-  static void addOptions(Options::Description& desc);
-
-  /// Construct particle selector config from user variables.
-  static Config readConfig(const Options::Variables& vars);
+  ProcessCode execute(const AlgorithmContext& ctx) const final;
 
   /// Get readonly access to the config parameters
   const Config& config() const { return m_cfg; }

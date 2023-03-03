@@ -9,15 +9,13 @@ namespace Acts {
 
 template <typename spacepoint_t>
 Result<void> SpacePointBuilder<spacepoint_t>::testRecoverSpacePoint(
-    SpacePointParameters& spParams, double stripLengthGapTolerance) const  {
+    SpacePointParameters& spParams, double stripLengthGapTolerance) const {
   std::error_code m_error;
-  
+
   // Consider some cases that would allow an easy exit
   // Check if the limits are allowed to be increased
-  std::cout << "recovering space point " << std::endl;
 
   if (stripLengthGapTolerance <= 0.) {
-    std::cout << "failure 1 (tolerance <=0 )" << std::endl;
     return Result<void>::failure(m_error);
   }
 
@@ -26,10 +24,12 @@ Result<void> SpacePointBuilder<spacepoint_t>::testRecoverSpacePoint(
   // outside the SDE
   spParams.limitExtended =
       spParams.limit + stripLengthGapTolerance / spParams.mag_firstBtmToTop;
-  std::cout << "limExtended =  (lim + tolerance)/ mag  = " << spParams.limitExtended << " =  "  << spParams.limit << " + " << stripLengthGapTolerance << " / " << spParams.mag_firstBtmToTop << std::endl;
+  std::cout << "limExtended =  (lim + tolerance)/ mag  = "
+            << spParams.limitExtended << " =  " << spParams.limit << " + "
+            << stripLengthGapTolerance << " / " << spParams.mag_firstBtmToTop
+            << std::endl;
   // Check if m is just slightly outside
   if (fabs(spParams.m) > spParams.limitExtended) {
-    std::cout << "failure 2 ( m > limExt ) " <<  std::endl;    
     return Result<void>::failure(m_error);
   }
   // Calculate n if not performed previously
@@ -41,10 +41,9 @@ Result<void> SpacePointBuilder<spacepoint_t>::testRecoverSpacePoint(
 
   // Check if n is just slightly outside
   if (fabs(spParams.n) > spParams.limitExtended) {
-    std::cout << "failure 3 (n > limExt )" << std::endl;    
     return Result<void>::failure(m_error);
   }
-  
+
   double secOnFirstScale =
       spParams.firstBtmToTop.dot(spParams.secondBtmToTop) /
       (spParams.mag_firstBtmToTop * spParams.mag_firstBtmToTop);
@@ -65,7 +64,6 @@ Result<void> SpacePointBuilder<spacepoint_t>::testRecoverSpacePoint(
         fabs(spParams.n) < spParams.limit) {
       return Result<void>::success();
     } else {
-    std::cout << "failure 4" << std::endl;      
       return Result<void>::failure(m_error);
     }
   }
@@ -87,18 +85,14 @@ Result<void> SpacePointBuilder<spacepoint_t>::testRecoverSpacePoint(
     }
   }
   // No solution could be found
-    std::cout << "failure 5" << std::endl;  
   return Result<void>::failure(m_error);
 }
 
-
-  
 template <typename spacepoint_t>
 SpacePointBuilder<spacepoint_t>::SpacePointBuilder(
-    SpacePointBuilderConfig cfg,
-    std::function<
-        spacepoint_t(Acts::Vector3, Acts::Vector2,
-                     boost::container::static_vector<const SourceLink*, 2>)>
+    const SpacePointBuilderConfig& cfg,
+    std::function<spacepoint_t(Acts::Vector3, Acts::Vector2,
+                               boost::container::static_vector<SourceLink, 2>)>
         func,
     std::unique_ptr<const Logger> logger)
     : m_config(cfg), m_spConstructor(func), m_logger(std::move(logger)) {
@@ -108,22 +102,21 @@ SpacePointBuilder<spacepoint_t>::SpacePointBuilder(
 template <typename spacepoint_t>
 template <template <typename...> typename container_t>
 void SpacePointBuilder<spacepoint_t>::buildSpacePoint(
-    const GeometryContext& gctx,
-    const std::vector<const Measurement*>& measurements,
+    const GeometryContext& gctx, const std::vector<SourceLink>& sourceLinks,
     const SpacePointBuilderOptions& opt,
     std::back_insert_iterator<container_t<spacepoint_t>> spacePointIt) const {
-  const unsigned int num_meas = measurements.size();
+  const unsigned int num_slinks = sourceLinks.size();
 
   Acts::Vector3 gPos = Acts::Vector3::Zero();
   Acts::Vector2 gCov = Acts::Vector2::Zero();
 
-  if (num_meas == 1) {  // pixel SP formation
-
-    auto gPosCov = m_spUtility->globalCoords(gctx, *(measurements[0]));
+  if (num_slinks == 1) {  // pixel SP formation
+    auto slink = sourceLinks.at(0);
+    auto [param, cov] = opt.paramCovAccessor(sourceLinks.at(0));
+    auto gPosCov = m_spUtility->globalCoords(gctx, slink, param, cov);
     gPos = gPosCov.first;
     gCov = gPosCov.second;
-
-  } else if (num_meas == 2) {  // strip SP formation
+  } else if (num_slinks == 2) {  // strip SP formation
 
     const auto& ends1 = opt.stripEndsPair.first;
     const auto& ends2 = opt.stripEndsPair.second;
@@ -138,13 +131,10 @@ void SpacePointBuilder<spacepoint_t>::buildSpacePoint(
       if (!spFound.ok()) {
         ACTS_VERBOSE(
             "SP formation: First attempt failed. Trying to recover SP");
-        std::cout << "m, n, limit " << fabs(spParams.m) << " "
-                  << fabs(spParams.n) << " " << spParams.limit << std::endl;
 
         spFound = m_spUtility->recoverSpacePoint(spParams,
                                                  opt.stripLengthGapTolerance);
-        testRecoverSpacePoint(spParams,
-			      opt.stripLengthGapTolerance);
+        testRecoverSpacePoint(spParams, opt.stripLengthGapTolerance);
 
         // ------------------------ tmp
 
@@ -152,7 +142,6 @@ void SpacePointBuilder<spacepoint_t>::buildSpacePoint(
       }
 
       if (!spFound.ok()) {
-        ACTS_VERBOSE("SP formation: no SP created for this pair")
         return;
       }
 
@@ -164,8 +153,9 @@ void SpacePointBuilder<spacepoint_t>::buildSpacePoint(
       auto resultPerpProj =
           m_spUtility->calcPerpendicularProjection(ends1, ends2, spParams);
 
-      if (!resultPerpProj.ok())
+      if (!resultPerpProj.ok()) {
         return;
+      }
       gPos = ends1.first + resultPerpProj.value() * spParams.firstBtmToTop;
     }
 
@@ -173,74 +163,58 @@ void SpacePointBuilder<spacepoint_t>::buildSpacePoint(
         acos(spParams.firstBtmToTop.dot(spParams.secondBtmToTop) /
              (spParams.firstBtmToTop.norm() * spParams.secondBtmToTop.norm()));
 
-    gCov = m_spUtility->calcRhoZVars(gctx, *(measurements.at(0)),
-                                     *(measurements.at(1)), gPos, theta);
+    gCov = m_spUtility->calcRhoZVars(gctx, sourceLinks.at(0), sourceLinks.at(1),
+                                     opt.paramCovAccessor, gPos, theta);
 
   } else {
-    ACTS_ERROR("More than 2 measurements are given for a space point.");
+    ACTS_ERROR("More than 2 sourceLinks are given for a space point.");
   }
-
-  boost::container::static_vector<const SourceLink*, 2> slinks;
-  for (const auto& meas : measurements) {
-    const auto& slink =
-        std::visit([](const auto& x) { return &x.sourceLink(); }, *meas);
-    slinks.emplace_back(slink);
-  }
+  boost::container::static_vector<SourceLink, 2> slinks(sourceLinks.begin(),
+                                                        sourceLinks.end());
 
   spacePointIt = m_spConstructor(gPos, gCov, std::move(slinks));
 }
 
 template <typename spacepoint_t>
-void SpacePointBuilder<spacepoint_t>::makeMeasurementPairs(
-    const GeometryContext& gctx, const StripPairOptions& pairOpt,
-    const std::vector<const Measurement*>& measurementsFront,
-    const std::vector<const Measurement*>& measurementsBack,
-    std::vector<std::pair<const Measurement*, const Measurement*>>&
-        measurementPairs) const {
-  // Return if no Measurements are given in a vector
-  if (measurementsFront.empty() || measurementsBack.empty()) {
+void SpacePointBuilder<spacepoint_t>::makeSlinkPairs(
+    const GeometryContext& gctx, const std::vector<SourceLink>& slinksFront,
+    const std::vector<SourceLink>& slinksBack,
+    std::vector<std::pair<SourceLink, SourceLink>>& slinkPairs,
+    const StripPairOptions& pairOpt) const {
+  if (slinksFront.empty() || slinksBack.empty()) {
     return;
   }
-  // Declare helper variables
-  double currentDiff;
-  double diffMin;
-  unsigned int measurementMinDist;
+  double minDistance = 0;
+  unsigned int closestIndex = 0;
 
-  // Walk through all Measurements on both surfaces
-  for (unsigned int iMeasurementsFront = 0;
-       iMeasurementsFront < measurementsFront.size(); iMeasurementsFront++) {
-    // Set the closest distance to the maximum of double
-    diffMin = std::numeric_limits<double>::max();
-    // Set the corresponding index to an element not in the list of Measurements
-    measurementMinDist = measurementsBack.size();
-    for (unsigned int iMeasurementsBack = 0;
-         iMeasurementsBack < measurementsBack.size(); iMeasurementsBack++) {
-      auto [gposFront, gcovFront] = m_spUtility->globalCoords(
-          gctx, *(measurementsFront[iMeasurementsFront]));
-      auto [gposBack, gcovBack] = m_spUtility->globalCoords(
-          gctx, *(measurementsBack[iMeasurementsBack]));
+  for (unsigned int i = 0; i < slinksFront.size(); i++) {
+    const auto& slinkFront = slinksFront[i];
+    minDistance = std::numeric_limits<double>::max();
+    closestIndex = slinksBack.size();
+    for (unsigned int j = 0; j < slinksBack.size(); j++) {
+      const auto& slinkBack = slinksBack[j];
+
+      const auto [paramFront, covFront] = pairOpt.paramCovAccessor(slinkFront);
+      const auto [gposFront, gcovFront] =
+          m_spUtility->globalCoords(gctx, slinkFront, paramFront, covFront);
+
+      const auto [paramBack, covBack] = pairOpt.paramCovAccessor(slinkBack);
+      const auto [gposBack, gcovBack] =
+          m_spUtility->globalCoords(gctx, slinkBack, paramBack, covBack);
 
       auto res = m_spUtility->differenceOfMeasurementsChecked(
           gposFront, gposBack, pairOpt.vertex, pairOpt.diffDist,
           pairOpt.diffPhi2, pairOpt.diffTheta2);
       if (!res.ok())
         continue;
-
-      currentDiff = res.value();
-
-      // Store the closest Measurements (distance and index) calculated so far
-      if (currentDiff < diffMin && currentDiff >= 0.) {
-        diffMin = currentDiff;
-        measurementMinDist = iMeasurementsBack;
+      const auto distance = res.value();
+      if (distance >= 0. && distance < minDistance) {
+        minDistance = distance;
+        closestIndex = j;
       }
     }
-
-    // Store the best (=closest) result
-    if (measurementMinDist < measurementsBack.size()) {
-      std::pair<const Measurement*, const Measurement*> measurementPair =
-          std::make_pair(measurementsFront[iMeasurementsFront],
-                         measurementsBack[measurementMinDist]);
-      measurementPairs.push_back(measurementPair);
+    if (closestIndex < slinksBack.size()) {
+      slinkPairs.emplace_back(slinksFront[i], slinksBack[closestIndex]);
     }
   }
 }

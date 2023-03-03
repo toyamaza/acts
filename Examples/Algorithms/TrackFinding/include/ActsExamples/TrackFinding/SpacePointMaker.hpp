@@ -11,6 +11,7 @@
 #include "Acts/Geometry/GeometryIdentifier.hpp"
 #include "Acts/SpacePointFormation/SpacePointBuilder.hpp"
 #include "ActsExamples/EventData/IndexSourceLink.hpp"
+#include "ActsExamples/EventData/Measurement.hpp"
 #include "ActsExamples/EventData/SimSpacePoint.hpp"
 #include "ActsExamples/Framework/BareAlgorithm.hpp"
 
@@ -69,7 +70,7 @@ class SpacePointMaker final : public BareAlgorithm {
   ///
   /// @param ctx is the algorithm context with event information
   /// @return a process code indication success or failure
-  ProcessCode execute(const AlgorithmContext& ctx) const final override;
+  ProcessCode execute(const AlgorithmContext& ctx) const override;
 
   /// Const access to the config
   const Config& config() const { return m_cfg; }
@@ -78,5 +79,9 @@ class SpacePointMaker final : public BareAlgorithm {
   Config m_cfg;
 
   Acts::SpacePointBuilder<SimSpacePoint> m_spacePointBuilder;
+
+  static std::pair<const Acts::BoundVector, const Acts::BoundSymMatrix>
+  paramCovFromMeasurements(ActsExamples::MeasurementContainer measurements,
+                           const Acts::SourceLink slink);
 };
 }  // namespace ActsExamples
