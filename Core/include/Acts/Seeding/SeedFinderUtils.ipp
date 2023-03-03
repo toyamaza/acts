@@ -149,21 +149,16 @@ bool xyzCoordinateCheck(Acts::SeedFinderConfig<external_spacepoint_t> m_config,
                         const float toleranceParam, double* outputCoordinates) {
   // check the compatibility of SPs coordinates in xyz assuming the
   // Bottom-Middle direction with the strip measurement details
-  std::cout << "tomohiro  acts seed 1 "  << std::endl;
+
   const float topHalfStripLength = m_config.getTopHalfStripLength(sp->sp());
-  std::cout << "tomohiro  acts seed 2 "  << std::endl;  
   const float bottomHalfStripLength =
       m_config.getBottomHalfStripLength(sp->sp());
-  std::cout << "tomohiro  acts seed 3 "  << std::endl;  
   const Acts::Vector3 topStripDirection =
       m_config.getTopStripDirection(sp->sp());
-  std::cout << "tomohiro  acts seed 4 "  << std::endl;  
   const Acts::Vector3 bottomStripDirection =
       m_config.getBottomStripDirection(sp->sp());
-  std::cout << "tomohiro  acts seed 5 "  << std::endl;  
   const Acts::Vector3 stripCenterDistance =
       m_config.getStripCenterDistance(sp->sp());
-  std::cout << "tomohiro  acts seed 6 "  << std::endl;  
 
   // cross product between top strip vector and spacepointPosition
   double d1[3] = {

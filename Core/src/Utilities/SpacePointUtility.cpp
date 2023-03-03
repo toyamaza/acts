@@ -85,10 +85,8 @@ Vector2 SpacePointUtility::calcRhoZVars(
         std::pair<const BoundVector, const BoundSymMatrix>(const SourceLink)>
         paramCovAccessor,
     const Vector3& globalPos, const double theta) const {
-  std::cout << "tomohiro calcRhoZVars 1" << std::endl;
   const auto var1 = paramCovAccessor(slinkFront).second(0, 0);
   const auto var2 = paramCovAccessor(slinkBack).second(0, 0);
-  std::cout << "tomohiro calcRhoZVars 2" << std::endl;
 
   // strip1 and strip2 are tilted at +/- theta/2
   double sigma_x = std::hypot(var1, var2) / (2 * sin(theta * 0.5));
@@ -99,14 +97,10 @@ Vector2 SpacePointUtility::calcRhoZVars(
   double sig_y1 = sigma_y * cos(0.5 * theta) + sigma_x * sin(0.5 * theta);
   SymMatrix2 lcov;
   lcov << sig_x1, 0, 0, sig_y1;
-  std::cout << "tomohiro calcRhoZVars 3" << std::endl;
 
   const auto geoId = slinkFront.geometryId();
-  std::cout << "tomohiro calcRhoZVars 4" << std::endl;
 
   auto gcov = rhoZCovariance(gctx, geoId, globalPos, lcov);
-  std::cout << "tomohiro calcRhoZVars 5" << std::endl;
-
   return gcov;
 }
 
@@ -114,15 +108,13 @@ Vector2 SpacePointUtility::rhoZCovariance(const GeometryContext& gctx,
                                           const GeometryIdentifier& geoId,
                                           const Vector3& globalPos,
                                           const SymMatrix2& localCov) const {
-  std::cout << "tomohiro rhoz 1" << std::endl;
-
   Vector3 globalFakeMom(1, 1, 1);
-  std::cout << "tomohiro rhoz 2" << std::endl;
+
   const Surface* surface = m_config.trackingGeometry->findSurface(geoId);
-  std::cout << "tomohiro rhoz 3" << std::endl;
+
   RotationMatrix3 rotLocalToGlobal =
       surface->referenceFrame(gctx, globalPos, globalFakeMom);
-  std::cout << "tomohiro rhoz 4" << std::endl;
+
   auto x = globalPos[ePos0];
   auto y = globalPos[ePos1];
   auto scale = 2 / std::hypot(x, y);
@@ -131,12 +123,11 @@ Vector2 SpacePointUtility::rhoZCovariance(const GeometryContext& gctx,
   jacXyzToRhoZ(0, ePos1) = scale * y;
   jacXyzToRhoZ(1, ePos2) = 1;
   // compute Jacobian from local coordinates to rho/z
-  std::cout << "tomohiro rhoz 5" << std::endl;
   ActsMatrix<2, 2> jac =
       jacXyzToRhoZ * rotLocalToGlobal.block<3, 2>(ePos0, ePos0);
   // compute rho/z variance
   ActsVector<2> var = (jac * localCov * jac.transpose()).diagonal();
-  std::cout << "tomohiro rhoz 6" << std::endl;
+
   auto gcov = Vector2(var[0], var[1]);
 
   return gcov;
