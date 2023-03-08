@@ -192,7 +192,7 @@ Result<void> SpacePointUtility::recoverSpacePoint(
     SpacePointParameters& spParams, double stripLengthGapTolerance) const {
   // Consider some cases that would allow an easy exit
   // Check if the limits are allowed to be increased
-
+  std::cout << "tomohiro modified recover space point " << std::endl;
   if (stripLengthGapTolerance <= 0.) {
     return Result<void>::failure(m_error);
   }
@@ -279,6 +279,49 @@ Result<void> SpacePointUtility::recoverSpacePoint(
   }
   // No solution could be found
   return Result<void>::failure(m_error);
+}
+
+Result<void> SpacePointUtility::recoverSpacePoint_athena(
+    SpacePointParameters& spParams, double stripLengthGapTolerance) const {
+  // Consider some cases that would allow an easy exit
+  // Check if the limits are allowed to be increased
+  std::cout << "tomohiro modified recover space point -- athena method"
+            << std::endl;
+
+  if (stripLengthGapTolerance == 0) {
+    return Result<void>::failure(m_error);
+  }
+
+  spParams.mag_firstBtmToTop = spParams.firstBtmToTop.norm();
+  double secOnFirstScale =
+      spParams.firstBtmToTop.dot(spParams.secondBtmToTop) /
+      (spParams.mag_firstBtmToTop *
+       spParams.mag_firstBtmToTop);  // this corresponds "cs" in athena
+
+  if (spParams.m > spParams.limit || spParams.n > spParams.limit) {
+    double dm = spParams.m - 1;
+    double dmn = (spParams.n - 1) * secOnFirstScale;
+    if (dmn > dm)
+      dm = dmn;
+    spParams.m -= dm;
+    spParams.n -= (dm / secOnFirstScale);
+    if (std::abs(spParams.m) > spParams.limit ||
+        std::abs(spParams.n) > spParams.limit) {
+      return Result<void>::failure(m_error);
+    }
+  } else if (spParams.m < -spParams.limit || spParams.n < -spParams.limit) {
+    double dm = -(1 + spParams.m);
+    double dmn = -(1 + spParams.n) * secOnFirstScale;
+    if (dmn > dm)
+      dm = dmn;
+    spParams.m += dm;
+    spParams.n += dm / secOnFirstScale;
+    if (std::abs(spParams.m) > spParams.limit ||
+        std::abs(spParams.n) > spParams.limit) {
+      return Result<void>::failure(m_error);
+    }
+  }
+  return Result<void>::success();
 }
 
 Result<double> SpacePointUtility::calcPerpendicularProjection(

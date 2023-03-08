@@ -129,6 +129,19 @@ class SpacePointUtility {
   Result<void> recoverSpacePoint(SpacePointParameters& spParams,
                                  double stripLengthGapTolerance) const;
 
+  /// @brief This function tests if a space point can be estimated by a more
+  /// tolerant treatment of construction. In fact, this function indirectly
+  /// allows shifts of the vertex.
+  ///
+  /// @param [in] spParams container that stores geometric parameters and rules of
+  /// the space point formation
+  /// @param [in] stripLengthGapTolerance Tolerance scaling factor of the gap
+  /// between strip detector elements
+  ///
+  /// @return indicator if the test was successful
+  Result<void> recoverSpacePoint_athena(SpacePointParameters& spParams,
+                                        double stripLengthGapTolerance) const;
+
   /// @brief Calculates (Delta theta)^2 + (Delta phi)^2 between two SourceLinks
   ///
   /// @param [in] pos1 position of the first SourceLink

@@ -8,87 +8,6 @@
 namespace Acts {
 
 template <typename spacepoint_t>
-Result<void> SpacePointBuilder<spacepoint_t>::testRecoverSpacePoint(
-    SpacePointParameters& spParams, double stripLengthGapTolerance) const {
-  std::error_code m_error;
-
-  // Consider some cases that would allow an easy exit
-  // Check if the limits are allowed to be increased
-
-  if (stripLengthGapTolerance <= 0.) {
-    return Result<void>::failure(m_error);
-  }
-
-  spParams.mag_firstBtmToTop = spParams.firstBtmToTop.norm();
-  // Increase the limits. This allows a check if the point is just slightly
-  // outside the SDE
-  spParams.limitExtended =
-      spParams.limit + stripLengthGapTolerance / spParams.mag_firstBtmToTop;
-  std::cout << "limExtended =  (lim + tolerance)/ mag  = "
-            << spParams.limitExtended << " =  " << spParams.limit << " + "
-            << stripLengthGapTolerance << " / " << spParams.mag_firstBtmToTop
-            << std::endl;
-  // Check if m is just slightly outside
-  if (fabs(spParams.m) > spParams.limitExtended) {
-    return Result<void>::failure(m_error);
-  }
-  // Calculate n if not performed previously
-  if (spParams.n == 0.) {
-    spParams.n =
-        -spParams.vtxToSecondMid2.dot(spParams.firstBtmToTopXvtxToFirstMid2) /
-        spParams.secondBtmToTop.dot(spParams.firstBtmToTopXvtxToFirstMid2);
-  }
-
-  // Check if n is just slightly outside
-  if (fabs(spParams.n) > spParams.limitExtended) {
-    return Result<void>::failure(m_error);
-  }
-
-  double secOnFirstScale =
-      spParams.firstBtmToTop.dot(spParams.secondBtmToTop) /
-      (spParams.mag_firstBtmToTop * spParams.mag_firstBtmToTop);
-  // Check if both overshoots are in the same direction
-  if (spParams.m > 1. && spParams.n > 1.) {
-    // Calculate the overshoots
-    double mOvershoot = spParams.m - 1.;
-    double nOvershoot =
-        (spParams.n - 1.) * secOnFirstScale;  // Perform projection
-    // Resolve worse overshoot
-    double biggerOvershoot = std::max(mOvershoot, nOvershoot);
-    // Move m and n towards 0
-    spParams.m -= biggerOvershoot;
-    spParams.n -= (biggerOvershoot / secOnFirstScale);
-    // Check if this recovered the space point
-
-    if (fabs(spParams.m) < spParams.limit &&
-        fabs(spParams.n) < spParams.limit) {
-      return Result<void>::success();
-    } else {
-      return Result<void>::failure(m_error);
-    }
-  }
-  // Check if both overshoots are in the same direction
-  if (spParams.m < -1. && spParams.n < -1.) {
-    // Calculate the overshoots
-    double mOvershoot = -(spParams.m + 1.);
-    double nOvershoot =
-        -(spParams.n + 1.) * secOnFirstScale;  // Perform projection
-    // Resolve worse overshoot
-    double biggerOvershoot = std::max(mOvershoot, nOvershoot);
-    // Move m and n towards 0
-    spParams.m += biggerOvershoot;
-    spParams.n += (biggerOvershoot / secOnFirstScale);
-    // Check if this recovered the space point
-    if (fabs(spParams.m) < spParams.limit &&
-        fabs(spParams.n) < spParams.limit) {
-      return Result<void>::success();
-    }
-  }
-  // No solution could be found
-  return Result<void>::failure(m_error);
-}
-
-template <typename spacepoint_t>
 SpacePointBuilder<spacepoint_t>::SpacePointBuilder(
     const SpacePointBuilderConfig& cfg,
     std::function<spacepoint_t(Acts::Vector3, Acts::Vector2,
@@ -132,9 +51,10 @@ void SpacePointBuilder<spacepoint_t>::buildSpacePoint(
         ACTS_VERBOSE(
             "SP formation: First attempt failed. Trying to recover SP");
 
-        spFound = m_spUtility->recoverSpacePoint(spParams,
-                                                 opt.stripLengthGapTolerance);
-        testRecoverSpacePoint(spParams, opt.stripLengthGapTolerance);
+        // spFound = m_spUtility->recoverSpacePoint(spParams,
+        //                                          opt.stripLengthGapTolerance);
+        spFound = m_spUtility->recoverSpacePoint_athena(
+            spParams, opt.stripLengthGapTolerance);
 
         // ------------------------ tmp
 
