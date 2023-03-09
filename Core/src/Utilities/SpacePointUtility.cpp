@@ -293,12 +293,33 @@ Result<void> SpacePointUtility::recoverSpacePoint_athena(
             ", lim = " + std::to_string(spParams.limit);
   std::cout << message << std::endl;
 
-  if (stripLengthGapTolerance == 0) {
+  if (stripLengthGapTolerance < 0) {
     return Result<void>::failure(m_error);
     std::cout << "stripLengthGapTolerance is 0. Skip recovering" << std::endl;
   }
 
   spParams.mag_firstBtmToTop = spParams.firstBtmToTop.norm();
+
+  // Increase the limits. This allows a check if the point is just slightly
+  // outside the SDE
+  spParams.limitExtended =
+      spParams.limit + stripLengthGapTolerance / spParams.mag_firstBtmToTop;
+  
+  if (fabs(spParams.m) > spParams.limitExtended) {
+    return Result<void>::failure(m_error);
+  }
+  // Calculate n if not performed previously
+  if (spParams.n == 0.) {
+    spParams.n =
+        -spParams.vtxToSecondMid2.dot(spParams.firstBtmToTopXvtxToFirstMid2) /
+        spParams.secondBtmToTop.dot(spParams.firstBtmToTopXvtxToFirstMid2);
+  }
+  // Check if n is just slightly outside
+  if (fabs(spParams.n) > spParams.limitExtended) {
+    return Result<void>::failure(m_error);
+  }
+  
+
   double secOnFirstScale =
       spParams.firstBtmToTop.dot(spParams.secondBtmToTop) /
       (spParams.mag_firstBtmToTop *
