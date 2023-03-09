@@ -295,7 +295,7 @@ Result<void> SpacePointUtility::recoverSpacePoint_athena(
 
   if (stripLengthGapTolerance < 0) {
     return Result<void>::failure(m_error);
-    std::cout << "stripLengthGapTolerance is 0. Skip recovering" << std::endl;
+    std::cout << "tomohiro stripLengthGapTolerance is 0. Skip recovering" << std::endl;
   }
 
   spParams.mag_firstBtmToTop = spParams.firstBtmToTop.norm();
@@ -304,9 +304,10 @@ Result<void> SpacePointUtility::recoverSpacePoint_athena(
   // outside the SDE
   spParams.limitExtended =
       spParams.limit + stripLengthGapTolerance / spParams.mag_firstBtmToTop;
-  std::cout << "lim extended = " << spParams.limitExtended << std::endl;
+  std::cout << "tomohiro lim extended = " << spParams.limitExtended << std::endl;
   
   if (fabs(spParams.m) > spParams.limitExtended) {
+    std::cout << "tomohiro m is larger than extended lim" << std::endl;
     return Result<void>::failure(m_error);
   }
   // Calculate n if not performed previously
@@ -317,6 +318,7 @@ Result<void> SpacePointUtility::recoverSpacePoint_athena(
   }
   // Check if n is just slightly outside
   if (fabs(spParams.n) > spParams.limitExtended) {
+    std::cout << "tomohiro n is larger than extended lim" << std::endl;    
     return Result<void>::failure(m_error);
   }
   
