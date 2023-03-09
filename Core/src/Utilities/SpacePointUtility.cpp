@@ -304,6 +304,7 @@ Result<void> SpacePointUtility::recoverSpacePoint_athena(
   // outside the SDE
   spParams.limitExtended =
       spParams.limit + stripLengthGapTolerance / spParams.mag_firstBtmToTop;
+  std::cout << "lim extended = " << spParams.limitExtended << std::endl;
   
   if (fabs(spParams.m) > spParams.limitExtended) {
     return Result<void>::failure(m_error);
