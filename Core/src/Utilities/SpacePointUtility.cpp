@@ -307,7 +307,7 @@ Result<void> SpacePointUtility::recoverSpacePoint_athena(
   std::cout << "tomohiro lim extended = " << spParams.limitExtended << std::endl;
   
   if (fabs(spParams.m) > spParams.limitExtended) {
-    std::cout << "tomohiro m is larger than extended lim" << std::endl;
+    std::cout << "tomohiro m is larger than extended lim. Not accepted" << std::endl;
     return Result<void>::failure(m_error);
   }
   // Calculate n if not performed previously
@@ -318,7 +318,7 @@ Result<void> SpacePointUtility::recoverSpacePoint_athena(
   }
   // Check if n is just slightly outside
   if (fabs(spParams.n) > spParams.limitExtended) {
-    std::cout << "tomohiro n is larger than extended lim" << std::endl;    
+    std::cout << "tomohiro n is larger than extended lim. Not accepted" << std::endl;    
     return Result<void>::failure(m_error);
   }
   

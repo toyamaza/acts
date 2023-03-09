@@ -51,10 +51,10 @@ void SpacePointBuilder<spacepoint_t>::buildSpacePoint(
         ACTS_VERBOSE(
             "SP formation: First attempt failed. Trying to recover SP");
 
-        // spFound = m_spUtility->recoverSpacePoint(spParams,
-        //                                          opt.stripLengthGapTolerance);
-        spFound = m_spUtility->recoverSpacePoint_athena(
-            spParams, opt.stripLengthGapTolerance);
+        spFound = m_spUtility->recoverSpacePoint(spParams,
+                                                 opt.stripLengthGapTolerance);
+        // spFound = m_spUtility->recoverSpacePoint_athena(
+        //     spParams, opt.stripLengthGapTolerance);
 
         // ------------------------ tmp
 
