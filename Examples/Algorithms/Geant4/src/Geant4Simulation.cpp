@@ -51,7 +51,7 @@ void setUserActions(manager_t& manager, actions_t& actions) {
 ActsExamples::Geant4Simulation::Geant4Simulation(
     const ActsExamples::Geant4Simulation::Config& config,
     Acts::Logging::Level level)
-    : BareAlgorithm("Geant4Simulation", level), m_cfg(config) {
+    : IAlgorithm("Geant4Simulation", level), m_cfg(config) {
   if (m_cfg.detectorConstruction == nullptr) {
     throw std::invalid_argument("Missing G4 DetectorConstruction object");
   }
@@ -168,33 +168,30 @@ ActsExamples::ProcessCode ActsExamples::Geant4Simulation::execute(
   if (not m_cfg.outputParticlesInitial.empty() and
       not m_cfg.outputParticlesFinal.empty()) {
     // Initial state of particles
-    SimParticleContainer outputParticlesInitial;
-    outputParticlesInitial.insert(eventData.particlesInitial.begin(),
-                                  eventData.particlesInitial.end());
     // Register to the event store
     ctx.eventStore.add(m_cfg.outputParticlesInitial,
-                       std::move(outputParticlesInitial));
+                       SimParticleContainer(eventData.particlesInitial.begin(),
+                                            eventData.particlesInitial.end()));
     // Final state of particles
-    SimParticleContainer outputParticlesFinal;
-    outputParticlesFinal.insert(eventData.particlesFinal.begin(),
-                                eventData.particlesFinal.end());
     // Register to the event store
     ctx.eventStore.add(m_cfg.outputParticlesFinal,
-                       std::move(outputParticlesFinal));
+                       SimParticleContainer(eventData.particlesFinal.begin(),
+                                            eventData.particlesFinal.end()));
   }
 
   // Output handling: Simulated hits
   if (not m_cfg.outputSimHits.empty()) {
-    SimHitContainer simHits;
-    simHits.insert(eventData.hits.begin(), eventData.hits.end());
     // Register to the event store
-    ctx.eventStore.add(m_cfg.outputSimHits, std::move(simHits));
+    ctx.eventStore.add(
+        m_cfg.outputSimHits,
+        SimHitContainer(eventData.hits.begin(), eventData.hits.end()));
   }
 
   // Output handling: Material tracks
   if (not m_cfg.outputMaterialTracks.empty()) {
-    ctx.eventStore.add(m_cfg.outputMaterialTracks,
-                       std::move(eventData.materialTracks));
+    ctx.eventStore.add(
+        m_cfg.outputMaterialTracks,
+        decltype(eventData.materialTracks)(eventData.materialTracks));
   }
 
   return ActsExamples::ProcessCode::SUCCESS;

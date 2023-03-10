@@ -13,7 +13,7 @@
 #include "ActsExamples/EventData/IndexSourceLink.hpp"
 #include "ActsExamples/EventData/Measurement.hpp"
 #include "ActsExamples/EventData/SimSpacePoint.hpp"
-#include "ActsExamples/Framework/BareAlgorithm.hpp"
+#include "ActsExamples/Framework/IAlgorithm.hpp"
 
 #include <memory>
 #include <string>
@@ -39,7 +39,7 @@ namespace ActsExamples {
 /// There are no explicit requirements on the content of the input measurements.
 /// If no local positions are measured, the transformed global positions will
 /// always be the position of the module origin.
-class SpacePointMaker final : public BareAlgorithm {
+class SpacePointMaker final : public IAlgorithm {
  public:
   struct Config {
     /// Input source links collection.
