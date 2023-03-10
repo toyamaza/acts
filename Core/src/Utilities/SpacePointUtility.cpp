@@ -192,7 +192,6 @@ Result<void> SpacePointUtility::recoverSpacePoint(
     SpacePointParameters& spParams, double stripLengthGapTolerance) const {
   // Consider some cases that would allow an easy exit
   // Check if the limits are allowed to be increased
-  std::cout << "tomohiro modified recover space point " << std::endl;
   if (stripLengthGapTolerance <= 0.) {
     return Result<void>::failure(m_error);
   }
@@ -286,17 +285,8 @@ Result<void> SpacePointUtility::recoverSpacePoint_athena(
   // Consider some cases that would allow an easy exit
   // Check if the limits are allowed to be increased
 
-  std::string message;
-
-  message = "tomohiro modified recover space point -- athena method. m =  " +
-            std::to_string(spParams.m) + ", n = " + std::to_string(spParams.n) +
-            ", lim = " + std::to_string(spParams.limit);
-  std::cout << message << std::endl;
-
   if (stripLengthGapTolerance < 0) {
     return Result<void>::failure(m_error);
-    std::cout << "tomohiro stripLengthGapTolerance is 0. Skip recovering"
-              << std::endl;
   }
 
   spParams.mag_firstBtmToTop = spParams.firstBtmToTop.norm();
@@ -305,12 +295,8 @@ Result<void> SpacePointUtility::recoverSpacePoint_athena(
   // outside the SDE
   spParams.limitExtended =
       spParams.limit + stripLengthGapTolerance / spParams.mag_firstBtmToTop;
-  std::cout << "tomohiro lim extended = " << spParams.limitExtended
-            << std::endl;
 
   if (fabs(spParams.m) > spParams.limitExtended) {
-    std::cout << "tomohiro m is larger than extended lim. Not accepted"
-              << std::endl;
     return Result<void>::failure(m_error);
   }
   // Calculate n if not performed previously
@@ -321,8 +307,6 @@ Result<void> SpacePointUtility::recoverSpacePoint_athena(
   }
   // Check if n is just slightly outside
   if (fabs(spParams.n) > spParams.limitExtended) {
-    std::cout << "tomohiro n is larger than extended lim. Not accepted"
-              << std::endl;
     return Result<void>::failure(m_error);
   }
 
@@ -332,12 +316,6 @@ Result<void> SpacePointUtility::recoverSpacePoint_athena(
        spParams.mag_firstBtmToTop);  // this corresponds "cs" in athena
 
   if (spParams.m > spParams.limit || spParams.n > spParams.limit) {
-    message = "tomohiro m or n is larger  than  limit. m = " +
-              std::to_string(spParams.m) +
-              ", n = " + std::to_string(spParams.n) +
-              ", lim = " + std::to_string(spParams.limit);
-    ;
-    std::cout << message << std::endl;
     double dm = spParams.m - 1;
     double dmn = (spParams.n - 1) * secOnFirstScale;
     if (dmn > dm)
@@ -346,19 +324,9 @@ Result<void> SpacePointUtility::recoverSpacePoint_athena(
     spParams.n -= (dm / secOnFirstScale);
     if (std::abs(spParams.m) > spParams.limit ||
         std::abs(spParams.n) > spParams.limit) {
-      std::cout << "tomohiro not accepted (m = " << spParams.m
-                << " n = " << spParams.n << " )" << std::endl;
       return Result<void>::failure(m_error);
     }
-    std::cout << "tomohiro accepted (m = " << spParams.m
-              << " n = " << spParams.n << " )" << std::endl;
   } else if (spParams.m < -spParams.limit || spParams.n < -spParams.limit) {
-    message = "tomohiro m or n is smaller than -limit. m = " +
-              std::to_string(spParams.m) +
-              ", n = " + std::to_string(spParams.n) +
-              ", lim = " + std::to_string(spParams.limit);
-    ;
-    std::cout << message << std::endl;
     double dm = -(1 + spParams.m);
     double dmn = -(1 + spParams.n) * secOnFirstScale;
     if (dmn > dm)
@@ -367,19 +335,8 @@ Result<void> SpacePointUtility::recoverSpacePoint_athena(
     spParams.n += dm / secOnFirstScale;
     if (std::abs(spParams.m) > spParams.limit ||
         std::abs(spParams.n) > spParams.limit) {
-      std::cout << "tomohiro not accepted (m = " << spParams.m
-                << " n = " << spParams.n << " )" << std::endl;
       return Result<void>::failure(m_error);
     }
-    std::cout << "tomohiro accepted (m = " << spParams.m
-              << " n = " << spParams.n << " )" << std::endl;
-  } else {
-    message =
-        "tomohiro m and n is within limit. m = " + std::to_string(spParams.m) +
-        ", n = " + std::to_string(spParams.n) +
-        ", lim = " + std::to_string(spParams.limit);
-    ;
-    std::cout << message << std::endl;
   }
   return Result<void>::success();
 }
