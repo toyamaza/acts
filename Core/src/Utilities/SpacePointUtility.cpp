@@ -240,7 +240,7 @@ Result<void> SpacePointUtility::recoverSpacePoint(
       spParams.firstBtmToTop.dot(spParams.secondBtmToTop) /
       (spParams.mag_firstBtmToTop * spParams.mag_firstBtmToTop);
   // Check if both overshoots are in the same direction
-  if (spParams.m > 1. && spParams.n > 1.) {
+  if (spParams.m > 1. || spParams.n > 1.) {
     // Calculate the overshoots
     double mOvershoot = spParams.m - 1.;
     double nOvershoot =
@@ -260,7 +260,7 @@ Result<void> SpacePointUtility::recoverSpacePoint(
     }
   }
   // Check if both overshoots are in the same direction
-  if (spParams.m < -1. && spParams.n < -1.) {
+  else if (spParams.m < -1. || spParams.n < -1.) {
     // Calculate the overshoots
     double mOvershoot = -(spParams.m + 1.);
     double nOvershoot =
