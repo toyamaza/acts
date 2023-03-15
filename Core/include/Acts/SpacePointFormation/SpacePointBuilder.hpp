@@ -78,8 +78,6 @@ class SpacePointBuilder {
  protected:
   // configuration of the single hit space point builder
   SpacePointBuilderConfig m_config;
-  Result<void> testRecoverSpacePoint(SpacePointParameters& spParams,
-                                     double stripLengthGapTolerance) const;
 
   /// @brief Function to create external space point
   /// The constructor of spacepoint_t with Vector3 global pos, Vector2 global
@@ -87,7 +85,6 @@ class SpacePointBuilder {
   std::function<spacepoint_t(Acts::Vector3, Acts::Vector2,
                              boost::container::static_vector<SourceLink, 2>)>
       m_spConstructor;
-
   /// the logging instance
   std::unique_ptr<const Acts::Logger> m_logger;
 

@@ -37,26 +37,24 @@ namespace tt = boost::test_tools;
 namespace Acts {
 namespace Test {
 
-using namespace Acts::UnitLiterals;
+using namespace UnitLiterals;
 
-using StraightPropagator =
-    Acts::Propagator<Acts::StraightLineStepper, Acts::Navigator>;
+using StraightPropagator = Propagator<StraightLineStepper, Navigator>;
 
-using TestMeasurement = Acts::BoundVariantMeasurement;
-using ConstantFieldStepper = Acts::EigenStepper<>;
-using ConstantFieldPropagator =
-    Acts::Propagator<ConstantFieldStepper, Acts::Navigator>;
+using TestMeasurement = BoundVariantMeasurement;
+using ConstantFieldStepper = EigenStepper<>;
+using ConstantFieldPropagator = Propagator<ConstantFieldStepper, Navigator>;
 // Construct initial track parameters.
 CurvilinearTrackParameters makeParameters(double phi, double theta, double p,
                                           double q) {
   // create covariance matrix from reasonable standard deviations
-  Acts::BoundVector stddev;
-  stddev[Acts::eBoundLoc0] = 100_um;
-  stddev[Acts::eBoundLoc1] = 100_um;
-  stddev[Acts::eBoundTime] = 25_ns;
-  stddev[Acts::eBoundPhi] = 2_degree;
-  stddev[Acts::eBoundTheta] = 2_degree;
-  stddev[Acts::eBoundQOverP] = 1 / 100_GeV;
+  BoundVector stddev;
+  stddev[eBoundLoc0] = 100_um;
+  stddev[eBoundLoc1] = 100_um;
+  stddev[eBoundTime] = 25_ns;
+  stddev[eBoundPhi] = 2_degree;
+  stddev[eBoundTheta] = 2_degree;
+  stddev[eBoundQOverP] = 1 / 100_GeV;
   BoundSymMatrix cov = stddev.cwiseProduct(stddev).asDiagonal();
   // Let the particle start from the origin
   Vector4 mPos4(-3_m, 0., 0., 0.);
@@ -114,13 +112,13 @@ const MeasurementResolutionMap resolutions = {
 
 // Construct a straight-line propagator.
 static StraightPropagator makeStraightPropagator(
-    std::shared_ptr<const Acts::TrackingGeometry> geo) {
-  Acts::Navigator::Config cfg{std::move(geo)};
+    std::shared_ptr<const TrackingGeometry> geo) {
+  Navigator::Config cfg{std::move(geo)};
   cfg.resolvePassive = false;
   cfg.resolveMaterial = true;
   cfg.resolveSensitive = true;
-  Acts::Navigator navigator{cfg};
-  Acts::StraightLineStepper stepper;
+  Navigator navigator{cfg};
+  StraightLineStepper stepper;
   return StraightPropagator(stepper, std::move(navigator));
 }
 
@@ -137,14 +135,13 @@ BOOST_DATA_TEST_CASE(SpacePointBuilder_basic, bdata::xrange(1), index) {
   double p = 50._GeV;
   double q = 1;
 
-  Acts::Navigator navigator({
+  Navigator navigator({
       geometry,
       true,  // sensitive
       true,  // material
       false  // passive
   });
-  auto field =
-      std::make_shared<Acts::ConstantBField>(Acts::Vector3(0.0, 0.0, 2._T));
+  auto field = std::make_shared<ConstantBField>(Vector3(0.0, 0.0, 2._T));
   ConstantFieldStepper stepper(std::move(field));
 
   ConstantFieldPropagator propagator(std::move(stepper), std::move(navigator));
@@ -153,7 +150,7 @@ BOOST_DATA_TEST_CASE(SpacePointBuilder_basic, bdata::xrange(1), index) {
   auto measurements =
       createMeasurements(propagator, geoCtx, magCtx, start, resolutions, rng);
 
-  auto sourceLinks = measurements.sourceLinks;
+  const auto sourceLinks = measurements.sourceLinks;
 
   std::vector<SourceLink> frontSourceLinks;
   std::vector<SourceLink> backSourceLinks;
@@ -182,11 +179,10 @@ BOOST_DATA_TEST_CASE(SpacePointBuilder_basic, bdata::xrange(1), index) {
   BOOST_CHECK_EQUAL(frontSourceLinks.size(), 2);
   BOOST_CHECK_EQUAL(backSourceLinks.size(), 2);
 
-  Acts::Vector3 vertex = Vector3(-3_m, 0., 0.);
+  Vector3 vertex = Vector3(-3_m, 0., 0.);
 
-  auto spConstructor =
-      [](const Acts::Vector3& pos, const Acts::Vector2& cov,
-         boost::container::static_vector<Acts::SourceLink, 2> slinks)
+  auto spConstructor = [](const Vector3& pos, const Vector2& cov,
+                          boost::container::static_vector<SourceLink, 2> slinks)
       -> TestSpacePoint {
     return TestSpacePoint(pos, cov[0], cov[1], std::move(slinks));
   };
@@ -195,7 +191,7 @@ BOOST_DATA_TEST_CASE(SpacePointBuilder_basic, bdata::xrange(1), index) {
   spBuilderConfig.trackingGeometry = geometry;
 
   auto spBuilder =
-      Acts::SpacePointBuilder<TestSpacePoint>(spBuilderConfig, spConstructor);
+      SpacePointBuilder<TestSpacePoint>(spBuilderConfig, spConstructor);
 
   // for cosmic  without vertex constraint, usePerpProj = true
   auto spBuilderConfig_perp = SpacePointBuilderConfig();
@@ -203,20 +199,20 @@ BOOST_DATA_TEST_CASE(SpacePointBuilder_basic, bdata::xrange(1), index) {
 
   spBuilderConfig_perp.usePerpProj = true;
 
-  auto spBuilder_perp = Acts::SpacePointBuilder<TestSpacePoint>(
-      spBuilderConfig_perp, spConstructor);
+  auto spBuilder_perp =
+      SpacePointBuilder<TestSpacePoint>(spBuilderConfig_perp, spConstructor);
 
   TestSpacePointContainer spacePoints;
   TestSpacePointContainer spacePoints_extra;
 
-  auto accessor = [&](const Acts::SourceLink& slink) {
+  auto accessor = [](SourceLink slink) {
     auto testslink = slink.get<TestSourceLink>();
-    Acts::BoundVector param;
+    BoundVector param;
     param.setZero();
     param[eBoundLoc0] = testslink.parameters[eBoundLoc0];
     param[eBoundLoc1] = testslink.parameters[eBoundLoc1];
 
-    Acts::BoundSymMatrix cov = Acts::BoundSymMatrix::Zero();
+    BoundSymMatrix cov = BoundSymMatrix::Zero();
     cov.topLeftCorner<2, 2>() = testslink.covariance;
 
     return std::make_pair(param, cov);
@@ -281,7 +277,7 @@ BOOST_DATA_TEST_CASE(SpacePointBuilder_basic, bdata::xrange(1), index) {
     auto spBuilderConfig_badStrips = SpacePointBuilderConfig();
 
     spBuilderConfig_badStrips.trackingGeometry = geometry;
-    auto spBuilder_badStrips = Acts::SpacePointBuilder<TestSpacePoint>(
+    auto spBuilder_badStrips = SpacePointBuilder<TestSpacePoint>(
         spBuilderConfig_badStrips, spConstructor);
     // sp building with the recovery method
     SpacePointBuilderOptions spOpt_badStrips1{std::make_pair(end3, end4),

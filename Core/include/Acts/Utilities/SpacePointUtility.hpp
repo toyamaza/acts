@@ -68,7 +68,7 @@ class SpacePointUtility {
   /// @param cov local covariance
   /// @return vectors of the global coordinates and covariance of the SourceLink
   std::pair<Vector3, Vector2> globalCoords(const GeometryContext& gctx,
-                                           const SourceLink slink,
+                                           SourceLink slink,
                                            const BoundVector& par,
                                            const BoundSymMatrix& cov) const;
 
@@ -93,10 +93,9 @@ class SpacePointUtility {
   /// @param theta The angle between the two strips
   /// @return (rho, z) components of the global covariance
   Vector2 calcRhoZVars(
-      const GeometryContext& gctx, const SourceLink slinkFront,
-      const SourceLink slinkBack,
+      const GeometryContext& gctx, SourceLink slinkFront, SourceLink slinkBack,
       std::function<
-          std::pair<const BoundVector, const BoundSymMatrix>(const SourceLink)>
+          std::pair<const BoundVector, const BoundSymMatrix>(SourceLink)>
           paramCovAccessor,
       const Vector3& globalPos, const double theta) const;
 

@@ -104,8 +104,7 @@ ActsExamples::SpacePointMaker::SpacePointMaker(Config cfg,
 
 std::pair<const Acts::BoundVector, const Acts::BoundSymMatrix>
 ActsExamples::SpacePointMaker::paramCovFromMeasurements(
-    ActsExamples::MeasurementContainer measurements,
-    const Acts::SourceLink slink) {
+    ActsExamples::MeasurementContainer measurements, Acts::SourceLink slink) {
   const auto islink = slink.get<IndexSourceLink>();
   const auto& meas = measurements[islink.index()];
 
@@ -122,12 +121,12 @@ ActsExamples::SpacePointMaker::paramCovFromMeasurements(
 
 ActsExamples::ProcessCode ActsExamples::SpacePointMaker::execute(
     const AlgorithmContext& ctx) const {
-  const auto& sourceLinks = m_inputSourceLinks(ctx);
+  auto& sourceLinks = m_inputSourceLinks(ctx);
   const auto& measurements = m_inputMeasurements(ctx);
 
   // TODO Support strip measurements
   Acts::SpacePointBuilderOptions spOpt;
-  spOpt.paramCovAccessor = [&](const Acts::SourceLink& slink) {
+  spOpt.paramCovAccessor = [&](Acts::SourceLink& slink) {
     return paramCovFromMeasurements(measurements, slink);
   };
 
