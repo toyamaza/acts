@@ -235,8 +235,8 @@ BOOST_DATA_TEST_CASE(SpacePointBuilder_basic, bdata::xrange(1), index) {
   StripPairOptions pairOpt;
   pairOpt.paramCovAccessor = accessor;
 
-  spBuilder.makeSlinkPairs(tgContext, frontSourceLinks, backSourceLinks,
-                           slinkPairs, pairOpt);
+  spBuilder.makeSourceLinkPairs(tgContext, frontSourceLinks, backSourceLinks,
+                                slinkPairs, pairOpt);
 
   BOOST_CHECK_EQUAL(slinkPairs.size(), 2);
 

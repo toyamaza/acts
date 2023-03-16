@@ -87,7 +87,7 @@ void SpacePointBuilder<spacepoint_t>::buildSpacePoint(
 }
 
 template <typename spacepoint_t>
-void SpacePointBuilder<spacepoint_t>::makeSlinkPairs(
+void SpacePointBuilder<spacepoint_t>::makeSourceLinkPairs(
     const GeometryContext& gctx, const std::vector<SourceLink>& slinksFront,
     const std::vector<SourceLink>& slinksBack,
     std::vector<std::pair<SourceLink, SourceLink>>& slinkPairs,

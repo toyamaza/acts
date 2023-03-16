@@ -279,67 +279,6 @@ Result<void> SpacePointUtility::recoverSpacePoint(
   return Result<void>::failure(m_error);
 }
 
-Result<void> SpacePointUtility::recoverSpacePoint_athena(
-    SpacePointParameters& spParams, double stripLengthGapTolerance) const {
-  // Consider some cases that would allow an easy exit
-  // Check if the limits are allowed to be increased
-
-  if (stripLengthGapTolerance < 0) {
-    return Result<void>::failure(m_error);
-  }
-
-  spParams.mag_firstBtmToTop = spParams.firstBtmToTop.norm();
-
-  // Increase the limits. This allows a check if the point is just slightly
-  // outside the SDE
-  spParams.limitExtended =
-      spParams.limit + stripLengthGapTolerance / spParams.mag_firstBtmToTop;
-
-  if (fabs(spParams.m) > spParams.limitExtended) {
-    return Result<void>::failure(m_error);
-  }
-  // Calculate n if not performed previously
-  if (spParams.n == 0.) {
-    spParams.n =
-        -spParams.vtxToSecondMid2.dot(spParams.firstBtmToTopXvtxToFirstMid2) /
-        spParams.secondBtmToTop.dot(spParams.firstBtmToTopXvtxToFirstMid2);
-  }
-  // Check if n is just slightly outside
-  if (fabs(spParams.n) > spParams.limitExtended) {
-    return Result<void>::failure(m_error);
-  }
-
-  double secOnFirstScale =
-      spParams.firstBtmToTop.dot(spParams.secondBtmToTop) /
-      (spParams.mag_firstBtmToTop *
-       spParams.mag_firstBtmToTop);  // this corresponds "cs" in athena
-
-  if (spParams.m > spParams.limit || spParams.n > spParams.limit) {
-    double dm = spParams.m - 1;
-    double dmn = (spParams.n - 1) * secOnFirstScale;
-    if (dmn > dm)
-      dm = dmn;
-    spParams.m -= dm;
-    spParams.n -= (dm / secOnFirstScale);
-    if (std::abs(spParams.m) > spParams.limit ||
-        std::abs(spParams.n) > spParams.limit) {
-      return Result<void>::failure(m_error);
-    }
-  } else if (spParams.m < -spParams.limit || spParams.n < -spParams.limit) {
-    double dm = -(1 + spParams.m);
-    double dmn = -(1 + spParams.n) * secOnFirstScale;
-    if (dmn > dm)
-      dm = dmn;
-    spParams.m += dm;
-    spParams.n += dm / secOnFirstScale;
-    if (std::abs(spParams.m) > spParams.limit ||
-        std::abs(spParams.n) > spParams.limit) {
-      return Result<void>::failure(m_error);
-    }
-  }
-  return Result<void>::success();
-}
-
 Result<double> SpacePointUtility::calcPerpendicularProjection(
     const std::pair<Vector3, Vector3>& stripEnds1,
     const std::pair<Vector3, Vector3>& stripEnds2,

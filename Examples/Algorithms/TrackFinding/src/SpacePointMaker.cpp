@@ -126,7 +126,7 @@ ActsExamples::ProcessCode ActsExamples::SpacePointMaker::execute(
 
   // TODO Support strip measurements
   Acts::SpacePointBuilderOptions spOpt;
-  spOpt.paramCovAccessor = [&](Acts::SourceLink& slink) {
+  spOpt.paramCovAccessor = [&](Acts::SourceLink slink) {
     return paramCovFromMeasurements(measurements, slink);
   };
 

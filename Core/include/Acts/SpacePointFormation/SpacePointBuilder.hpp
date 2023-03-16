@@ -69,7 +69,7 @@ class SpacePointBuilder {
   /// @param slinksBack vector of SoruceLinks on another surface
   /// @param slinkPairs storage of the SouceLink pairs
   /// @param pairOpt pair maker option with paramCovAccessor
-  void makeSlinkPairs(
+  void makeSourceLinkPairs(
       const GeometryContext& gctx, const std::vector<SourceLink>& slinksFront,
       const std::vector<SourceLink>& slinksBack,
       std::vector<std::pair<SourceLink, SourceLink>>& slinkPairs,
