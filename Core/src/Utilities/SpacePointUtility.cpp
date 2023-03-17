@@ -95,6 +95,8 @@ Vector2 SpacePointUtility::calcRhoZVars(
   // projection to the surface with strip1.
   double sig_x1 = sigma_x * cos(0.5 * theta) + sigma_y * sin(0.5 * theta);
   double sig_y1 = sigma_y * cos(0.5 * theta) + sigma_x * sin(0.5 * theta);
+
+  std::cout << "tomohiro  (v1,v2,sig1,xig2,theta) =  " << var1 << " " << var2 << " " << sigma_x << " " << sigma_y << " " << sig_x1 << " " << sig_y1 << " " << theta << std::endl;
   SymMatrix2 lcov;
   lcov << sig_x1, 0, 0, sig_y1;
 
