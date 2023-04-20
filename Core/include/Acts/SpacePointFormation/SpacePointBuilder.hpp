@@ -59,7 +59,8 @@ class SpacePointBuilder {
   void buildSpacePoint(
       const GeometryContext& gctx, const std::vector<SourceLink>& sourceLinks,
       const SpacePointBuilderOptions& opt,
-      std::back_insert_iterator<container_t<spacepoint_t>> spacePointIt) const;
+      std::back_insert_iterator<container_t<spacepoint_t>> spacePointIt,
+      std::map<std::string, long>* timingResults = nullptr) const;
 
   /// @brief Searches possible combinations of two SourceLinks on different
   /// surfaces that may come from the same particles

@@ -5,6 +5,8 @@
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
+#include <chrono>
+
 namespace Acts {
 
 template <typename spacepoint_t>
@@ -23,7 +25,11 @@ template <template <typename...> typename container_t>
 void SpacePointBuilder<spacepoint_t>::buildSpacePoint(
     const GeometryContext& gctx, const std::vector<SourceLink>& sourceLinks,
     const SpacePointBuilderOptions& opt,
-    std::back_insert_iterator<container_t<spacepoint_t>> spacePointIt) const {
+    std::back_insert_iterator<container_t<spacepoint_t>> spacePointIt,
+    std::map<std::string, long>* timingResults) const {
+  using hr_clock = std::chrono::high_resolution_clock;
+  auto build_start = hr_clock::now();
+
   const unsigned int num_slinks = sourceLinks.size();
 
   Acts::Vector3 gPos = Acts::Vector3::Zero();
@@ -43,13 +49,29 @@ void SpacePointBuilder<spacepoint_t>::buildSpacePoint(
     Acts::SpacePointParameters spParams;
 
     if (!m_config.usePerpProj) {  // default strip SP building
-
+      auto calculate_start = hr_clock::now();
       auto spFound = m_spUtility->calculateStripSPPosition(
           ends1, ends2, opt.vertex, spParams, opt.stripLengthTolerance);
+      auto calculate_end = hr_clock::now();
+      if (timingResults)
+        (*timingResults)["calculateSpacePoint"] =
+            std::chrono::duration_cast<std::chrono::microseconds>(
+                calculate_end - calculate_start)
+                .count();
 
       if (!spFound.ok()) {
+        auto recover_start = hr_clock::now();
         spFound = m_spUtility->recoverSpacePoint(spParams,
                                                  opt.stripLengthGapTolerance);
+        auto recover_end = hr_clock::now();
+        if (timingResults)
+          (*timingResults)["recoverSpacePoint"] =
+              std::chrono::duration_cast<std::chrono::microseconds>(
+                  recover_end - recover_start)
+                  .count();
+      } else {
+        if (timingResults)
+          (*timingResults)["recoverSpacePoint"] = -1;
       }
 
       if (!spFound.ok()) {
@@ -73,17 +95,36 @@ void SpacePointBuilder<spacepoint_t>::buildSpacePoint(
     double theta =
         acos(spParams.firstBtmToTop.dot(spParams.secondBtmToTop) /
              (spParams.firstBtmToTop.norm() * spParams.secondBtmToTop.norm()));
-
+    auto calcRhoZVars_start = hr_clock::now();
     gCov = m_spUtility->calcRhoZVars(gctx, sourceLinks.at(0), sourceLinks.at(1),
                                      opt.paramCovAccessor, gPos, theta);
+    auto calcRhoZVars_end = hr_clock::now();
+    if (timingResults)
+      (*timingResults)["calcRhoZVars"] =
+          std::chrono::duration_cast<std::chrono::microseconds>(
+              calcRhoZVars_end - calcRhoZVars_start)
+              .count();
 
   } else {
     ACTS_ERROR("More than 2 sourceLinks are given for a space point.");
   }
+  auto construct_start = hr_clock::now();
   boost::container::static_vector<SourceLink, 2> slinks(sourceLinks.begin(),
                                                         sourceLinks.end());
 
   spacePointIt = m_spConstructor(gPos, gCov, std::move(slinks));
+  auto construct_end = hr_clock::now();
+  auto build_end = hr_clock::now();
+  if (timingResults)
+    (*timingResults)["constructSpacePoint"] =
+        std::chrono::duration_cast<std::chrono::microseconds>(construct_end -
+                                                              construct_start)
+            .count();
+  if (timingResults)
+    (*timingResults)["buildSpacePoint"] =
+        std::chrono::duration_cast<std::chrono::microseconds>(build_end -
+                                                              build_start)
+            .count();
 }
 
 template <typename spacepoint_t>
