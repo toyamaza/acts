@@ -22,8 +22,7 @@ class IBaseDetector;
 using AlignedDetElementGetter =
     std::function<std::vector<Acts::DetectorElementBase*>(
         const std::shared_ptr<ActsExamples::IBaseDetector>&,
-	const std::map<std::string,std::vector<Acts::GeometryIdentifier>&)>>;
-
+        const std::map<std::string, std::vector<Acts::GeometryIdentifier>>&)>;
 /// The options for running alignment or not
 ///
 /// @param desc The options description to add options to
