@@ -74,7 +74,7 @@ ActsExamples::SpacePointMaker::SpacePointMaker(Config cfg,
           "' is not valid. It needs to be either 'strips' or 'pixels'");
     }
 
-    // Tempolary until the strip digitization is implemented
+    // Temporary until the strip digitization is implemented
     if (detectorType == "strips") {
       ACTS_WARNING(
           "'strips' is found in geometry selection, but strip SP building is "
