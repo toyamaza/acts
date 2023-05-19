@@ -35,8 +35,8 @@ int main(int argc, char* argv[]) {
   // @todo: allow different levels of alignment
   auto alignedDetElementsGetter =
       [](const std::shared_ptr<ActsExamples::IBaseDetector>& detector,
-         const std::vector<Acts::GeometryIdentifier>& geometrySelection)
-      -> std::vector<Acts::DetectorElementBase*> {
+         const std::map<std::string, std::vector<Acts::GeometryIdentifier>>&
+             geometrySelection) -> std::vector<Acts::DetectorElementBase*> {
     std::vector<Acts::DetectorElementBase*> dets;
     auto* alignedDetector =
         &dynamic_cast<ActsExamples::AlignedDetectorWithOptions*>(detector.get())
@@ -46,10 +46,15 @@ int main(int argc, char* argv[]) {
         // get the detetor surface
         const auto& surface = &ldet->surface();
         auto geoID = surface->geometryId();
-        auto it = std::find(geometrySelection.begin(), geometrySelection.end(),
-                            geoID);
-        if (it != geometrySelection.end()) {
-          dets.push_back(ldet.get());
+
+        // Check if the geometry ID matches any of the specified selections
+        for (const auto& selection : geometrySelection) {
+          const auto& identifier = selection.first;
+          const auto& ids = selection.second;
+          if (std::find(ids.begin(), ids.end(), geoID) != ids.end()) {
+            dets.push_back(ldet.get());
+            break;
+          }
         }
       }
     }
