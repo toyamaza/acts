@@ -58,15 +58,20 @@ void ActsExamples::to_json(
   }
 }
 
-std::vector<Acts::GeometryIdentifier> ActsExamples::readJsonGeometryList(
-    const std::string& path) {
+std::map<std::string, std::vector<Acts::GeometryIdentifier>>
+ActsExamples::readJsonGeometryList(const std::string& path) {
   nlohmann::json data;
-  std::vector<Acts::GeometryIdentifier> geoIdList;
+  std::map<std::string, std::vector<Acts::GeometryIdentifier>> geoIdMap;
   std::ifstream infile(path, std::ifstream::in | std::ifstream::binary);
   infile.exceptions(std::ofstream::failbit | std::ofstream::badbit);
   infile >> data;
-  from_json(data, geoIdList);
-  return geoIdList;
+  for (const auto& [detType, geoIds] :
+       data.items()) {  // detType is pixels or strips
+    std::vector<Acts::GeometryIdentifier> geoIdList;
+    from_json(geoIds, geoIdList);
+    geoIdMap.insert({detType, geoIdList});
+  }
+  return geoIdMap;
 }
 
 void ActsExamples::writeJsonGeometryList(

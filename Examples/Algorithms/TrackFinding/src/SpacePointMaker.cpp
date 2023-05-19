@@ -45,15 +45,6 @@ ActsExamples::SpacePointMaker::SpacePointMaker(Config cfg,
   m_inputMeasurements.initialize(m_cfg.inputMeasurements);
   m_outputSpacePoints.initialize(m_cfg.outputSpacePoints);
 
-  // ensure geometry selection contains only valid inputs
-  for (const auto& geoId : m_cfg.geometrySelection) {
-    if ((geoId.approach() != 0u) or (geoId.boundary() != 0u) or
-        (geoId.sensitive() != 0u)) {
-      throw std::invalid_argument(
-          "Invalid geometry selection: only volume and layer are allowed to be "
-          "set");
-    }
-  }
   // remove geometry selection duplicates
   //
   // the geometry selections must be mutually exclusive, i.e. if we have a
@@ -73,20 +64,50 @@ ActsExamples::SpacePointMaker::SpacePointMaker(Config cfg,
     // within the same volume hierarchy only consider layers
     return (ref.layer() == cmp.layer());
   };
-  auto geoSelBeg = m_cfg.geometrySelection.begin();
-  auto geoSelEnd = m_cfg.geometrySelection.end();
-  // sort geometry selection so the unique filtering works
-  std::sort(geoSelBeg, geoSelEnd);
-  auto geoSelLastUnique = std::unique(geoSelBeg, geoSelEnd, isDuplicate);
-  if (geoSelLastUnique != geoSelEnd) {
-    ACTS_WARNING("Removed " << std::distance(geoSelLastUnique, geoSelEnd)
-                            << " geometry selection duplicates");
-    m_cfg.geometrySelection.erase(geoSelLastUnique, geoSelEnd);
+
+  for (auto& geoList : m_cfg.geometrySelection) {
+    const std::string& detectorType = geoList.first;
+    auto& geoIds = geoList.second;
+    if (detectorType != "strips" && detectorType != "pixels") {
+      throw std::invalid_argument(
+          "Invalid geometry selection: detector type '" + detectorType +
+          "' is not valid. It needs to be either 'strips' or 'pixels'");
+    }
+
+    // Tempolary until the strip digitization is implemented
+    if (detectorType == "strips") {
+      ACTS_WARNING(
+          "'strips' is found in geometry selection, but strip SP building is "
+          "not "
+          "supported in Example yet");
+      continue;
+    }
+
+    for (const auto& geoId : geoIds) {
+      if ((geoId.approach() != 0u) or (geoId.boundary() != 0u) or
+          (geoId.sensitive() != 0u)) {
+        throw std::invalid_argument(
+            "Invalid geometry selection: only volume and layer are allowed to "
+            "be set");
+      }
+    }
+
+    auto geoSelBeg = geoIds.begin();
+    auto geoSelEnd = geoIds.end();
+    // sort geometry selection so the unique filtering works
+    std::sort(geoSelBeg, geoSelEnd);
+    auto geoSelLastUnique = std::unique(geoSelBeg, geoSelEnd, isDuplicate);
+    if (geoSelLastUnique != geoSelEnd) {
+      ACTS_WARNING("Removed " << std::distance(geoSelLastUnique, geoSelEnd)
+                              << " geometry selection duplicates");
+      geoIds.erase(geoSelLastUnique, geoSelEnd);
+    }
+    ACTS_INFO("Space point geometry selection (" << detectorType << ") :");
+    for (const auto& geoId : geoList.second) {
+      ACTS_INFO("  " << geoId);
+    }
   }
-  ACTS_INFO("Space point geometry selection:");
-  for (const auto& geoId : m_cfg.geometrySelection) {
-    ACTS_INFO("  " << geoId);
-  }
+
   auto spBuilderConfig = Acts::SpacePointBuilderConfig();
   spBuilderConfig.trackingGeometry = m_cfg.trackingGeometry;
 
@@ -126,22 +147,25 @@ ActsExamples::ProcessCode ActsExamples::SpacePointMaker::execute(
   };
 
   SimSpacePointContainer spacePoints;
-  for (Acts::GeometryIdentifier geoId : m_cfg.geometrySelection) {
-    // select volume/layer depending on what is set in the geometry id
-    auto range = selectLowestNonZeroGeometryObject(sourceLinks, geoId);
-    // groupByModule only works with geometry containers, not with an
-    // arbitrary range. do the equivalent grouping manually
-    auto groupedByModule = makeGroupBy(range, detail::GeometryIdGetter());
 
-    for (auto [moduleGeoId, moduleSourceLinks] : groupedByModule) {
-      for (auto& sourceLink : moduleSourceLinks) {
-        m_spacePointBuilder.buildSpacePoint(
-            ctx.geoContext, {Acts::SourceLink{sourceLink}}, spOpt,
-            std::back_inserter(spacePoints));
+  if (m_cfg.geometrySelection.find("pixels") != m_cfg.geometrySelection.end()) {
+    for (Acts::GeometryIdentifier geoId :
+         m_cfg.geometrySelection.at("pixels")) {
+      // select volume/layer depending on what is set in the geometry id
+      auto range = selectLowestNonZeroGeometryObject(sourceLinks, geoId);
+      // groupByModule only works with geometry containers, not with an
+      // arbitrary range. do the equivalent grouping manually
+      auto groupedByModule = makeGroupBy(range, detail::GeometryIdGetter());
+
+      for (auto [moduleGeoId, moduleSourceLinks] : groupedByModule) {
+        for (auto& sourceLink : moduleSourceLinks) {
+          m_spacePointBuilder.buildSpacePoint(
+              ctx.geoContext, {Acts::SourceLink{sourceLink}}, spOpt,
+              std::back_inserter(spacePoints));
+        }
       }
     }
   }
-
   spacePoints.shrink_to_fit();
 
   ACTS_DEBUG("Created " << spacePoints.size() << " space points");

@@ -57,8 +57,10 @@ class SpacePointMaker final : public IAlgorithm {
     /// to select larger parts of the hierarchy, i.e. setting only the volume
     /// selects all measurements within that volume. Adding a single identifier
     /// with all components set to zero selects all available measurements. The
-    /// selection must not have duplicates.
-    std::vector<Acts::GeometryIdentifier> geometrySelection;
+    /// selection must not have duplicates. The first element of the map is the
+    /// detector type, which needs to be 'pixels' or 'strips'.
+    std::map<std::string, std::vector<Acts::GeometryIdentifier>>
+        geometrySelection;
   };
 
   /// Construct the space point maker.

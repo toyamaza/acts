@@ -25,8 +25,8 @@ void from_json(const nlohmann::json& data,
 void to_json(nlohmann::json& data,
              const std::vector<Acts::GeometryIdentifier>& geoIdList);
 
-std::vector<Acts::GeometryIdentifier> readJsonGeometryList(
-    const std::string& path);
+std::map<std::string, std::vector<Acts::GeometryIdentifier>>
+readJsonGeometryList(const std::string& path);
 
 void writeJsonGeometryList(
     const std::vector<Acts::GeometryIdentifier>& geoIdList,
