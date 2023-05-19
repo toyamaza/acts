@@ -49,7 +49,6 @@ int main(int argc, char* argv[]) {
 
         // Check if the geometry ID matches any of the specified selections
         for (const auto& selection : geometrySelection) {
-          const auto& identifier = selection.first;
           const auto& ids = selection.second;
           if (std::find(ids.begin(), ids.end(), geoID) != ids.end()) {
             dets.push_back(ldet.get());
