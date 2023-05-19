@@ -104,7 +104,7 @@ int runMeasurementsToSP(
   spCfg.inputMeasurements = measurementsReader.outputMeasurements;
   spCfg.outputSpacePoints = "spacepoints";
   spCfg.trackingGeometry = tGeometry;
-  spCfg.geometrySelection = {Acts::GeometryIdentifier().setVolume(0)};
+  spCfg.geometrySelection["pixels"] = {Acts::GeometryIdentifier().setVolume(0)};
   sequencer.addAlgorithm(std::make_shared<SpacePointMaker>(spCfg, logLevel));
 
   // // write out spacepoints...
