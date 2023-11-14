@@ -85,6 +85,9 @@ struct GaussianSumFitter {
            const std::vector<const Surface*>& sSequence,
            TrackContainer<track_container_t, traj_t, holder_t>& trackContainer)
       const {
+    ACTS_VERBOSE("fit function for the direct navigator");
+
+    
     // Check if we have the correct navigator
     static_assert(
         std::is_same_v<DirectNavigator, typename propagator_t::Navigator>);
@@ -141,6 +144,7 @@ struct GaussianSumFitter {
            const GsfOptions<traj_t>& options,
            TrackContainer<track_container_t, traj_t, holder_t>& trackContainer)
       const {
+    ACTS_VERBOSE("fit function for the standard navigator");    
     // Check if we have the correct navigator
     static_assert(std::is_same_v<Navigator, typename propagator_t::Navigator>);
 
@@ -289,6 +293,7 @@ struct GaussianSumFitter {
     }();
 
     if (!fwdResult.ok()) {
+      ACTS_VERBOSE("fwdResult is not ok");
       return return_error_or_abort(fwdResult.error());
     }
 
@@ -296,10 +301,12 @@ struct GaussianSumFitter {
         fwdResult->template get<typename GsfActor::result_type>();
 
     if (!fwdGsfResult.result.ok()) {
+      ACTS_VERBOSE("fwdGsfResult is not ok");
       return return_error_or_abort(fwdGsfResult.result.error());
     }
 
     if (fwdGsfResult.measurementStates == 0) {
+      ACTS_VERBOSE("fwdGsfResult.measurementStates=0");
       return return_error_or_abort(GsfError::NoMeasurementStatesCreatedForward);
     }
 
