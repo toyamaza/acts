@@ -143,27 +143,34 @@ struct PointwiseMaterialInteraction {
   template <typename propagator_state_t, typename stepper_t>
   void updateState(propagator_state_t& state, const stepper_t& stepper,
                    NoiseUpdateMode updateMode = addNoise) {
+    ACTS_VERBOSE("check31");
     // in forward(backward) propagation, energy decreases(increases) and
     // variances increase(decrease)
     const auto nextE = std::hypot(mass, momentum) - Eloss * navDir;
     // put particle at rest if energy loss is too large
     nextP = (mass < nextE) ? std::sqrt(nextE * nextE - mass * mass) : 0;
+        ACTS_VERBOSE("check32");
     // minimum momentum below which we will not push particles via material
     // update
     // TODO 10 MeV might be quite low and we should make this configurable
     static constexpr double minP = 10 * Acts::UnitConstants::MeV;
     nextP = std::max(minP, nextP);
+        ACTS_VERBOSE("check33");
     // update track parameters and covariance
     stepper.update(state.stepping, pos, dir,
                    std::copysign(absQ / nextP, qOverP), time);
+                       ACTS_VERBOSE("check34");
     state.stepping.cov(eBoundPhi, eBoundPhi) = updateVariance(
         state.stepping.cov(eBoundPhi, eBoundPhi), variancePhi, updateMode);
+            ACTS_VERBOSE("check35");
     state.stepping.cov(eBoundTheta, eBoundTheta) =
         updateVariance(state.stepping.cov(eBoundTheta, eBoundTheta),
                        varianceTheta, updateMode);
+                           ACTS_VERBOSE("check36");
     state.stepping.cov(eBoundQOverP, eBoundQOverP) =
         updateVariance(state.stepping.cov(eBoundQOverP, eBoundQOverP),
                        varianceQoverP, updateMode);
+                           ACTS_VERBOSE("check37");
   }
 
  private:

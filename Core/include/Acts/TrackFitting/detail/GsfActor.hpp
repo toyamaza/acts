@@ -681,9 +681,10 @@ struct GsfActor {
 
         // Update the state and stepper with material effects
         interaction.updateState(singleState, singleStepper, addNoise);
-
+      ACTS_VERBOSE("check21");
         assert(singleState.stepping.cov.array().isFinite().all() &&
                "covariance not finite after multi scattering");
+      ACTS_VERBOSE("check22");
       }
     }
   }

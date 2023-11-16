@@ -63,7 +63,7 @@ auto Acts::Propagator<S, N>::propagate_impl(propagator_state_t& state,
       // Post-stepping:
       // navigator post step call - action list - aborter list
       m_navigator.postStep(state, m_stepper);
-                  ACTS_VERBOSE("check16");
+                  ACTS_VERBOSE("check16"); //checked
       state.options.actionList(state, m_stepper, m_navigator, result, logger());
                   ACTS_VERBOSE("check17");
       if (state.options.abortList(state, m_stepper, m_navigator, result,
