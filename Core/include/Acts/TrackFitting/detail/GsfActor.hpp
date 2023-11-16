@@ -303,8 +303,9 @@ struct GsfActor {
       // reduce component number
       const auto finalCmpNumber = std::min(
           static_cast<std::size_t>(stepper.maxComponents), m_cfg.maxComponents);
+    std::cout << "check 411.1" << std::endl;
       m_cfg.extensions.mixtureReducer(componentCache, finalCmpNumber, surface);
-
+    std::cout << "check 411.2" << std::endl;
       removeLowWeightComponents(componentCache);
     std::cout << "check 412" << std::endl;
       updateStepper(state, stepper, navigator, componentCache);
