@@ -40,11 +40,15 @@ auto Acts::Propagator<S, N>::propagate_impl(propagator_state_t& state,
 
     // Propagation loop : stepping
     for (; result.steps < state.options.maxSteps; ++result.steps) {
+        ACTS_VERBOSE("check11");
       // Pre-Stepping: target setting
       m_navigator.preStep(state, m_stepper);
       // Perform a propagation step - it takes the propagation state
+            ACTS_VERBOSE("check12");
       Result<double> res = m_stepper.step(state, m_navigator);
+                  ACTS_VERBOSE("check13");
       if (res.ok()) {
+                    ACTS_VERBOSE("check14");
         // Accumulate the path length
         double s = *res;
         result.pathLength += s;
@@ -55,12 +59,16 @@ auto Acts::Propagator<S, N>::propagate_impl(propagator_state_t& state,
         // pass error to caller
         return res.error();
       }
+                  ACTS_VERBOSE("check15");
       // Post-stepping:
       // navigator post step call - action list - aborter list
       m_navigator.postStep(state, m_stepper);
+                  ACTS_VERBOSE("check16");
       state.options.actionList(state, m_stepper, m_navigator, result, logger());
+                  ACTS_VERBOSE("check17");
       if (state.options.abortList(state, m_stepper, m_navigator, result,
                                   logger())) {
+                                                ACTS_VERBOSE("check18");
         terminatedNormally = true;
         break;
       }

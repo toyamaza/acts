@@ -252,7 +252,7 @@ struct GaussianSumFitter {
 
     auto fwdResult = [&]() {
       auto fwdPropOptions = fwdPropInitializer(options);
-
+      ACTS_VERBOSE("check1");
       // Catch the actor and set the measurements
       auto& actor = fwdPropOptions.actionList.template get<GsfActor>();
       actor.setOptions(options);
@@ -266,27 +266,30 @@ struct GaussianSumFitter {
       // If necessary convert to MultiComponentBoundTrackParameters
       using IsMultiParameters =
           detail::IsMultiComponentBoundParameters<start_parameters_t>;
-
+      ACTS_VERBOSE("check2");
       typename propagator_t::template action_list_t_result_t<
           MultiComponentCurvilinearTrackParameters,
           decltype(fwdPropOptions.actionList)>
           inputResult;
-
+      ACTS_VERBOSE("check3");
       auto& r = inputResult.template get<typename GsfActor::result_type>();
-
+      ACTS_VERBOSE("check4");
       r.fittedStates = &trackContainer.trackStateContainer();
-
+      ACTS_VERBOSE("check5");
       // This allows the initialization with single- and multicomponent start
       // parameters
+      
       if constexpr (not IsMultiParameters::value) {
         MultiComponentBoundTrackParameters params(
             sParameters.referenceSurface().getSharedPtr(),
             sParameters.parameters(), *sParameters.covariance(),
             sParameters.particleHypothesis());
+        ACTS_VERBOSE("check6");
 
         return m_propagator.propagate(params, fwdPropOptions, false,
                                       std::move(inputResult));
       } else {
+         ACTS_VERBOSE("check7");
         return m_propagator.propagate(sParameters, fwdPropOptions, false,
                                       std::move(inputResult));
       }
