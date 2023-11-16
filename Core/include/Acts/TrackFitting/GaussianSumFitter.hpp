@@ -296,10 +296,10 @@ struct GaussianSumFitter {
       ACTS_VERBOSE("fwdResult is not ok");
       return return_error_or_abort(fwdResult.error());
     }
-
+    ACTS_VERBOSE("Getting fwdGsfResult");
     auto& fwdGsfResult =
         fwdResult->template get<typename GsfActor::result_type>();
-
+    ACTS_VERBOSE("Got fwdGsfResult");
     if (!fwdGsfResult.result.ok()) {
       ACTS_VERBOSE("fwdGsfResult is not ok");
       return return_error_or_abort(fwdGsfResult.result.error());
@@ -335,7 +335,7 @@ struct GaussianSumFitter {
       actor.setOptions(options);
 
       bwdPropOptions.direction = gsfBackward;
-
+      ACTS_VERBOSE("target surface");
       const Surface& target = options.referenceSurface
                                   ? *options.referenceSurface
                                   : sParameters.referenceSurface();
@@ -357,17 +357,18 @@ struct GaussianSumFitter {
               std::declval<Acts::Surface&>(),
               std::declval<decltype(bwdPropOptions)>(),
               std::declval<decltype(inputResult)>()));
-
+      ACTS_VERBOSE("Get result");
       auto& r = inputResult.template get<typename GsfActor::result_type>();
-
+      ACTS_VERBOSE("fittedstates");
       r.fittedStates = &trackContainer.trackStateContainer();
-
+      ACTS_VERBOSE("assert tip is valid");
       assert(
           (fwdGsfResult.lastMeasurementTip != MultiTrajectoryTraits::kInvalid &&
            "tip is invalid"));
-
+      ACTS_VERBOSE("proxy");
       auto proxy =
           r.fittedStates->getTrackState(fwdGsfResult.lastMeasurementTip);
+      ACTS_VERBOSE("sharefrom");
       proxy.shareFrom(TrackStatePropMask::Filtered,
                       TrackStatePropMask::Smoothed);
 
@@ -376,9 +377,9 @@ struct GaussianSumFitter {
       r.surfacesVisitedBwdAgain.push_back(&proxy.referenceSurface());
       r.measurementStates++;
       r.processedStates++;
-
+       ACTS_VERBOSE("get params");
       const auto& params = *fwdGsfResult.lastMeasurementState;
-
+      ACTS_VERBOSE("returning propagate");
       return m_propagator.template propagate<std::decay_t<decltype(params)>,
                                              decltype(bwdPropOptions),
                                              MultiStepperSurfaceReached>(
@@ -386,6 +387,7 @@ struct GaussianSumFitter {
     }();
 
     if (!bwdResult.ok()) {
+      ACTS_VERBOSE("Get result");
       return return_error_or_abort(bwdResult.error());
     }
 
@@ -393,10 +395,12 @@ struct GaussianSumFitter {
         bwdResult->template get<typename GsfActor::result_type>();
 
     if (!bwdGsfResult.result.ok()) {
+       ACTS_VERBOSE("bwdGsfResult is not ok");
       return return_error_or_abort(bwdGsfResult.result.error());
     }
 
     if (bwdGsfResult.measurementStates == 0) {
+            ACTS_VERBOSE("bwdGsfResult.measurementStates=0");
       return return_error_or_abort(
           GsfError::NoMeasurementStatesCreatedBackward);
     }
