@@ -244,23 +244,24 @@ struct GsfActor {
                                 MaterialUpdateStage::FullUpdate);
       }
     }
-
+    std::cout << "check 41" << std::endl;
     // We do not need the component cache here, we can just update our stepper
     // state with the filtered components.
     // NOTE because of early return before we know that we have a measurement
     if (not haveMaterial) {
       TemporaryStates tmpStates;
-
+    std::cout << "check 42" << std::endl;
       auto res = kalmanUpdate(state, stepper, navigator, result, tmpStates,
                               found_source_link->second);
-
+    std::cout << "check 43" << std::endl;
       if (not res.ok()) {
         setErrorOrAbort(res.error());
         return;
       }
-
+    std::cout << "check 44" << std::endl;
       updateStepper(state, stepper, tmpStates);
     }
+
     // We have material, we thus need a component cache since we will
     // convolute the components and later reduce them again before updating
     // the stepper
@@ -269,25 +270,27 @@ struct GsfActor {
       Result<void> res;
 
       if (haveMeasurement) {
+    std::cout << "check 45" << std::endl;
         res = kalmanUpdate(state, stepper, navigator, result, tmpStates,
                            found_source_link->second);
       } else {
+    std::cout << "check 46" << std::endl;
         res = noMeasurementUpdate(state, stepper, navigator, result, tmpStates,
                                   false);
       }
-
+    std::cout << "check 47" << std::endl;
       if (not res.ok()) {
         setErrorOrAbort(res.error());
         return;
       }
-
+    std::cout << "check 48" << std::endl;
       // Reuse memory over all calls to the Actor in a single propagation
       std::vector<ComponentCache>& componentCache = result.componentCache;
       componentCache.clear();
-
+    std::cout << "check 49" << std::endl;
       convoluteComponents(state, stepper, navigator, tmpStates, componentCache,
                           result.nInvalidBetheHeitler);
-
+    std::cout << "check 410" << std::endl;
       if (componentCache.empty()) {
         ACTS_WARNING(
             "No components left after applying energy loss. "
@@ -296,28 +299,33 @@ struct GsfActor {
         ACTS_WARNING("Return to propagator without applying energy loss");
         return;
       }
-
+    std::cout << "check 411" << std::endl;
       // reduce component number
       const auto finalCmpNumber = std::min(
           static_cast<std::size_t>(stepper.maxComponents), m_cfg.maxComponents);
       m_cfg.extensions.mixtureReducer(componentCache, finalCmpNumber, surface);
 
       removeLowWeightComponents(componentCache);
-
+    std::cout << "check 412" << std::endl;
       updateStepper(state, stepper, navigator, componentCache);
-    }
 
+    }
+    std::cout << "check 413" << std::endl;
     // If we have only done preUpdate before, now do postUpdate
     if (haveMaterial && haveMeasurement) {
+    std::cout << "check 414" << std::endl;
       applyMultipleScattering(state, stepper, navigator,
                               MaterialUpdateStage::PostUpdate);
-    }
 
+    }
+    std::cout << "check 415" << std::endl;
     // Break the navigation if we found all measurements
     if (m_cfg.numberMeasurements &&
         result.measurementStates == m_cfg.numberMeasurements) {
+    std::cout << "check 415" << std::endl;
       navigator.targetReached(state.navigation, true);
     }
+    std::cout << "check 416" << std::endl;
   }
 
   template <typename propagator_state_t, typename stepper_t,
