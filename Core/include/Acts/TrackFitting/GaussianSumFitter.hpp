@@ -156,6 +156,8 @@ struct GaussianSumFitter {
            const GsfOptions<traj_t>& options,
            TrackContainer<track_container_t, traj_t, holder_t>& trackContainer)
       const {
+      ACTS_INFO("Tomohiro's Modified ACTS. Fit for standard navigator called");
+    
     // Check if we have the correct navigator
     static_assert(std::is_same_v<Navigator, typename propagator_t::Navigator>);
 
