@@ -144,7 +144,7 @@ auto Acts::Propagator<S, N>::makeState(
     const parameters_t& start, const propagator_options_t& options) const {
   static_assert(Concepts::BoundTrackParametersConcept<parameters_t>,
                 "Parameters do not fulfill bound parameters concept.");
-
+  std::cout << "check31" << std::endl;
   // Type of track parameters produced by the propagation
   using ReturnParameterType = StepperCurvilinearTrackParameters;
 
@@ -164,12 +164,18 @@ auto Acts::Propagator<S, N>::makeState(
   using StateType =
       action_list_t_state_t<OptionsType,
                             typename propagator_options_t::action_list_type>;
+  std::cout << "check32" << std::endl;
+  std::cout << "chck60" << std::endl;
+  // eOptions.magFieldContext.
+  std::cout << "chck61" << std::endl;    
+  std::cout << "check34" << std::endl;
+  
   StateType state{
       eOptions,
       m_stepper.makeState(eOptions.geoContext, eOptions.magFieldContext, start,
                           eOptions.maxStepSize),
       m_navigator.makeState(&start.referenceSurface(), nullptr)};
-
+  std::cout << "check33" << std::endl;
   static_assert(
       Concepts::has_method<const S, Result<double>, Concepts::Stepper::step_t,
                            StateType&, const N&>,

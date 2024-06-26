@@ -96,14 +96,26 @@ struct GaussianSumFitter {
            const GsfOptions<traj_t>& options,
            const std::vector<const Surface*>& sSequence,
            TrackContainer<track_container_t, traj_t, holder_t>& trackContainer)
-      const {
+    const {
 
-      ACTS_INFO("Tomohiro's Modified ACTS. Fit for direct navigator called");
+    ACTS_INFO("Tomohiro's Modified ACTS. Fit for direct navigator called");
+// // Check if any surface is a nullptr and print its type if not
+// for (const auto* surface : sSequence) {
+//     if (surface != nullptr) {
+//         std::cout << "Surface type: " << typeid(*surface).name() << std::endl;
+
+// 	std::cout << "geoid  " << (*surface).geometryId() << std::endl; 
+
+
+//     } else {
+//         std::cout << "Found a nullptr surface" << std::endl;
+//     }
+// }  
     
     // Check if we have the correct navigator
     static_assert(
-        std::is_same_v<DirectNavigator, typename propagator_t::Navigator>);
-
+		  std::is_same_v<DirectNavigator, typename propagator_t::Navigator>);
+    std::cout << "check1" << std::endl;
     // Initialize the forward propagation with the DirectNavigator
     auto fwdPropInitializer = [&sSequence, this](const auto& opts) {
       using Actors = ActionList<GsfActor, DirectNavigator::Initializer>;
@@ -115,35 +127,35 @@ struct GaussianSumFitter {
       propOptions.setPlainOptions(opts.propagatorPlainOptions);
 
       propOptions.actionList.template get<DirectNavigator::Initializer>()
-          .navSurfaces = sSequence;
+	.navSurfaces = sSequence;
       propOptions.actionList.template get<GsfActor>()
-          .m_cfg.bethe_heitler_approx = &m_betheHeitlerApproximation;
+	.m_cfg.bethe_heitler_approx = &m_betheHeitlerApproximation;
 
       return propOptions;
     };
-
+    std::cout << "check2" << std::endl;
     // Initialize the backward propagation with the DirectNavigator
     auto bwdPropInitializer = [&sSequence, this](const auto& opts) {
       using Actors = ActionList<GsfActor, DirectNavigator::Initializer>;
       using Aborters = AbortList<>;
-
+      std::cout << "check3" << std::endl;
       std::vector<const Surface*> backwardSequence(
-          std::next(sSequence.rbegin()), sSequence.rend());
+						   std::next(sSequence.rbegin()), sSequence.rend());
       backwardSequence.push_back(opts.referenceSurface);
-
+      std::cout << "check4" << std::endl;
       PropagatorOptions<Actors, Aborters> propOptions(opts.geoContext,
                                                       opts.magFieldContext);
 
       propOptions.setPlainOptions(opts.propagatorPlainOptions);
 
       propOptions.actionList.template get<DirectNavigator::Initializer>()
-          .navSurfaces = std::move(backwardSequence);
+	.navSurfaces = std::move(backwardSequence);
       propOptions.actionList.template get<GsfActor>()
-          .m_cfg.bethe_heitler_approx = &m_betheHeitlerApproximation;
+	.m_cfg.bethe_heitler_approx = &m_betheHeitlerApproximation;
 
       return propOptions;
     };
-
+      std::cout << "check5" << std::endl;
     return fit_impl(begin, end, sParameters, options, fwdPropInitializer,
                     bwdPropInitializer, trackContainer);
   }
@@ -210,6 +222,7 @@ struct GaussianSumFitter {
            const bwd_prop_initializer_t& bwdPropInitializer,
            TrackContainer<track_container_t, traj_t, holder_t>& trackContainer)
       const {
+    std::cout << "check 11 " << std::endl;
     // return or abort utility
     auto return_error_or_abort = [&](auto error) {
       if (options.abortOnError) {
@@ -222,7 +235,7 @@ struct GaussianSumFitter {
     // refer to 'forward' and 'backward' regardless of the actual direction.
     const auto gsfForward = options.propagatorPlainOptions.direction;
     const auto gsfBackward = gsfForward.invert();
-
+    std::cout << "check 12 " << std::endl;
     // Check if the start parameters are on the start surface
     auto intersectionStatusStartSurface =
         sParameters.referenceSurface()
@@ -236,18 +249,19 @@ struct GaussianSumFitter {
       ACTS_DEBUG(
           "Surface intersection of start parameters WITH bound-check failed");
     }
-
+    std::cout << "check 13 " << std::endl;
     // To be able to find measurements later, we put them into a map
     // We need to copy input SourceLinks anyway, so the map can own them.
     ACTS_VERBOSE("Preparing " << std::distance(begin, end)
                               << " input measurements");
     std::map<GeometryIdentifier, SourceLink> inputMeasurements;
+    std::cout << "check 14 " << std::endl;    
     for (auto it = begin; it != end; ++it) {
       SourceLink sl = *it;
       inputMeasurements.emplace(
           options.extensions.surfaceAccessor(sl)->geometryId(), std::move(sl));
     }
-
+    std::cout << "check 15 " << std::endl;
     ACTS_VERBOSE(
         "Gsf: Final measurement map size: " << inputMeasurements.size());
 
@@ -261,7 +275,7 @@ struct GaussianSumFitter {
     ACTS_VERBOSE("+-----------------------------+");
     ACTS_VERBOSE("| Gsf: Do forward propagation |");
     ACTS_VERBOSE("+-----------------------------+");
-
+    std::cout << "check 16 " << std::endl;
     auto fwdResult = [&]() {
       auto fwdPropOptions = fwdPropInitializer(options);
 
@@ -281,7 +295,7 @@ struct GaussianSumFitter {
 
       // dirty optional because parameters are not default constructible
       std::optional<MultiComponentBoundTrackParameters> params;
-
+    std::cout << "check 17 " << std::endl;
       // This allows the initialization with single- and multicomponent start
       // parameters
       if constexpr (!IsMultiParameters::value) {
@@ -292,33 +306,35 @@ struct GaussianSumFitter {
       } else {
         params = sParameters;
       }
+    std::cout << "check 18 " << std::endl;
+
 
       auto state = m_propagator.makeState(*params, fwdPropOptions);
-
+    std::cout << "check 19 " << std::endl;
       auto& r = state.template get<typename GsfActor::result_type>();
       r.fittedStates = &trackContainer.trackStateContainer();
-
+    std::cout << "check 20 " << std::endl;
       auto propagationResult = m_propagator.propagate(state);
-
+    std::cout << "check 21 " << std::endl;
       return m_propagator.makeResult(std::move(state), propagationResult,
                                      fwdPropOptions, false);
     }();
-
+    std::cout << "check 22 " << std::endl;
     if (!fwdResult.ok()) {
       return return_error_or_abort(fwdResult.error());
     }
-
+    std::cout << "check 23 " << std::endl;
     const auto& fwdGsfResult =
         fwdResult->template get<typename GsfActor::result_type>();
 
     if (!fwdGsfResult.result.ok()) {
       return return_error_or_abort(fwdGsfResult.result.error());
     }
-
+    std::cout << "check 24 " << std::endl;
     if (fwdGsfResult.measurementStates == 0) {
       return return_error_or_abort(GsfError::NoMeasurementStatesCreatedForward);
     }
-
+    std::cout << "check 25 " << std::endl;
     ACTS_VERBOSE("Finished forward propagation");
     ACTS_VERBOSE("- visited surfaces: " << fwdGsfResult.visitedSurfaces.size());
     ACTS_VERBOSE("- processed states: " << fwdGsfResult.processedStates);
@@ -326,7 +342,7 @@ struct GaussianSumFitter {
 
     std::size_t nInvalidBetheHeitler = fwdGsfResult.nInvalidBetheHeitler.val();
     double maxPathXOverX0 = fwdGsfResult.maxPathXOverX0.val();
-
+    std::cout << "check 17 " << std::endl;
     //////////////////
     // Backward pass
     //////////////////

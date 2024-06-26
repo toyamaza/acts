@@ -308,35 +308,73 @@ class MultiEigenStepperLoop
                    const std::shared_ptr<const MagneticFieldProvider>& bfield,
                    const MultiComponentBoundTrackParameters& multipars,
                    double ssize = std::numeric_limits<double>::max())
-        : particleHypothesis(multipars.particleHypothesis()),
-          geoContext(gctx),
-          magContext(mctx) {
+      : particleHypothesis(multipars.particleHypothesis()),
+	geoContext(gctx),
+	magContext(mctx) {
       if (multipars.components().empty()) {
+	std::cout << "state constructor" << std::endl;;
         throw std::invalid_argument(
-            "Cannot construct MultiEigenStepperLoop::State with empty "
-            "multi-component parameters");
+				    "Cannot construct MultiEigenStepperLoop::State with empty "
+				    "multi-component parameters");
       }
-
+      std::cout << "check41" << std::endl;
       const auto surface = multipars.referenceSurface().getSharedPtr();
+      std::cout << "check42" << std::endl;
 
-      for (auto i = 0ul; i < multipars.components().size(); ++i) {
-        const auto& [weight, singlePars] = multipars[i];
-        components.push_back(
-            {SingleState(gctx, bfield->makeCache(mctx), singlePars, ssize),
-             weight, Intersection3D::Status::onSurface});
+
+      try {        
+        auto componentSize = multipars.components().size();
+        std::cout << "Number of components: " << componentSize << std::endl;
+        
+        for (auto i = 0ul; i < componentSize; ++i) {
+	  std::cout <<"check42.2" << std::endl;
+	  const auto& [weight, singlePars] = multipars[i];
+	  // std::cout << "multipars " << multipars[i] << std::endl;
+	  std::cout << "weight " << weight << std::endl;
+	  std::cout << "singlePars " << singlePars << std::endl;
+	  std::cout << "check42.22" << std::endl;
+	  bfield->makeCache(mctx);
+	  std::cout << "check42.3" << std::endl;
+	  // if (!singlePars) {
+	  //   std::cerr << "Single parameters are nullptr at index: " << i << std::endl;
+	  //   continue;
+	  // }
+	  // std::cout << demangle(typeid(singlePars).name())  << std::endl;
+
+	  components.push_back(
+			       {SingleState(gctx, bfield->makeCache(mctx), singlePars, ssize),
+				weight, Intersection3D::Status::onSurface});
+        }
+        std::cout << "check43" << std::endl;
+      } catch (const std::exception& e) {
+        std::cerr << "Exception caught: " << e.what() << std::endl;
+      } catch (...) {
+        std::cerr << "Unknown exception caught" << std::endl;
       }
 
+      // for (auto i = 0ul; i < multipars.components().size(); ++i) {
+      //   const auto& [weight, singlePars] = multipars[i];
+      //   components.push_back(
+      //       {SingleState(gctx, bfield->makeCache(mctx), singlePars, ssize),
+      //        weight, Intersection3D::Status::onSurface});
+      // }
+      std::cout << "check43" << std::endl;
       if (std::get<2>(multipars.components().front())) {
         covTransport = true;
       }
     }
-  };
+    };
 
   /// Construct and initialize a state
   State makeState(std::reference_wrapper<const GeometryContext> gctx,
                   std::reference_wrapper<const MagneticFieldContext> mctx,
                   const MultiComponentBoundTrackParameters& par,
                   double ssize = std::numeric_limits<double>::max()) const {
+    std::cout << "makeState in MultiEigen" << std::endl;
+
+    std::cout << "check70" << std::endl;
+    const std::shared_ptr<const MagneticFieldProvider> bf =  SingleStepper::m_bField;
+      std::cout << "check71" << std::endl;
     return State(gctx, mctx, SingleStepper::m_bField, par, ssize);
   }
 

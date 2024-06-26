@@ -80,6 +80,7 @@ class EigenStepper {
           stepSize(ssize),
           fieldCache(std::move(fieldCacheIn)),
           geoContext(gctx) {
+      std::cout << "check5.0" << std::endl;
       Vector3 position = par.position(gctx);
       Vector3 direction = par.direction();
       pars.template segment<3>(eFreePos0) = position;
