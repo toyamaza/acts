@@ -116,13 +116,9 @@ if __name__ == "__main__":
 
     field = acts.ConstantBField(acts.Vector3(0, 0, 2 * u.T))
 
-    # Create a single-threaded sequencer to avoid messy output
-    s = acts.examples.Sequencer(events=100, numThreads=1, logLevel=acts.logging.INFO)
-
     runRefittingGsf(
         trackingGeometry=trackingGeometry,
         field=field,
         digiConfigFile=digiConfigFile,
         outputDir=Path.cwd(),
-        s=s,
     ).run()

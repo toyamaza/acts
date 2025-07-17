@@ -37,7 +37,7 @@ def runTruthTrackingGsf(
 
     s = s or acts.examples.Sequencer(
         events=100, numThreads=-1, logLevel=acts.logging.INFO,
-        trackFpes=False  # Disable FPE tracking to avoid interruptions
+        trackFpes=False 
     )
 
     for d in decorators:

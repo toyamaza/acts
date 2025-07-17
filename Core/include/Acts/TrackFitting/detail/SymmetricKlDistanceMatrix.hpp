@@ -170,6 +170,30 @@ class SymmetricKLDistanceMatrix {
 
   friend std::ostream &operator<<(std::ostream &os,
                                   const SymmetricKLDistanceMatrix &m) {
+    const auto prev_precision = os.precision();
+    const int width = 8;
+    const int prec = 2;
+
+    os << "\n";
+    os << std::string(width, ' ') << " | ";
+    for (auto j = 0ul; j < m.m_numberComponents - 1; ++j) {
+      os << std::setw(width) << j << "  ";
+    }
+    os << "\n";
+    os << std::string((width + 3) + (width + 2) * (m.m_numberComponents - 1),
+                      '-');
+    os << "\n";
+
+    for (auto i = 1ul; i < m.m_numberComponents; ++i) {
+      const auto indexConst = (i - 1) * i / 2;
+      os << std::setw(width) << i << " | ";
+      for (auto j = 0ul; j < i; ++j) {
+        os << std::setw(width) << std::setprecision(prec)
+           << m.m_distances[indexConst + j] << "  ";
+      }
+      os << "\n";
+    }
+    os << std::setprecision(prev_precision);
     return os;
   }
 };
