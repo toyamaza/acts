@@ -38,13 +38,13 @@ public:
         if (!active) return 0.0;
         auto end_time = std::chrono::high_resolution_clock::now();
         active = false;
-        return std::chrono::duration_cast<std::chrono::nanoseconds>(end_time - start_time).count() / 1000.0;
+        return std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time).count();
     }
     
     double elapsed() const {
         if (!active) return 0.0;
         auto now = std::chrono::high_resolution_clock::now();
-        return std::chrono::duration_cast<std::chrono::nanoseconds>(now - start_time).count() / 1000.0;
+        return std::chrono::duration_cast<std::chrono::microseconds>(now - start_time).count();
     }
 };
 
@@ -65,29 +65,16 @@ struct TimingResults {
         std::cout << "=== GSF Mixture Reduction Performance Report ===" << std::endl;
         std::cout << "Components: " << initial_components << " -> " << final_components << " (reduced by " << (initial_components - final_components) << ")" << std::endl;
         std::cout << "Iterations: " << iterations << std::endl;
-        
-        double measured_time = matrix_construction + minpair_search + component_merging + distance_recomputation + masking + cleanup;
-        double overhead_time = total_time - measured_time;
-        
         std::cout << "Matrix construction:    " << std::setw(8) << matrix_construction << " μs (" << std::setw(5) << (100.0 * matrix_construction / total_time) << "%)" << std::endl;
         std::cout << "Min pair search:        " << std::setw(8) << minpair_search << " μs (" << std::setw(5) << (100.0 * minpair_search / total_time) << "%)" << std::endl;
         std::cout << "Component merging:      " << std::setw(8) << component_merging << " μs (" << std::setw(5) << (100.0 * component_merging / total_time) << "%)" << std::endl;
         std::cout << "Distance recomputation: " << std::setw(8) << distance_recomputation << " μs (" << std::setw(5) << (100.0 * distance_recomputation / total_time) << "%)" << std::endl;
         std::cout << "Masking:                " << std::setw(8) << masking << " μs (" << std::setw(5) << (100.0 * masking / total_time) << "%)" << std::endl;
         std::cout << "Final cleanup:          " << std::setw(8) << cleanup << " μs (" << std::setw(5) << (100.0 * cleanup / total_time) << "%)" << std::endl;
-        std::cout << "Other/Overhead:         " << std::setw(8) << overhead_time << " μs (" << std::setw(5) << (100.0 * overhead_time / total_time) << "%)" << std::endl;
         std::cout << "Total time:             " << std::setw(8) << total_time << " μs" << std::endl;
         if (iterations > 0) {
             std::cout << "Average per iteration:  " << std::setw(8) << ((minpair_search + component_merging + distance_recomputation + masking) / iterations) << " μs" << std::endl;
         }
-        
-        // Show the inefficiency of the current masking approach
-        double initial_search_space = initial_components * (initial_components - 1) / 2;
-        double final_search_space = final_components * (final_components - 1) / 2;
-        std::cout << "Search space inefficiency: " << std::setw(8) << initial_search_space 
-                  << " -> " << std::setw(8) << final_search_space 
-                  << " (potential " << std::setw(5) << (100.0 * (initial_search_space - final_search_space) / initial_search_space) << "% reduction)" << std::endl;
-        
         std::cout << "=================================================" << std::endl;
     }
     
@@ -152,47 +139,39 @@ void reduceWithKLDistanceImpl(std::vector<Acts::GsfComponent> &cmpCache,
 #if ENABLE_GSF_TIMING
     TIMING_START(minpair_timer);
 #endif
-    
-    auto [minI_current, minJ_current] = distances.minDistancePair();
-    
+    const auto [minI, minJ] = distances.minDistancePair();
 #if ENABLE_GSF_TIMING
     TIMING_ACCUMULATE(results.minpair_search, minpair_timer);
 #endif
-    
-    // Ensure minI is the smaller index to keep indices stable during removal
-    if (minI_current > minJ_current) {
-        std::swap(minI_current, minJ_current);
-    }
-
-    // Get original indices before any potential matrix modification
-    const auto minI_original = distances.getOriginalIndex(minI_current);
-    const auto minJ_original = distances.getOriginalIndex(minJ_current);
 
     // Time component merging
 #if ENABLE_GSF_TIMING
     TIMING_START(merge_timer);
 #endif
-    cmpCache[minI_original] =
-        mergeComponents(cmpCache[minI_original], cmpCache[minJ_original], proj, desc);
+    cmpCache[minI] =
+        mergeComponents(cmpCache[minI], cmpCache[minJ], proj, desc);
 #if ENABLE_GSF_TIMING
     TIMING_ACCUMULATE(results.component_merging, merge_timer);
 #endif
-
-    // Mark the removed component as invalid for the final cleanup step
-    proj(cmpCache[minJ_original]).weight = -1.0;
 
     // Time distance recomputation
 #if ENABLE_GSF_TIMING
     TIMING_START(recompute_timer);
 #endif
-    distances.recomputeAssociatedDistances(minI_current, cmpCache, proj);
+    distances.recomputeAssociatedDistances(minI, cmpCache, proj);
 #if ENABLE_GSF_TIMING
     TIMING_ACCUMULATE(results.distance_recomputation, recompute_timer);
 #endif
 
-    // Remove the second component from the distance matrix
-    // This is the core of the immediate-removal optimization
-    distances.removeComponent(minJ_current);
+    // Time masking
+#if ENABLE_GSF_TIMING
+    TIMING_START(mask_timer);
+#endif
+    proj(cmpCache[minJ]).weight = -1.0;
+    distances.maskAssociatedDistances(minJ);
+#if ENABLE_GSF_TIMING
+    TIMING_ACCUMULATE(results.masking, mask_timer);
+#endif
 
     remainingComponents--;
   }

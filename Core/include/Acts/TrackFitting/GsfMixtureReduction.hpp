@@ -32,4 +32,10 @@ void reduceMixtureWithKLDistance(std::vector<GsfComponent> &cmpCache,
                                  std::size_t maxCmpsAfterMerge,
                                  const Surface &surface);
 
+/// Print aggregate timing statistics for GSF mixture reduction
+void printGsfTimingSummary();
+
+/// Reset timing statistics for GSF mixture reduction
+void resetGsfTimingStats();
+
 }  // namespace Acts
