@@ -9,6 +9,7 @@
 #pragma once
 
 #include <numeric>
+#include <limits>
 
 #include "Acts/EventData/MultiComponentTrackParameters.hpp"
 #include "Acts/EventData/MultiTrajectory.hpp"
@@ -158,13 +159,42 @@ class SymmetricKLDistanceMatrix {
     std::size_t idx = 0;
     
     std::size_t current_dist_size = m_numberComponents * (m_numberComponents - 1) / 2;
+    
+    // First pass: find the minimum distance
     for (auto i = 0l; i < current_dist_size; ++i) {
-      if (auto distance = m_distances[i]; distance < min) {
-        min = distance;
-        idx = i;
+      if (m_distances[i] < min) {
+        min = m_distances[i];
       }
     }
-
+    
+    // Second pass: among all pairs with minimum distance, choose the one with
+    // lexicographically smallest original indices for deterministic behavior
+    std::size_t best_orig_i = std::numeric_limits<std::size_t>::max();
+    std::size_t best_orig_j = std::numeric_limits<std::size_t>::max();
+    
+    // Iterate through the upper triangle of the distance matrix
+    std::size_t linear_idx = 0;
+    for (std::size_t i = 1; i < m_numberComponents; ++i) {
+      for (std::size_t j = 0; j < i; ++j) {
+        if (m_distances[linear_idx] == min) {
+          // Get original indices
+          std::size_t orig_i = m_currentToOriginal[i];
+          std::size_t orig_j = m_currentToOriginal[j];
+          
+          // Ensure smaller index comes first for comparison
+          if (orig_i > orig_j) std::swap(orig_i, orig_j);
+          
+          // Check if this pair has lexicographically smaller indices
+          if (orig_i < best_orig_i || (orig_i == best_orig_i && orig_j < best_orig_j)) {
+            best_orig_i = orig_i;
+            best_orig_j = orig_j;
+            idx = linear_idx;
+          }
+        }
+        linear_idx++;
+      }
+    }
+    
     return m_mapToPair.at(idx);
   }
 
